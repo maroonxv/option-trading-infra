@@ -1,0 +1,350 @@
+"""
+OptionSelectorService - 期权选择领域服务
+
+负责从全市场合约中筛选出符合策略要求的虚值期权合约。
+"""
+from typing import Optional, List, Callable, Any
+
+import pandas as pd
+
+from ..value_object.option_contract import OptionContract, OptionType
+
+
+class OptionSelectorService:
+    """
+    期权选择服务
+    
+    职责:
+    - 过滤不符合流动性要求的合约
+    - 按虚值程度排序选择目标档位
+    - 过滤到期日不合适的合约
+    """
+    
+    def __init__(
+        self,
+        strike_level: int = 3,          # 目标虚值档位
+        min_bid_price: float = 10.0,    # 最小买一价 (过滤价格过低的合约)
+        min_bid_volume: int = 10,       # 最小买一量 (过滤深度不足的合约)
+        min_trading_days: int = 1,      # 最小剩余交易日 (过滤即将到期的合约)
+        max_trading_days: int = 50      # 最大剩余交易日 (过滤远月合约)
+    ):
+        """
+        初始化期权选择服务
+        
+        参数:
+            strike_level: 虚值档位
+            min_bid_price: 最小买一价 (过滤价格过低的合约)
+            min_bid_volume: 最小买一量 (过滤深度不足的合约)
+            min_trading_days: 最小剩余交易日 (过滤即将到期的合约)
+            max_trading_days: 最大剩余交易日 (过滤远月合约)
+        """
+        self.strike_level = strike_level
+        self.min_bid_price = min_bid_price
+        self.min_bid_volume = min_bid_volume
+        self.min_trading_days = min_trading_days
+        self.max_trading_days = max_trading_days
+    
+    def check_liquidity(
+        self,
+        tick: Any,
+        contract: Any,
+        min_volume: int = 100,
+        min_bid_volume: int = 1,
+        max_spread_ticks: int = 3,
+        log_func: Optional[Callable] = None
+    ) -> bool:
+        """
+        检查开仓前流动性
+        
+        参数:
+            tick: TickData
+            contract: ContractData
+            min_volume: 当日最小成交量
+            min_bid_volume: 最小买一量
+            max_spread_ticks: 最大买卖价差
+            log_func: 日志记录函数
+            
+        返回:
+            如果检查通过则返回 True
+        """
+        if not tick or not contract:
+            return False
+            
+        vt_symbol = tick.vt_symbol
+        
+        # 1. 宏观活跃度：成交量
+        if tick.volume < min_volume:
+            if log_func:
+                log_func(f"[流动性] 过滤 {vt_symbol}: 活跃度低 (成交量 {tick.volume} < {min_volume})")
+            return False
+            
+        # 2. 微观流动性：买一量
+        if tick.bid_volume_1 < min_bid_volume:
+            if log_func:
+                log_func(f"[流动性] 过滤 {vt_symbol}: 深度不足 (买一量 {tick.bid_volume_1} < {min_bid_volume})")
+            return False
+            
+        # 3. 买卖价差过滤
+        pricetick = getattr(contract, "pricetick", 0)
+        if pricetick <= 0:
+            if log_func: log_func(f"[流动性] 过滤 {vt_symbol}: 无效的最小变动价位 {pricetick}")
+            return False
+            
+        spread = tick.ask_price_1 - tick.bid_price_1
+        spread_ticks = spread / pricetick
+        
+        if spread_ticks >= max_spread_ticks:
+            if log_func:
+                log_func(f"[流动性] 过滤 {vt_symbol}: 价差过大 买一 {tick.bid_price_1} 卖一 {tick.ask_price_1} ({spread_ticks:.1f} 跳 >= {max_spread_ticks})")
+            return False
+            
+        return True
+
+    def select_target_option(
+        self,
+        contracts: pd.DataFrame,
+        option_type: OptionType,
+        underlying_price: float,
+        strike_level: Optional[int] = None,
+        log_func: Optional[Callable] = None
+    ) -> Optional[OptionContract]:
+        """
+        选择目标期权合约
+        
+        参数:
+            contracts: 合约 DataFrame (需包含必要列)
+            option_type: 期权类型 ("call" 或 "put")
+            underlying_price: 标的当前价格
+            strike_level: 虚值档位 (可选，默认使用初始化值)
+            log_func: 日志回调函数
+            
+        返回:
+            选中的期权合约，如果没有符合条件的则返回 None
+        """
+        if contracts.empty:
+            if log_func: log_func("[DEBUG-OPT] 筛选失败: 传入合约列表为空")
+            return None
+        
+        level = strike_level or self.strike_level
+        df = contracts.copy()
+        
+        if log_func:
+            log_func(f"[DEBUG-OPT] 标的价: {underlying_price} | 开始筛选 {option_type} 期权 (初始数量: {len(df)})")
+            # 打印数据摘要
+            log_func(f"[DEBUG-OPT] 传入列名: {list(df.columns)}")
+            sample_cols = ["vt_symbol", "strike_price", "days_to_expiry", "bid_price", "option_type"]
+            available_cols = [c for c in sample_cols if c in df.columns]
+            if available_cols:
+                log_func(f"[DEBUG-OPT] 数据摘要(前5行):\n{df[available_cols].head(5).to_string()}")
+        
+        # 1. 按期权类型筛选
+        if "option_type" in df.columns:
+            df = df[df["option_type"] == option_type]
+        
+        if df.empty:
+            if log_func: log_func("[DEBUG-OPT] 筛选失败: 无该类型期权")
+            return None
+        
+        # 2. 过滤流动性
+        df = self._filter_liquidity(df, log_func)
+        
+        if df.empty:
+            if log_func: log_func(f"[DEBUG-OPT] 筛选失败: 流动性过滤后为空 (最小买价: {self.min_bid_price}, 最小买量: {self.min_bid_volume})")
+            return None
+        
+        # 3. 过滤到期日
+        if log_func and "days_to_expiry" in df.columns:
+            days = df["days_to_expiry"]
+            if not days.empty:
+                log_func(f"[DEBUG-OPT] 过滤前天数分布: min={days.min()}, max={days.max()}, mean={days.mean():.1f}")
+            else:
+                log_func("[DEBUG-OPT] 警告: days_to_expiry 列为空")
+
+        df = self._filter_trading_days(df, log_func)
+        
+        if df.empty:
+            if log_func: log_func(f"[DEBUG-OPT] 筛选失败: 到期日过滤后为空 (最小天数: {self.min_trading_days}, 最大天数: {self.max_trading_days})")
+            return None
+        
+        # 4. 计算虚值程度并排序
+        df = self._calculate_otm_ranking(df, option_type, underlying_price)
+        
+        if log_func and not df.empty:
+            log_func(f"[DEBUG-OPT] 虚值计算后剩余: {len(df)}")
+            cols = ["vt_symbol", "strike_price", "diff1"]
+            available_cols = [c for c in cols if c in df.columns]
+            log_func(f"[DEBUG-OPT] 虚值前5:\n{df[available_cols].head(5).to_string()}")
+
+        if df.empty:
+            if log_func: log_func(f"[DEBUG-OPT] 筛选失败: 无虚值期权 (标的价: {underlying_price})")
+            return None
+        
+        if log_func:
+            log_func(f"[DEBUG-OPT] 候选数量: {len(df)}")
+            # 打印前5个虚值合约
+            for i in range(min(5, len(df))):
+                row = df.iloc[i]
+                log_func(f"  {i+1}. {row.get('vt_symbol')} | 虚值度: {row.get('diff1'):.2%} | 买价: {row.get('bid_price')}")
+
+        # 5. 选择虚值第 N 档
+        target = self._select_by_level(df, option_type, level)
+        
+        if target is None:
+            return None
+        
+        result = self._to_option_contract(target, option_type)
+        if log_func:
+            log_func(f"[DEBUG-OPT] 最终选中: {result.vt_symbol} (虚值第{level}档)")
+            
+        return result
+    
+    def _filter_liquidity(self, df: pd.DataFrame, log_func: Optional[Callable] = None) -> pd.DataFrame:
+        """过滤流动性不足的合约"""
+        result = df.copy()
+        start_len = len(result)
+        
+        if "bid_price" in result.columns:
+            result = result[result["bid_price"] >= self.min_bid_price]
+            if log_func and len(result) < start_len:
+                log_func(f"[DEBUG-OPT] 价格过滤: {start_len} -> {len(result)} (min_bid_price={self.min_bid_price})")
+        
+        mid_len = len(result)
+        if "bid_volume" in result.columns:
+            result = result[result["bid_volume"] >= self.min_bid_volume]
+            if log_func and len(result) < mid_len:
+                log_func(f"[DEBUG-OPT] 销量过滤: {mid_len} -> {len(result)} (min_bid_volume={self.min_bid_volume})")
+        
+        return result
+    
+    def _filter_trading_days(self, df: pd.DataFrame, log_func: Optional[Callable] = None) -> pd.DataFrame:
+        """过滤到期日不合适的合约"""
+        if "days_to_expiry" not in df.columns:
+            return df
+        
+        result = df.copy()
+        start_len = len(result)
+        
+        result = result[result["days_to_expiry"] >= self.min_trading_days]
+        result = result[result["days_to_expiry"] <= self.max_trading_days]
+        
+        if log_func and len(result) < start_len:
+            log_func(f"[DEBUG-OPT] 到期日过滤: {start_len} -> {len(result)} (days={self.min_trading_days}-{self.max_trading_days})")
+        
+        return result
+    
+    def _calculate_otm_ranking(
+        self,
+        df: pd.DataFrame,
+        option_type: OptionType,
+        underlying_price: float
+    ) -> pd.DataFrame:
+        """
+        计算虚值程度排名
+        
+        虚值程度 (diff1):
+        - Call: (strike_price - underlying_price) / underlying_price
+        - Put: (underlying_price - strike_price) / underlying_price
+        
+        虚值期权的 diff1 > 0
+        """
+        if "strike_price" not in df.columns or underlying_price <= 0:
+            return df
+        
+        result = df.copy()
+        
+        if option_type == "call":
+            # Call 虚值: 行权价 > 标的价格
+            result["diff1"] = (result["strike_price"] - underlying_price) / underlying_price
+            result = result[result["diff1"] > 0]  # 只保留虚值
+            result = result.sort_values("diff1", ascending=True)  # 虚值程度从小到大
+        else:
+            # Put 虚值: 行权价 < 标的价格
+            result["diff1"] = (underlying_price - result["strike_price"]) / underlying_price
+            result = result[result["diff1"] > 0]  # 只保留虚值
+            result = result.sort_values("diff1", ascending=True)  # 虚值程度从小到大
+        
+        return result
+    
+    def _select_by_level(
+        self,
+        df: pd.DataFrame,
+        option_type: OptionType,
+        level: int
+    ) -> Optional[pd.Series]:
+        """
+        选择虚值第 N 档
+        
+        参数:
+            df: 已按虚值程度排序的 DataFrame
+            option_type: 期权类型
+            level: 虚值档位
+            
+        返回:
+            选中的行，或 None
+        """
+        if len(df) < level:
+            # 如果合约数量不足，选择最后一个 (最虚值)
+            if len(df) > 0:
+                return df.iloc[-1]
+            return None
+        
+        # 选择第 level 档 (索引从 0 开始，所以是 level - 1)
+        return df.iloc[level - 1]
+    
+    def _to_option_contract(
+        self,
+        row: pd.Series,
+        option_type: OptionType
+    ) -> OptionContract:
+        """将 DataFrame 行转换为 OptionContract 对象"""
+        return OptionContract(
+            vt_symbol=str(row.get("vt_symbol", "")),
+            underlying_symbol=str(row.get("underlying_symbol", "")),
+            option_type=option_type,
+            strike_price=float(row.get("strike_price", 0)),
+            expiry_date=str(row.get("expiry_date", "")),
+            diff1=float(row.get("diff1", 0)),
+            bid_price=float(row.get("bid_price", 0)),
+            bid_volume=int(row.get("bid_volume", 0)),
+            ask_price=float(row.get("ask_price", 0)),
+            ask_volume=int(row.get("ask_volume", 0)),
+            days_to_expiry=int(row.get("days_to_expiry", 0))
+        )
+    
+    def get_all_otm_options(
+        self,
+        contracts: pd.DataFrame,
+        option_type: OptionType,
+        underlying_price: float
+    ) -> List[OptionContract]:
+        """
+        获取所有虚值期权列表 (按虚值程度排序)
+        
+        参数:
+            contracts: 合约 DataFrame
+            option_type: 期权类型
+            underlying_price: 标的当前价格
+            
+        返回:
+            虚值期权列表 (从最接近平值到最虚值)
+        """
+        if contracts.empty:
+            return []
+        
+        df = contracts.copy()
+        
+        # 按期权类型筛选
+        if "option_type" in df.columns:
+            df = df[df["option_type"] == option_type]
+        
+        # 过滤流动性
+        df = self._filter_liquidity(df)
+        
+        # 过滤到期日
+        df = self._filter_trading_days(df)
+        
+        # 计算虚值排名
+        df = self._calculate_otm_ranking(df, option_type, underlying_price)
+        
+        # 转换为对象列表
+        return [self._to_option_contract(row, option_type) for _, row in df.iterrows()]

@@ -1,0 +1,14 @@
+.env
+__pycache__/
+data/
+.venv/
+TODO
+
+.vscode/
+.pytest_cache/
+.kiro/
+.hypothesis/
+
+temp/
+
+deploy/init_data/init.sql

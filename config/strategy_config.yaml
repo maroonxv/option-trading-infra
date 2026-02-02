@@ -1,0 +1,34 @@
+strategies:
+  - class_name: "MacdTdIndexStrategy"  # 策略类名，对应 src/strategy/macd_td_index_strategy.py 中的类
+    setting:
+      max_positions: 5                 # 策略允许持有的最大合约数量（风控限制）
+      position_ratio: 0.1              # 单次开仓使用的资金比例（相对于账户总权益）
+      strike_level: 4                  # 期权选合约时的虚值档位（OTM Level），例如 4 表示虚值 4 档
+      macd_fast: 12                    # MACD 指标参数：快线周期
+      macd_slow: 26                    # MACD 指标参数：慢线周期
+      macd_signal: 9                   # MACD 指标参数：信号线周期
+      ema_fast: 5                      # EMA 均线参数：快线周期（用于辅助趋势判断）
+      ema_slow: 20                     # EMA 均线参数：慢线周期（用于辅助趋势判断）
+      bar_window: 1                    # K线合成窗口大小。1 表示不合成，直接使用 1 分钟线；15 表示合成 15 分钟线
+      bar_interval: "MINUTE"           # K线合成的基础周期单位，可选 "MINUTE", "HOUR", "DAILY"
+
+runtime:
+  log_level: "INFO"            # 日志输出级别，可选 DEBUG, INFO, WARNING, ERROR
+  log_dir: "data/logs"         # 日志文件存放的相对目录
+  heartbeat_interval: 60       # 心跳检测间隔（秒），预留配置，目前代码中未强制依赖
+  max_restart_count: 10        # 守护进程允许重启子进程的最大次数，超过后将停止运行
+  restart_delay: 5.0           # 每次重启子进程前的等待时间（秒），避免频繁重启
+  
+  # 交易时段配置 (24小时制)
+  # 用于守护进程判断是否在交易时间。非交易时间会停止子进程以节省资源。
+  # 时间段覆盖日盘和夜盘，建议留有一定冗余供程序启动和初始化。
+  trading_periods:
+    # 上午盘：08:40 启动（早于 09:00 开盘），11:30 准时收盘休息
+    - start: "08:40"
+      end: "11:30"
+
+    # 下午盘：13:00 启动（如果你确认此时可以连接），直到 15:30
+    # 注意：国内期货标准开盘是 13:30，设置 13:00 可以让程序提前运行准备，
+    # 但需确保 CTP 服务器在 13:00 已允许连接，否则可能消耗重启次数。
+    - start: "13:00"
+      end: "15:30"

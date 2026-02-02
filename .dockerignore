@@ -1,0 +1,34 @@
+# Version Control
+.git/
+.gitignore
+
+# Environment & Config
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+
+# Local Data & Logs
+data/
+logs/
+temp/
+deploy/mysql_data/
+*.log
+
+# Docker specific
+deploy/
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Build artifacts
+build/
+dist/
+*.egg-info/

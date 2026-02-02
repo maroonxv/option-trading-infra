@@ -1,0 +1,69 @@
+name: macd-td-index-strategy
+
+
+
+services:
+  # --- 数据库服务 ---
+  mysql-db:
+    image: mysql:8.0
+    container_name: vnpy_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-vnpy}
+    volumes:
+      # 挂载数据卷，保证数据持久化
+      - mysql_data:/var/lib/mysql
+      # 挂载初始化脚本（方案 B）
+      - ./init_data:/docker-entrypoint-initdb.d
+    ports:
+      - "3307:3306"  # 开发期暴露：宿主机3307 -> 容器3306
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # --- 监控面板 ---
+  dashboard:
+    build: 
+      context: ..  # 上下文设为项目根目录
+      dockerfile: deploy/Dockerfile
+    container_name: vnpy_dashboard
+    command: python src/interface/web/app.py
+    ports:
+      - "5007:5007"
+    environment:
+      - VNPY_DATABASE_DRIVER=mysql
+      - VNPY_DATABASE_HOST=mysql-db
+      - VNPY_DATABASE_USER=root
+      - VNPY_DATABASE_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - VNPY_DATABASE_DATABASE=${MYSQL_DATABASE:-vnpy}
+    volumes:
+      - ../logs:/app/logs  # 挂载日志
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+  # --- 15分钟策略 ---
+  strategy-15m:
+    build: 
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: vnpy_strategy_15m
+    # 核心：直接指定启动 15m 的配置
+    command: python src/main/main.py --mode daemon --config config/strategy_config.yaml --override-config config/timeframe/15m.yaml
+    environment:
+      - VNPY_DATABASE_DRIVER=mysql
+      - VNPY_DATABASE_HOST=mysql-db
+      - VNPY_DATABASE_USER=root
+      - VNPY_DATABASE_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+      - VNPY_DATABASE_DATABASE=${MYSQL_DATABASE:-vnpy}
+    volumes:
+      - ../logs:/app/logs
+      # 挂载 config 目录，允许微调配置不重启
+      - ../config:/app/config
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
