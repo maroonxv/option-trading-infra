@@ -108,7 +108,7 @@ class SnapshotReader:
 
     def _parse_instruments(self, aggregate, macd_history, dullness_states, divergence_states):
         result = {}
-        # aggregate 是 TargetInstrumentAggregate 对象
+        # aggregate 是 InstrumentManager 对象
         
         for symbol in aggregate.get_all_symbols():
             instrument = aggregate.get_instrument(symbol)

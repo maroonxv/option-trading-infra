@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Set
 
 from ..entity.position import Position
 from ..entity.order import Order, OrderStatus
-from ..value_object.signal_type import SignalType
 from ..value_object.order_instruction import Offset
 from ..event.event_types import (
     DomainEvent,
@@ -86,7 +85,7 @@ class PositionAggregate:
         self,
         option_vt_symbol: str,
         underlying_vt_symbol: str,
-        signal_type: SignalType,
+        signal: str,
         target_volume: int
     ) -> Position:
         """
@@ -95,7 +94,7 @@ class PositionAggregate:
         Args:
             option_vt_symbol: 期权合约代码
             underlying_vt_symbol: 标的期货合约代码
-            signal_type: 开仓信号类型
+            signal: 开仓信号类型
             target_volume: 目标持仓数量
             
         Returns:
@@ -104,11 +103,8 @@ class PositionAggregate:
         position = Position(
             vt_symbol=option_vt_symbol,
             underlying_vt_symbol=underlying_vt_symbol,
-            signal_type=signal_type,
-            volume=0,
-            target_volume=target_volume,
-            create_time=datetime.now(),
-            is_closed=False
+            signal=signal,
+            target_volume=target_volume
         )
         
         self._positions[option_vt_symbol] = position

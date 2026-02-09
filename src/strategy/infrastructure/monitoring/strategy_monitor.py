@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-from ...domain.aggregate.target_instrument_aggregate import TargetInstrumentAggregate
+from ...domain.aggregate.target_instrument_aggregate import InstrumentManager
 from ...domain.aggregate.position_aggregate import PositionAggregate
 from ...domain.value_object.macd_value import MACDValue
 from ...domain.value_object.dullness_state import DullnessState
@@ -228,7 +228,7 @@ class StrategyMonitor:
 
     def record_snapshot(
         self,
-        target_aggregate: TargetInstrumentAggregate,
+        target_aggregate: InstrumentManager,
         position_aggregate: PositionAggregate,
         strategy_context: Any
     ) -> None:

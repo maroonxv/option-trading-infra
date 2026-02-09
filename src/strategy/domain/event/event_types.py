@@ -73,7 +73,7 @@ class SignalGeneratedEvent(DomainEvent):
     - 用于回测分析或实时通知
     """
     vt_symbol: str = ""
-    signal_type: str = ""  # SignalType.value
+    signal: str = ""  # 信号字符串
     reason: str = ""
 
 
@@ -117,7 +117,7 @@ class PositionClosedEvent(DomainEvent):
     触发时机: 持仓完全平仓。
     """
     vt_symbol: str = ""
-    signal_type: str = ""
+    signal: str = ""  # 信号字符串
     holding_seconds: float = 0.0
     pnl: float = 0.0
 

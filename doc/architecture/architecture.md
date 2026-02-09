@@ -45,7 +45,7 @@
 | :--- | :--- | :--- | :--- |
 | **FutureSelectionService** | `domain_service/future_selection_service.py` | **主力合约选择**。<br>基于“7天规则”判断是否切换到次月合约。 | `select_dominant_contract(contracts, current_date)`:<br>- 若到期日 > 7天，选当月。<br>- 若到期日 <= 7天，选次月。 |
 | **IndicatorService** | `domain_service/indicator_service.py` | **指标计算外观 (Facade)**。<br>协调 MACD, TD, EMA 计算服务，生成指标快照。 | `calculate_all(instrument, ...)`:<br>- 调用 `MacdCalculatorService`<br>- 调用 `TdCalculatorService`<br>- 调用 `EmaCalculatorService`<br>- 返回 `IndicatorResultDTO` |
-| **OptionSelectorService** | `domain_service/option_selector_service.py` | **期权合约筛选**。<br>根据流动性和虚值程度筛选目标期权。 | `select_target_option(contracts, option_type, ...)`:<br>- 过滤流动性差的合约。<br>- 计算虚值程度 (Diff1)。<br>- 选择虚值第 N 档 (默认4档)。 |
+| **OptionSelectorService** | `domain_service/option_selector_service.py` | **期权合约筛选**。<br>根据流动性和虚值程度筛选目标期权。 | `select_option(contracts, option_type, ...)`:<br>- 过滤流动性差的合约。<br>- 计算虚值程度 (Diff1)。<br>- 选择虚值第 N 档 (默认4档)。 |
 | **SignalService** | `domain_service/signal_service.py` | **信号判断逻辑**。<br>根据指标状态判断开平仓信号 (纯逻辑)。 | `check_open_signal(instrument)`:<br>- 判断钝化 + TD 8/9。<br>- 判断背离确认。<br>`check_close_signal(position, instrument)`:<br>- 判断止盈/止损条件。 |
 | **PositionSizingService** | `domain_service/position_sizing_service.py` | **仓位管理**。<br>计算开仓数量，执行风控检查。 | `make_open_decision(account_balance, ...)`:<br>- 检查最大持仓限制。<br>- 根据资金比例计算手数。<br>- 生成 `OrderInstruction`。 |
 

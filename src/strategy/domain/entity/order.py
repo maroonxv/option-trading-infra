@@ -9,7 +9,6 @@ from enum import Enum
 from typing import Optional
 
 from ..value_object.order_instruction import Direction, Offset
-from ..value_object.signal_type import SignalType
 
 
 class OrderStatus(Enum):
@@ -40,7 +39,7 @@ class Order:
         price: 委托价格
         status: 订单状态
         traded: 已成交数量
-        signal_type: 关联的信号类型
+        signal: 关联的信号类型
         create_time: 订单创建时间
         update_time: 订单更新时间
     """
@@ -52,7 +51,7 @@ class Order:
     price: float = 0.0
     status: OrderStatus = OrderStatus.SUBMITTING
     traded: int = 0
-    signal_type: Optional[SignalType] = None
+    signal: str = ""
     create_time: datetime = field(default_factory=datetime.now)
     update_time: Optional[datetime] = None
     

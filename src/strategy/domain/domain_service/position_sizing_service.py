@@ -3,7 +3,6 @@ PositionSizingService - 计算【考虑了当日开仓限额、品种开仓限�
 """
 from typing import List, Optional
 
-from ..value_object.signal_type import SignalType
 from ..value_object.order_instruction import OrderInstruction, Direction, Offset
 from ..entity.position import Position
 
@@ -41,7 +40,7 @@ class PositionSizingService:
     def calculate_open_volumn(
         self,
         account_balance: float,
-        signal_type: SignalType,
+        signal: str,
         vt_symbol: str,
         contract_price: float,
         current_positions: List[Position],
@@ -59,7 +58,7 @@ class PositionSizingService:
         
         参数:
             account_balance: 可用资金
-            signal_type: 信号类型
+            signal: 信号类型
             vt_symbol: 合约代码
             contract_price: 合约价格 (期权权利金)
             current_positions: 当前持仓列表 (用于检查最大持仓限制)
@@ -101,14 +100,14 @@ class PositionSizingService:
             offset=Offset.OPEN,
             volume=volume,
             price=contract_price,
-            signal_type=signal_type.value
+            signal=signal
         )
     
     def calculate_close_volumn(
         self,
         position: Position,
         close_price: float,
-        signal_type: Optional[SignalType] = None
+        signal: str = ""
     ) -> Optional[OrderInstruction]:
         """
         生成平仓指令
@@ -116,7 +115,7 @@ class PositionSizingService:
         参数:
             position: 要平仓的持仓
             close_price: 平仓价格
-            signal_type: 触发平仓的信号类型
+            signal: 触发平仓的信号类型
             
         Returns:
             OrderInstruction (包含交易指令) 或 None
@@ -131,5 +130,5 @@ class PositionSizingService:
             offset=Offset.CLOSE,
             volume=position.volume,
             price=close_price,
-            signal_type=signal_type.value if signal_type else None
+            signal=signal
         )

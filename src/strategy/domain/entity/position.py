@@ -7,8 +7,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
 
-from ..value_object.signal_type import SignalType
-
 
 @dataclass
 class Position:
@@ -23,7 +21,7 @@ class Position:
     Attributes:
         vt_symbol: 期权合约代码 (VnPy 格式)
         underlying_vt_symbol: 标的期货合约代码
-        signal_type: 开仓信号类型
+        signal: 开仓信号类型
         volume: 当前持仓数量 (实际成交量)
         target_volume: 目标持仓数量 (委托量)
         direction: 持仓方向 ("long" 或 "short")
@@ -36,7 +34,7 @@ class Position:
     """
     vt_symbol: str
     underlying_vt_symbol: str
-    signal_type: SignalType
+    signal: str
     volume: int = 0
     target_volume: int = 0
     direction: str = "short"  # 卖权策略通常是 short
@@ -117,22 +115,22 @@ class Position:
         end_time = self.close_time or datetime.now()
         return (end_time - self.open_time).total_seconds()
     
-    def is_for_open_signal(self, *signal_types: SignalType) -> bool:
+    def is_for_open_signal(self, *signal_types: str) -> bool:
         """
         判断持仓是否由指定的开仓信号触发
         
         Args:
-            signal_types: 一个或多个信号类型
+            signal_types: 一个或多个信号类型字符串
             
         Returns:
             如果持仓的信号类型在给定的信号类型中则返回 True
         """
-        return self.signal_type in signal_types
+        return self.signal in signal_types
     
     def __repr__(self) -> str:
         status = "Closed" if self.is_closed else f"Active({self.volume})"
         manual = " [Manual]" if self.is_manually_closed else ""
         return (
-            f"Position({self.vt_symbol}, {self.signal_type.value}, "
+            f"Position({self.vt_symbol}, {self.signal}, "
             f"{self.direction}, {status}{manual})"
         )

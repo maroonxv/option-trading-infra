@@ -570,7 +570,7 @@ class OptionSelectorService:
         """
         self.strike_level = strike_level
     
-    def select_target_option(self,
+    def select_option(self,
                            group: DataFrame,
                            strike_level: Optional[int] = None,
                            min_trading_days: int = 1,

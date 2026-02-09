@@ -100,10 +100,10 @@ class OptionSelectorService:
             
         return True
 
-    def select_target_option(
+    def select_option(
         self,
         contracts: pd.DataFrame,
-        option_type: OptionType,
+        option_type: str,  # "CALL" | "PUT" (case-insensitive)
         underlying_price: float,
         strike_level: Optional[int] = None,
         log_func: Optional[Callable] = None
@@ -113,7 +113,7 @@ class OptionSelectorService:
         
         参数:
             contracts: 合约 DataFrame (需包含必要列)
-            option_type: 期权类型 ("call" 或 "put")
+            option_type: 期权类型，支持 "CALL" 或 "PUT" (大小写不敏感)
             underlying_price: 标的当前价格
             strike_level: 虚值档位 (可选，默认使用初始化值)
             log_func: 日志回调函数
@@ -125,6 +125,12 @@ class OptionSelectorService:
             if log_func: log_func("[DEBUG-OPT] 筛选失败: 传入合约列表为空")
             return None
         
+        # 归一化 option_type
+        option_type = option_type.lower()
+        if option_type not in ["call", "put"]:
+             if log_func: log_func(f"[DEBUG-OPT] 错误: 无效的 option_type {option_type}")
+             return None
+
         level = strike_level or self.strike_level
         df = contracts.copy()
         
@@ -314,7 +320,7 @@ class OptionSelectorService:
     def get_all_otm_options(
         self,
         contracts: pd.DataFrame,
-        option_type: OptionType,
+        option_type: str,  # "CALL" | "PUT" (case-insensitive)
         underlying_price: float
     ) -> List[OptionContract]:
         """
@@ -322,7 +328,7 @@ class OptionSelectorService:
         
         参数:
             contracts: 合约 DataFrame
-            option_type: 期权类型
+            option_type: 期权类型，支持 "CALL" 或 "PUT" (大小写不敏感)
             underlying_price: 标的当前价格
             
         返回:
@@ -331,6 +337,11 @@ class OptionSelectorService:
         if contracts.empty:
             return []
         
+        # 归一化 option_type
+        option_type = option_type.lower()
+        if option_type not in ["call", "put"]:
+             return []
+
         df = contracts.copy()
         
         # 按期权类型筛选

@@ -1,61 +1,48 @@
 """
 TargetInstrument 实体 - 标的合约
 
-管理单个标的的 K 线数据和指标状态快照。
-作为只读数据容器，不包含计算逻辑。
+贫血模型实体，仅作为数据容器使用。
+所有业务逻辑由服务层处理。
 """
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, Dict, Any
 
 import pandas as pd
-
-from ..value_object.macd_value import MACDValue
-from ..value_object.td_value import TDValue
-from ..value_object.ema_state import EMAState
-from ..value_object.dullness_state import DullnessState
-from ..value_object.divergence_state import DivergenceState
 
 
 @dataclass
 class TargetInstrument:
     """
-    标的合约实体
+    标的合约实体（贫血模型）
     
     职责:
-    1. 数据仓库: bars DataFrame 存储完整的历史 K 线及指标序列
-    2. 状态快照: 存储当前时刻的指标状态 (Value Objects)
-    3. 一致性: 保证所有状态在同一时间点对齐
+    1. 数据容器: 存储合约基础信息
+    2. K 线队列: 维护历史 K 线数据
+    3. 指标容器: 提供动态指标存储（indicators 字典）
+    
+    设计理念:
+    - 不包含任何计算逻辑
+    - indicators 字典由 IIndicatorService 负责填充
+    - 保持实体稳定，新增指标无需修改实体结构
     
     Attributes:
         vt_symbol: VnPy 格式的合约代码 (如 "rb2501.SHFE")
-        bars: K 线数据 DataFrame (包含 open, high, low, close 等列)
-        macd_value: 当前 MACD 指标快照
-        td_value: 当前 TD 序列快照
-        ema_state: 当前 EMA 均线状态
-        dullness_state: 当前钝化状态
-        divergence_state: 当前背离状态
+        bars: K 线数据 DataFrame (包含 open, high, low, close, volume 等列)
+        indicators: 动态指标容器，存储任意类型的指标数据
         last_update_time: 最后更新时间
     """
     vt_symbol: str
     bars: pd.DataFrame = field(default_factory=pd.DataFrame)
-    macd_value: Optional[MACDValue] = None
-    td_value: Optional[TDValue] = None
-    ema_state: Optional[EMAState] = None
-    dullness_state: DullnessState = field(default_factory=DullnessState)
-    divergence_state: DivergenceState = field(default_factory=DivergenceState)
-    macd_history: List[MACDValue] = field(default_factory=list)
+    indicators: Dict[str, Any] = field(default_factory=dict)
     last_update_time: Optional[datetime] = None
     
     def __post_init__(self) -> None:
-        """初始化后处理"""
+        """初始化后处理 - 创建基础 K 线结构"""
         if self.bars.empty:
-            # 初始化空 DataFrame 结构
+            # 初始化空 DataFrame，仅包含基础 OHLCV 列
             self.bars = pd.DataFrame(columns=[
-                "datetime", "open", "high", "low", "close", "volume",
-                "dif", "dea", "macd",
-                "td_count", "td_setup",
-                "ema_fast", "ema_slow"
+                "datetime", "open", "high", "low", "close", "volume"
             ])
     
     def append_bar(self, bar_data: dict) -> None:
@@ -73,71 +60,6 @@ class TargetInstrument:
         else:
             self.bars = pd.concat([self.bars, new_row], ignore_index=True)
         self.last_update_time = bar_data.get("datetime", datetime.now())
-    
-    def update_indicators(
-        self,
-        macd_value: MACDValue,
-        td_value: TDValue,
-        ema_state: EMAState,
-        dullness_state: DullnessState,
-        divergence_state: DivergenceState
-    ) -> None:
-        """
-        全量更新指标状态 (原子操作)
-        
-        由应用层在调用领域服务计算完指标后调用此方法更新状态。
-        
-        Args:
-            macd_value: 新的 MACD 指标值
-            td_value: 新的 TD 序列值
-            ema_state: 新的 EMA 状态
-            dullness_state: 新的钝化状态
-            divergence_state: 新的背离状态
-        """
-        self.macd_value = macd_value
-        if macd_value:
-            self.macd_history.append(macd_value)
-            # 限制长度，保留最近 500 个数据
-            if len(self.macd_history) > 500:
-                self.macd_history = self.macd_history[-500:]
-        self.td_value = td_value
-        self.ema_state = ema_state
-        self.dullness_state = dullness_state
-        self.divergence_state = divergence_state
-    
-    def update_bar_indicators(
-        self,
-        dif: float,
-        dea: float,
-        macd: float,
-        td_count: int,
-        td_setup: int,
-        ema_fast: float,
-        ema_slow: float
-    ) -> None:
-        """
-        更新最新 K 线的指标列数据
-        
-        Args:
-            dif: MACD DIF 值
-            dea: MACD DEA 值
-            macd: MACD 柱状图值
-            td_count: TD 计数
-            td_setup: TD Setup 计数
-            ema_fast: 快速 EMA 值
-            ema_slow: 慢速 EMA 值
-        """
-        if self.bars.empty:
-            return
-        
-        idx = self.bars.index[-1]
-        self.bars.loc[idx, "dif"] = dif
-        self.bars.loc[idx, "dea"] = dea
-        self.bars.loc[idx, "macd"] = macd
-        self.bars.loc[idx, "td_count"] = td_count
-        self.bars.loc[idx, "td_setup"] = td_setup
-        self.bars.loc[idx, "ema_fast"] = ema_fast
-        self.bars.loc[idx, "ema_slow"] = ema_slow
     
     def get_latest_bar(self) -> Optional[pd.Series]:
         """获取最新的 K 线数据"""

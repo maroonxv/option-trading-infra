@@ -7,7 +7,7 @@ VnPy 策略模板的接口层实现。
 设计原则:
 1. 仅作为 VnPy 回调的入口和适配器
 2. 不包含业务逻辑，只做组装和转发
-3. 依赖注入: self -> VolatilityTrade -> VnpyTradeGateway
+3. 依赖注入: self -> StrategyEngine -> VnpyTradeGateway
 """
 from typing import Any, Dict, Optional
 from pathlib import Path
@@ -22,11 +22,12 @@ from vnpy.trader.constant import Interval
 from vnpy.event.engine import Event
 
 
-from .application.volatility_trade import VolatilityTrade
+from .application.volatility_trade import StrategyEngine
 from .domain.domain_service.indicator_service import IndicatorService
 from .domain.domain_service.signal_service import SignalService
 from .domain.domain_service.position_sizing_service import PositionSizingService
 from .domain.domain_service.option_selector_service import OptionSelectorService
+from .domain.domain_service.future_selection_service import BaseFutureSelector
 from .domain.event.event_types import EVENT_STRATEGY_ALERT
 from .infrastructure.reporting.feishu_handler import FeishuEventHandler
 from .infrastructure.logging.logging_utils import setup_strategy_logger
@@ -128,7 +129,7 @@ class MacdTdIndexStrategy(StrategyTemplate):
         self.warmup_days: int = int(setting.get("warmup_days", 5 if self.backtesting else 30))
         
         # 应用服务 (在 on_init 中初始化)
-        self.app_service: Optional[VolatilityTrade] = None
+        self.app_service: Optional[StrategyEngine] = None
         self.feishu_handler: Optional[FeishuEventHandler] = None
         
         # K线合成器 (在 on_init 中初始化)
@@ -178,10 +179,14 @@ class MacdTdIndexStrategy(StrategyTemplate):
             ema_slow=self.ema_slow
         )
         
+        signal_service = SignalService()
+        
         position_sizing_service = PositionSizingService(
             max_positions=self.max_positions,
             position_ratio=self.position_ratio
         )
+        
+        future_selection_service = BaseFutureSelector()
         
         option_selector_service = OptionSelectorService(
             strike_level=self.strike_level
@@ -189,13 +194,14 @@ class MacdTdIndexStrategy(StrategyTemplate):
 
         # ______________________________  3. 组装应用服务  ______________________________
 
-        self.app_service = VolatilityTrade(
+        self.app_service = StrategyEngine(
             strategy_context=self,
-            target_products=self.target_products,
             indicator_service=indicator_service,
-            signal_service=None, 
+            signal_service=signal_service,
             position_sizing_service=position_sizing_service,
-            option_selector_service=option_selector_service
+            future_selection_service=future_selection_service,
+            option_selector_service=option_selector_service,
+            target_products=self.target_products
         )
 
 

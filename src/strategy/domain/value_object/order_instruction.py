@@ -2,7 +2,7 @@
 OrderInstruction 值对象 - 交易指令
 
 由 PositionSizingService (Decider) 生成的交易指令，
-由 VolatilityTrade (Doer) 通过 Gateway 执行。
+由 StrategyEngine (Doer) 通过 Gateway 执行。
 
 注意: 此模块不依赖 VnPy，使用自定义的 Direction 和 Offset 枚举。
 """
@@ -32,7 +32,7 @@ class OrderInstruction:
     
     这是 Decider/Doer 模式中的"决策结果"。
     PositionSizingService 生成此对象，表达交易意图。
-    VolatilityTrade 接收此对象，调用 Gateway 执行实际交易。
+    StrategyEngine 接收此对象，调用 Gateway 执行实际交易。
     
     Attributes:
         vt_symbol: 合约代码 (VnPy 格式，如 "rb2501.SHFE")
@@ -40,14 +40,14 @@ class OrderInstruction:
         offset: 开平标志 (OPEN/CLOSE)
         volume: 交易数量
         price: 交易价格 (0 表示市价)
-        signal_type: 触发此指令的信号类型 (可选)
+        signal: 触发此指令的信号类型 (可选)
     """
     vt_symbol: str
     direction: Direction
     offset: Offset
     volume: int
     price: float = 0.0
-    signal_type: Optional[str] = None
+    signal: str = ""
     
     @property
     def is_open(self) -> bool:

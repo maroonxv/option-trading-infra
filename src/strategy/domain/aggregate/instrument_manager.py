@@ -1,8 +1,8 @@
 """
-TargetInstrumentAggregate - 标的聚合根
+InstrumentManager - 标的管理器
 
 管理多个 TargetInstrument 实体，维护行情数据和指标状态。
-只读聚合根，不产生领域事件。
+只读数据容器，不产生领域事件。
 """
 from datetime import datetime
 from typing import Dict, Optional, List, Any
@@ -10,16 +10,11 @@ from typing import Dict, Optional, List, Any
 import pandas as pd
 
 from ..entity.target_instrument import TargetInstrument
-from ..value_object.macd_value import MACDValue
-from ..value_object.td_value import TDValue
-from ..value_object.ema_state import EMAState
-from ..value_object.dullness_state import DullnessState
-from ..value_object.divergence_state import DivergenceState
 
 
-class TargetInstrumentAggregate:
+class InstrumentManager:
     """
-    标的聚合根 (只读, 行情状态)
+    标的管理器 (只读, 行情状态)
     
     职责:
     1. 管理 instruments 字典 (多标的支持)
@@ -30,11 +25,11 @@ class TargetInstrumentAggregate:
     设计原则:
     - 纯数据容器，无计算逻辑
     - 计算逻辑委托给 IndicatorService 和 SignalService
-    - 由应用层 (VolatilityTrade) 调用领域服务并更新聚合根
+    - 由应用层 (StrategyEngine) 调用领域服务并更新管理器
     """
     
     def __init__(self) -> None:
-        """初始化聚合根"""
+        """初始化管理器"""
         self._instruments: Dict[str, TargetInstrument] = {}
         self._active_contracts: Dict[str, str] = {}  # product -> vt_symbol
 
@@ -48,7 +43,7 @@ class TargetInstrumentAggregate:
         }
 
     @classmethod
-    def from_snapshot(cls, snapshot: Dict[str, Any]) -> "TargetInstrumentAggregate":
+    def from_snapshot(cls, snapshot: Dict[str, Any]) -> "InstrumentManager":
         """从快照恢复状态"""
         obj = cls()
         obj._instruments = snapshot.get("instruments", {})
@@ -109,40 +104,6 @@ class TargetInstrumentAggregate:
         instrument = self.get_or_create_instrument(vt_symbol)
         instrument.append_bar(bar_data)
         return instrument
-    
-    def update_indicators(
-        self,
-        vt_symbol: str,
-        macd_value: MACDValue,
-        td_value: TDValue,
-        ema_state: EMAState,
-        dullness_state: DullnessState,
-        divergence_state: DivergenceState
-    ) -> None:
-        """
-        更新指标状态
-        
-        由应用层在调用领域服务计算完指标后调用。
-        
-        Args:
-            vt_symbol: 合约代码
-            macd_value: MACD 指标值
-            td_value: TD 序列值
-            ema_state: EMA 状态
-            dullness_state: 钝化状态
-            divergence_state: 背离状态
-        """
-        instrument = self.get_instrument(vt_symbol)
-        if instrument is None:
-            return
-        
-        instrument.update_indicators(
-            macd_value=macd_value,
-            td_value=td_value,
-            ema_state=ema_state,
-            dullness_state=dullness_state,
-            divergence_state=divergence_state
-        )
     
     def get_bar_history(
         self,
@@ -221,4 +182,7 @@ class TargetInstrumentAggregate:
     
     def __repr__(self) -> str:
         symbols = ", ".join(self._instruments.keys())
-        return f"TargetInstrumentAggregate([{symbols}])"
+        return f"InstrumentManager([{symbols}])"
+
+# Backward compatibility for pickle
+TargetInstrumentAggregate = InstrumentManager
