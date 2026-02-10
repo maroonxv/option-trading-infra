@@ -1,57 +1,43 @@
-# 股指期权 MACD-TD 策略
+# 期权量化交易策略框架
 
-## 一、策略简介
+## 一、项目简介
 
-本策略基于 15/30/60 分钟级别的 K 线数据，结合 MACD 钝化、背离及 TD 序列指标，在股指期货及其对应的期权上进行**卖出期权（Short Option）**操作。策略主要包含“卖沽（Sell Put）”和“卖购（Sell Call）”两个子策略。（做虚四档！）
+这是一个基于 VnPy 的期权量化交易策略框架，采用领域驱动设计（DDD）架构，提供了完整的策略开发骨架。框架支持多周期运行、Docker 容器化部署、实盘/回测/模拟交易等多种模式。
 
-### 1. 卖沽策略（看多震荡/反弹）
-适用于判断底部形成或上涨中继阶段。
+### 核心特性
 
-**（一）钝化 + 低9**
-*   **开仓条件**：
-    1.  标的 K 线创新低。
-    2.  MACD DIFF 值未创新低（底背离雏形/钝化形成）。
-    3.  TD 序列出现低 8。
-    *   **操作**：卖出当月认沽期权（Sell Put），虚值四档。
-*   **平仓条件**：
-    *   **止盈**：TD 序列出现高 8，或 DIFF 值形成顶背离。
-    *   **止损**：钝化失效（DIFF 值创出新低）。
+*   **领域驱动设计**：清晰的分层架构（Domain/Application/Infrastructure），便于扩展和维护
+*   **多周期支持**：可同时运行多个不同时间周期的策略实例（15分钟/30分钟/60分钟等）
+*   **灵活配置**：支持 YAML 配置文件，无需修改代码即可调整策略参数
+*   **容器化部署**：提供完整的 Docker 部署方案，一键启动所有服务
+*   **状态持久化**：支持策略状态保存与恢复，重启后自动恢复运行状态
+*   **监控面板**：内置 Web 监控面板，实时查看策略运行状态
+*   **多模式运行**：支持实盘交易、模拟交易、历史回测
 
-**（二）底背离**
-*   **开仓条件**：
-    1.  钝化形成后，下一根 K 线收盘价高于前一根（确认背离形成）。
-    *   **操作**：卖出当月认沽期权（Sell Put），虚值四档。
-*   **平仓条件**：
-    *   **止盈**：TD 序列出现高 8，或 DIFF 值钝化消失。
-    *   **止损**：底背离失效（DIFF 值创出新低）。
+### 技术栈
 
-### 2. 卖购策略（看空震荡/回调）
-适用于判断顶部形成或下跌中继阶段。
+*   **交易框架**：VnPy 4.2.0
+*   **数据库**：MySQL 8.0
+*   **容器化**：Docker + Docker Compose
+*   **监控面板**：Flask + SocketIO
+*   **技术指标**：TA-Lib
 
-**（一）钝化 + 高9**
-*   **开仓条件**：
-    1.  标的 K 线创新高。
-    2.  MACD DIFF 值未创新高（顶背离雏形/钝化形成）。
-    3.  TD 序列出现高 8。
-    *   **操作**：卖出当月认购期权（Sell Call），虚值四档。
-*   **平仓条件**：
-    *   **止盈**：TD 序列出现低 8，或 DIFF 值形成底背离。
-    *   **止损**：钝化失效（DIFF 值创出新高）。
+### 适用场景
 
-**（二）顶背离**
-*   **开仓条件**：
-    1.  钝化形成后，下一根 K 线收盘价低于前一根（确认背离形成）。
-    *   **操作**：卖出当月认购期权（Sell Call），虚值四档。
-*   **平仓条件**：
-    *   **止盈**：TD 序列出现低 8，或 DIFF 值钝化消失。
-    *   **止损**：顶背离失效（DIFF 值创出新高）。
+本框架适用于基于技术指标的期权交易策略开发，特别是：
+*   期货期权套利策略
+*   波动率交易策略
+*   技术指标驱动的期权卖方策略
+*   多品种、多周期的组合策略
+
+---
 
 ## 二、Docker 部署指南
 
 本项目推荐使用 Docker 进行容器化部署，以实现环境隔离、一键启动和数据持久化。
 
 ### 1. 部署架构
-我们采用“统一镜像，多服务编排”的架构，所有服务共享同一个 Docker 镜像：
+我们采用"统一镜像，多服务编排"的架构，所有服务共享同一个 Docker 镜像：
 *   **`mysql-db`**: 数据库服务 (MySQL 8.0)，负责存储行情与交易记录。
 *   **`dashboard`**: 监控面板服务，提供 Web 界面查看策略状态 (端口 5007)。
 *   **`strategy-15m`**: 15分钟周期策略服务 (示例)。
@@ -109,7 +95,7 @@ docker-compose up -d --build
     *   `max_restart_count`: 子进程允许的最大异常重启次数。
 
 ### 2. 交易标的配置 (`config/general/trading_target.yaml`)
-此文件定义了策略需要监控和交易的**股指期货品种代码**。
+此文件定义了策略需要监控和交易的**期货品种代码**。
 
 *   **格式**：YAML 列表格式。
 *   **示例**：
@@ -144,73 +130,162 @@ strategies:
 ```
 
 #### 3.3 停用周期
-若要暂时停用某个周期的策略，直接把对应配置文件删除即可
-
-
-## 四、代码阅读指南（非技术人员版）
-
-如果您是非技术背景的项目管理者或策略研究员，需要核对策略逻辑的实现细节，请关注以下核心模块。这些文件直接对应策略文档中的关键业务规则。
-
-### 1. 策略配置与流程控制
-*   **参数定义：`macd_td_index_strategy.py`**
-    *   **位置**：[src/strategy/macd_td_index_strategy.py](src/strategy/macd_td_index_strategy.py)
-    *   **功能**：策略的**参数配置中心**。
-    *   **关注点**：所有可调整的策略参数均在此定义，包括 MACD 参数 (`macd_fast`, `macd_slow`)、虚值档位 (`strike_level`)、最大持仓限制 (`max_positions`) 等。修改策略参数直接调整此文件。
-
-*   **主流程控制：`volatility_trade.py`**
-    *   **位置**：[src/strategy/application/volatility_trade.py](src/strategy/application/volatility_trade.py)
-    *   **功能**：策略的**执行协调层**。
-    *   **关注点**：负责协调数据获取、指标计算、信号判断和交易执行的完整流程。如果需要了解策略的执行顺序（如：先更新行情 -> 再计算指标 -> 最后判断交易），请查看此文件。
-
-### 2. 核心交易逻辑 (Domain Services)
-此目录 (`src/strategy/domain/domain_service/`) 包含策略的具体业务规则实现。
-
-*   **信号决策：`signal_service.py`（核心）**
-    *   **位置**：[src/strategy/domain/domain_service/signal_service.py](src/strategy/domain/domain_service/signal_service.py)
-    *   **功能**：**买卖点逻辑判断**。
-    *   **关注点**：
-        *   `check_open_signal`：**开仓条件**。核对代码是否正确实现了“底背离确认”、“钝化+低9”等进场逻辑。
-        *   `check_close_signal`：**平仓条件**。核对止盈（如“高9”）和止损（如“背离失效”）的触发条件。
-
-*   **合约筛选：`option_selector_service.py`**
-    *   **位置**：[src/strategy/domain/domain_service/option_selector_service.py](src/strategy/domain/domain_service/option_selector_service.py)
-    *   **功能**：**期权合约选择规则**。
-    *   **关注点**：
-        *   **虚值档位**：确认策略如何计算和选择“虚值三档/四档”合约。
-        *   **流动性过滤**：检查最小成交量、买卖价差等过滤规则，确保不交易低流动性合约。
-
-*   **指标计算：`indicator_service.py`**
-    *   **位置**：[src/strategy/domain/domain_service/indicator_service.py](src/strategy/domain/domain_service/indicator_service.py)
-    *   **功能**：**技术指标算法**。
-    *   **关注点**：负责 MACD、TD 序列、EMA 等指标的具体计算逻辑。如有对“钝化”或“背离”定义的数学异议，请核对计算公式。
-
-*   **仓位风控：`position_sizing_service.py`**
-    *   **位置**：[src/strategy/domain/domain_service/position_sizing_service.py](src/strategy/domain/domain_service/position_sizing_service.py)
-    *   **功能**：**交易数量计算与风控**。
-    *   **关注点**：计算单次开仓数量（策略定为1手），并执行“单日最大交易次数”、“单品种最大持仓”等风控限制。
-
-*   **主力切换：`future_selection_service.py`**
-    *   **位置**：[src/strategy/domain/domain_service/future_selection_service.py](src/strategy/domain/domain_service/future_selection_service.py)
-    *   **功能**：**期货主力合约换月**。
-    *   **关注点**：定义了何时从当月合约切换到次月合约（例如：距离交割日不足7天时自动切换）。
-
-### 3. 状态与数据管理 (Aggregates)
-此目录 (`src/strategy/domain/aggregate/`) 负责维护策略运行时的状态数据。
-
-*   **持仓管理：`position_aggregate.py`**
-    *   **位置**：[src/strategy/domain/aggregate/position_aggregate.py](src/strategy/domain/aggregate/position_aggregate.py)
-    *   **功能**：**持仓全生命周期管理**。
-    *   **关注点**：记录当前持仓详情，追踪在途订单。包含检测**人工手动平仓**的逻辑，确保策略能感知人工干预。
-
-*   **行情数据：`target_instrument_aggregate.py`**
-    *   **位置**：[src/strategy/domain/aggregate/target_instrument_aggregate.py](src/strategy/domain/aggregate/target_instrument_aggregate.py)
-    *   **功能**：**K线与指标数据容器**。
-    *   **关注点**：存储标的物的历史行情数据及计算后的指标状态，供策略随时调用。
+若要暂时停用某个周期的策略，直接把对应配置文件删除即可。
 
 ---
-**快速索引**：
-*   **调整参数** -> `macd_td_index_strategy.py`
-*   **核对买卖逻辑** -> `signal_service.py`
-*   **核对选合约规则** -> `option_selector_service.py`
-*   **核对风控限额** -> `position_sizing_service.py`
 
+## 四、架构设计
+
+本项目采用领域驱动设计（DDD）架构，代码结构清晰，职责分明。
+
+### 1. 目录结构
+
+```
+src/strategy/
+├── macd_td_index_strategy.py          # VnPy 策略入口（适配器层）
+├── application/                        # 应用层
+│   └── volatility_trade.py           # 策略执行协调器
+├── domain/                            # 领域层
+│   ├── aggregate/                     # 聚合根（状态管理）
+│   │   ├── position_aggregate.py     # 持仓状态管理
+│   │   └── target_instrument_aggregate.py  # 行情数据管理
+│   ├── domain_service/                # 领域服务（业务逻辑）
+│   │   ├── signal_service.py         # 交易信号判断
+│   │   ├── indicator_service.py      # 技术指标计算
+│   │   ├── option_selector_service.py # 期权合约选择
+│   │   ├── position_sizing_service.py # 仓位管理
+│   │   └── future_selection_service.py # 主力合约选择
+│   └── interface/                     # 领域接口定义
+└── infrastructure/                    # 基础设施层
+    ├── gateway/                       # 交易网关适配
+    ├── persistence/                   # 数据持久化
+    ├── logging/                       # 日志管理
+    └── reporting/                     # 报告与通知
+```
+
+### 2. 核心模块说明
+
+#### 策略入口层
+*   **`macd_td_index_strategy.py`**：VnPy 策略模板的实现，负责接收 VnPy 回调并转发给应用层
+
+#### 应用层
+*   **`volatility_trade.py`**：策略执行协调器，编排各个领域服务的调用流程
+
+#### 领域层（核心业务逻辑）
+*   **`signal_service.py`**：交易信号判断逻辑（开仓/平仓条件）
+*   **`indicator_service.py`**：技术指标计算（MACD、TD序列、EMA等）
+*   **`option_selector_service.py`**：期权合约筛选规则（虚值档位、流动性过滤）
+*   **`position_sizing_service.py`**：仓位管理与风控（最大持仓、交易次数限制）
+*   **`future_selection_service.py`**：期货主力合约选择与换月逻辑
+*   **`position_aggregate.py`**：持仓状态管理（持仓记录、订单追踪）
+*   **`target_instrument_aggregate.py`**：行情数据管理（K线数据、指标缓存）
+
+#### 基础设施层
+*   **`gateway/`**：交易网关适配器（VnPy 接口封装）
+*   **`persistence/`**：数据持久化（MySQL、Pickle）
+*   **`logging/`**：日志管理
+*   **`reporting/`**：飞书通知等报告功能
+
+### 3. 如何开发自己的策略
+
+#### 步骤 1：实现信号逻辑
+修改 `src/strategy/domain/domain_service/signal_service.py`，实现你的开仓和平仓条件判断。
+
+#### 步骤 2：调整指标计算
+如需使用其他技术指标，修改 `src/strategy/domain/domain_service/indicator_service.py`。
+
+#### 步骤 3：配置策略参数
+修改 `config/strategy_config.yaml` 和 `config/timeframe/*.yaml`，调整策略参数。
+
+#### 步骤 4：测试与部署
+*   **回测**：使用 VnPy 回测引擎进行历史数据测试
+*   **模拟交易**：连接模拟账户进行实时测试
+*   **实盘部署**：使用 Docker 部署到生产环境
+
+---
+
+## 五、开发指南
+
+### 1. 本地开发环境搭建
+
+#### 安装依赖
+```powershell
+pip install -r requirements.txt
+```
+
+#### 配置数据库
+修改 `.env` 文件，配置 MySQL 连接信息。
+
+#### 运行策略
+```powershell
+# 运行单个周期策略
+python -m src.main.run_strategy --config config/timeframe/15m.yaml
+
+# 运行回测
+python -m src.main.run_backtesting
+
+# 启动监控面板
+python -m src.interface.dashboard
+```
+
+### 2. 添加新的技术指标
+
+在 `src/strategy/domain/domain_service/indicator_service.py` 中添加新的指标计算方法：
+
+```python
+def calculate_your_indicator(self, bars: List[BarData]) -> float:
+    """计算自定义指标"""
+    # 实现你的指标计算逻辑
+    pass
+```
+
+### 3. 自定义交易信号
+
+修改 `src/strategy/domain/domain_service/signal_service.py`：
+
+```python
+def check_open_signal(self, instrument_data, current_bar) -> Optional[str]:
+    """
+    检查开仓信号
+    
+    Returns:
+        "SELL_PUT" | "SELL_CALL" | None
+    """
+    # 实现你的开仓逻辑
+    pass
+
+def check_close_signal(self, position, instrument_data, current_bar) -> bool:
+    """检查平仓信号"""
+    # 实现你的平仓逻辑
+    pass
+```
+
+### 4. 扩展期权选择规则
+
+修改 `src/strategy/domain/domain_service/option_selector_service.py`，自定义合约筛选条件。
+
+---
+
+## 六、常见问题
+
+### 1. 如何添加新的交易品种？
+修改 `config/general/trading_target.yaml`，添加期货品种代码。
+
+### 2. 如何调整策略参数？
+修改 `config/strategy_config.yaml` 或对应周期的配置文件。
+
+### 3. 如何查看策略日志？
+*   **Docker 部署**：`docker-compose logs -f strategy-15m`
+*   **本地运行**：查看 `data/logs/` 目录
+
+### 4. 策略重启后如何恢复状态？
+策略会自动从 `data/pickle/` 目录加载上次保存的状态，并从数据库回放最近的 K 线数据进行 warmup。
+
+### 5. 如何接入飞书通知？
+在 `config/strategy_config.yaml` 中配置 `feishu_webhook` 参数。
+
+---
+
+## 七、许可证
+
+本项目仅供学习和研究使用。
