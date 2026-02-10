@@ -25,6 +25,21 @@ class Offset(Enum):
     CLOSEYESTERDAY = "closeyesterday"  # 平昨
 
 
+class OrderType(Enum):
+    """
+    订单类型
+    
+    - LIMIT: 限价单，指定价格成交
+    - MARKET: 市价单，以当前市场价格立即成交
+    - FAK: Fill and Kill，立即成交剩余撤销
+    - FOK: Fill or Kill，全部成交或全部撤销
+    """
+    LIMIT = "limit"        # 限价单
+    MARKET = "market"      # 市价单
+    FAK = "fak"            # 立即成交剩余撤销
+    FOK = "fok"            # 全部成交或撤销
+
+
 @dataclass(frozen=True)
 class OrderInstruction:
     """
@@ -48,6 +63,7 @@ class OrderInstruction:
     volume: int
     price: float = 0.0
     signal: str = ""
+    order_type: OrderType = OrderType.LIMIT  # 订单类型，默认限价单
     
     @property
     def is_open(self) -> bool:
@@ -72,7 +88,8 @@ class OrderInstruction:
     def __repr__(self) -> str:
         direction_str = "Buy" if self.is_buy else "Sell"
         offset_str = "Open" if self.is_open else "Close"
+        type_str = self.order_type.value.upper()
         return (
             f"OrderInstruction({direction_str} {offset_str} "
-            f"{self.vt_symbol} x{self.volume} @{self.price:.2f})"
+            f"{self.vt_symbol} x{self.volume} @{self.price:.2f} [{type_str}])"
         )
