@@ -22,7 +22,8 @@ from datetime import datetime, timedelta
 from typing import Optional
 from dataclasses import dataclass
 
-from src.main.utils.config_loader import ConfigLoader
+from src.main.config.config_loader import ConfigLoader
+from src.main.utils.signal_handler import register_shutdown_signals
 
 
 @dataclass
@@ -163,10 +164,10 @@ class ParentProcess:
     
     def _setup_signal_handlers(self) -> None:
         """设置信号处理器"""
-        signal.signal(signal.SIGTERM, self._handle_shutdown_signal)
-        signal.signal(signal.SIGINT, self._handle_shutdown_signal)
+        # 使用共享模块注册 SIGTERM 和 SIGINT
+        register_shutdown_signals(self._handle_shutdown_signal)
         
-        # Windows 不支持 SIGHUP
+        # Windows 不支持 SIGHUP，需要单独处理 reload 信号
         if hasattr(signal, "SIGHUP"):
             signal.signal(signal.SIGHUP, self._handle_reload_signal)
     
@@ -251,7 +252,7 @@ class ParentProcess:
         self.restart_count += 1
         self.last_start_time = datetime.now()
         
-        # 构建子进程命令
+        # 构建子进程命令 - 指向新位置 src/main/process/child_process.py
         child_script = Path(__file__).parent / "child_process.py"
         
         cmd = [

@@ -36,6 +36,7 @@ class ConfigLoader:
             包含 CTP 配置的 .env 文件
         """
         # 显式定位项目根目录下的 .env
+        # 从 src/main/config/config_loader.py 到项目根目录需要 4 级 parent
         env_path = Path(__file__).resolve().parent.parent.parent.parent / ".env"
         if env_path.exists():
             load_dotenv(dotenv_path=env_path)
@@ -184,6 +185,7 @@ class ConfigLoader:
             品种代码列表 (e.g. ['rb', 'm'])
         """
         if not os.path.isabs(path):
+            # 从 src/main/config/config_loader.py 到项目根目录需要 4 级 parent
             project_root = Path(__file__).resolve().parent.parent.parent.parent
             path = str(project_root / path)
             
@@ -192,4 +194,3 @@ class ConfigLoader:
             
         with open(path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
-

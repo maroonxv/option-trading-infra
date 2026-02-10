@@ -13,8 +13,6 @@ main.py - 策略运行主入口
 import argparse
 import sys
 import logging
-import signal
-import yaml
 from pathlib import Path
 from typing import Optional
 
@@ -22,8 +20,9 @@ from typing import Optional
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.main.utils.log_handler import setup_logging
-from src.main.utils.config_loader import ConfigLoader
+from src.main.utils.logging_setup import setup_logging
+from src.main.config.config_loader import ConfigLoader
+from src.main.utils.signal_handler import register_shutdown_signals
 
 
 def parse_args() -> argparse.Namespace:
@@ -98,7 +97,7 @@ def run_standalone(args: argparse.Namespace) -> None:
     Args:
         args: 命令行参数
     """
-    from src.main.child_process import ChildProcess
+    from src.main.process.child_process import ChildProcess
     
     # 确保配置文件路径是绝对路径
     config_path = Path(args.config)
@@ -114,12 +113,11 @@ def run_standalone(args: argparse.Namespace) -> None:
     )
     
     # 注册信号处理器，确保 Ctrl+C 时能调用 child.shutdown()
-    def signal_handler(signum, frame):
+    def shutdown_handler(signum, frame):
         logging.info(f"接收到退出信号 ({signum})，正在停止策略...")
         child.running = False
     
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    register_shutdown_signals(shutdown_handler)
     
     try:
         child.run()
@@ -141,7 +139,7 @@ def run_daemon(args: argparse.Namespace) -> None:
     Args:
         args: 命令行参数
     """
-    from src.main.parent_process import ParentProcess
+    from src.main.process.parent_process import ParentProcess
     
     # 确保配置文件路径是绝对路径
     config_path = Path(args.config)
@@ -159,13 +157,12 @@ def run_daemon(args: argparse.Namespace) -> None:
     # 如果需要，ParentProcess 也需要更新。假设模拟交易使用独立模式。
     
     # 注册信号处理器
-    def signal_handler(signum, frame):
+    def shutdown_handler(signum, frame):
         logging.info(f"父进程接收到退出信号 ({signum})，正在停止...")
         parent.graceful_shutdown()
         sys.exit(0)
     
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
+    register_shutdown_signals(shutdown_handler)
     
     try:
         parent.run()

@@ -64,7 +64,7 @@ logger.setLevel(logging.DEBUG)
 from vnpy.trader.constant import Interval
 from vnpy_portfoliostrategy import BacktestingEngine
 from src.strategy.strategy_entry import StrategyEntry
-from src.main.utils.config_loader import ConfigLoader
+from src.main.config.config_loader import ConfigLoader
 from src.backtesting.vt_symbol_generator import VtSymbolGenerator
 
 def run_backtesting(

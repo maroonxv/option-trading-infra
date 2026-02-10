@@ -186,7 +186,7 @@ class StrategyEntry(StrategyTemplate):
 
         # ______________________________  1. 加载交易品种配置  ______________________________
 
-        from src.main.utils.config_loader import ConfigLoader
+        from src.main.config.config_loader import ConfigLoader
         self.target_products = ConfigLoader.load_target_products()
         if not self.target_products:
             self.logger.error("未配置任何交易品种，请先检查并配置 target_products.yaml")

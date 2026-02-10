@@ -11,14 +11,13 @@ child_process.py - 工作进程实现
 import os
 import sys
 import time
-import signal
 import logging
 import argparse
 from pathlib import Path
 from typing import Dict, Any, Optional, Iterable, List, Set, Tuple
 
 # 添加项目根目录到 Python 路径
-PROJECT_ROOT = Path(__file__).parent.parent.parent
+PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 # VnPy 导入
@@ -28,11 +27,19 @@ from vnpy.trader.engine import MainEngine
 # 组合策略应用
 from vnpy_portfoliostrategy import PortfolioStrategyApp
 
-# 内部模块
-from src.main.gateway import GatewayManager
-from src.main.utils.config_loader import ConfigLoader
-from src.main.utils.log_handler import setup_logging
+# 内部模块 - 使用新的模块路径
+from src.main.config.gateway_manager import GatewayManager
+from src.main.config.config_loader import ConfigLoader
+from src.main.utils.logging_setup import setup_logging
 from src.strategy.strategy_entry import StrategyEntry
+
+# 共享启动模块
+from src.main.bootstrap import (
+    create_engines,
+    setup_vnpy_database,
+    patch_data_recorder_setting_path,
+)
+from src.main.utils.signal_handler import register_shutdown_signals
 
 # 添加策略路径
 STRATEGY_PATH = PROJECT_ROOT / "src" / "strategy"
@@ -95,13 +102,8 @@ class ChildProcess:
         self.strategies_started: bool = False
         self._is_shutdown: bool = False
         
-        # 设置信号处理
-        self._setup_signal_handlers()
-    
-    def _setup_signal_handlers(self) -> None:
-        """设置信号处理器"""
-        signal.signal(signal.SIGTERM, self._handle_shutdown)
-        signal.signal(signal.SIGINT, self._handle_shutdown)
+        # 设置信号处理 - 使用共享模块
+        register_shutdown_signals(self._handle_shutdown)
     
     def _handle_shutdown(self, signum: int, frame) -> None:
         """处理关闭信号"""
@@ -119,8 +121,10 @@ class ChildProcess:
             # 1. 加载配置
             self._load_configs()
 
-            self._setup_vnpy_database_settings()
-            self._patch_data_recorder_setting_path()
+            # 使用共享模块设置数据库和路径补丁
+            self.recorder_enabled = setup_vnpy_database()
+            if self.recorder_enabled:
+                patch_data_recorder_setting_path()
             
             # 2. 初始化引擎
             self._init_engines()
@@ -195,83 +199,21 @@ class ChildProcess:
             self.logger.error(f"加载策略配置失败: {e}")
             raise
 
-    def _setup_vnpy_database_settings(self) -> None:
-        try:
-            from vnpy.trader.setting import SETTINGS
-        except Exception as e:
-            self.logger.warning(f"加载 vn.py SETTINGS 失败，跳过数据库注入: {e}")
-            self.recorder_enabled = False
-            return
-
-        driver = os.getenv("VNPY_DATABASE_DRIVER", "").strip()
-        if not driver:
-            self.logger.info("未配置 VNPY_DATABASE_DRIVER，数据录制将不启用")
-            self.recorder_enabled = False
-            return
-
-        database = os.getenv("VNPY_DATABASE_DATABASE", "").strip()
-        host = os.getenv("VNPY_DATABASE_HOST", "localhost").strip()
-        port_raw = os.getenv("VNPY_DATABASE_PORT", "3306").strip()
-        user = os.getenv("VNPY_DATABASE_USER", "").strip()
-        password = os.getenv("VNPY_DATABASE_PASSWORD", "")
-
-        try:
-            port = int(port_raw)
-        except Exception:
-            port = 3306
-
-        SETTINGS["database.driver"] = driver
-        SETTINGS["database.name"] = driver
-        SETTINGS["database.database"] = database
-        SETTINGS["database.host"] = host
-        SETTINGS["database.port"] = port
-        SETTINGS["database.user"] = user
-        SETTINGS["database.password"] = password
-
-        self.recorder_enabled = True
-        self.logger.info(f"已注入 vn.py 数据库配置: driver={driver}, host={host}, port={port}, database={database}")
-
-    def _patch_data_recorder_setting_path(self) -> None:
-        if not self.recorder_enabled:
-            return
-
-        try:
-            import vnpy.trader.utility as vnpy_utility
-        except Exception as e:
-            self.logger.warning(f"加载 vn.py utility 失败，跳过 data_recorder_setting.json 重定向: {e}")
-            return
-
-        original_get_file_path = vnpy_utility.get_file_path
-
-        config_path = PROJECT_ROOT / "config" / "general" / "data_recorder_setting.json"
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        if (not config_path.exists()) or config_path.stat().st_size == 0:
-            config_path.write_text("{}", encoding="utf-8")
-
-        def patched_get_file_path(filename: str):
-            if filename == "data_recorder_setting.json":
-                self.logger.info(f"Redirecting data_recorder_setting.json to: {config_path}")
-                return config_path
-            return original_get_file_path(filename)
-
-        vnpy_utility.get_file_path = patched_get_file_path
-
     def _init_engines(self) -> None:
         """初始化 VnPy 引擎"""
         self.logger.info("初始化 VnPy 引擎...")
         
-        # 1. 创建事件引擎
-        self.event_engine = EventEngine()
+        # 使用共享模块创建引擎
+        bundle = create_engines()
+        self.event_engine = bundle.event_engine
+        self.main_engine = bundle.main_engine
         
-        # 2. 创建主引擎
-        self.main_engine = MainEngine(self.event_engine)
-        
-        # 3. 初始化网关管理器
+        # 初始化网关管理器
         self.gateway_manager = GatewayManager(self.main_engine)
         self.gateway_manager.set_config(self.gateway_config)
         self.gateway_manager.add_gateways()
         
-        # 4. 添加组合策略应用
+        # 添加组合策略应用
         self.strategy_engine = self.main_engine.add_app(PortfolioStrategyApp)
 
         self.strategy_engine.init_engine()
