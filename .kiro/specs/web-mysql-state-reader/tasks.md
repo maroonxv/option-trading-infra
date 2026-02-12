@@ -29,14 +29,14 @@
     - **Property 2: Bars extraction preserves record count and data**
     - **Validates: Requirements 3.1, 3.2**
 
-  - [-] 1.5 实现 `transform_positions` 和 `transform_orders` 方法
+  - [x] 1.5 实现 `transform_positions` 和 `transform_orders` 方法
     - 将 positions 字典转换为列表，包含 vt_symbol/direction/volume/price/pnl 字段
     - 将 pending_orders 字典转换为列表，包含 vt_orderid/vt_symbol/direction/offset/volume/price/status 字段
     - 解析字段中的 `__enum__` 标记为字符串
     - 空字典返回空列表
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5_
 
-  - [~] 1.6 编写 positions/orders 转换的属性测试
+  - [x] 1.6 编写 positions/orders 转换的属性测试
     - **Property 3: Positions and orders dict-to-list transformation**
     - **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
 

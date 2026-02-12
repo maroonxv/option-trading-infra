@@ -292,3 +292,177 @@ class TestBarsExtractionProperty:
                 record["high"],
             ], f"ohlc[{i}] mismatch"
             assert volumes[i] == record["volume"], f"volumes[{i}] mismatch"
+
+
+# ---------------------------------------------------------------------------
+# Property 3: Positions and orders dict-to-list transformation
+# ---------------------------------------------------------------------------
+
+
+def _direction_value():
+    """Generate a direction value: either a plain string or an __enum__ marker."""
+    plain = st.sampled_from(["Direction.LONG", "Direction.SHORT", "LONG", "SHORT"])
+    enum_marker = st.builds(
+        lambda v: {"__enum__": v},
+        v=st.sampled_from(["Direction.LONG", "Direction.SHORT"]),
+    )
+    return st.one_of(plain, enum_marker)
+
+
+def _offset_value():
+    """Generate an offset value: either a plain string or an __enum__ marker."""
+    plain = st.sampled_from(["Offset.OPEN", "Offset.CLOSE", "OPEN", "CLOSE"])
+    enum_marker = st.builds(
+        lambda v: {"__enum__": v},
+        v=st.sampled_from(["Offset.OPEN", "Offset.CLOSE"]),
+    )
+    return st.one_of(plain, enum_marker)
+
+
+def _status_value():
+    """Generate a status value: either a plain string or an __enum__ marker."""
+    plain = st.sampled_from(
+        ["Status.SUBMITTING", "Status.NOTTRADED", "Status.ALLTRADED", "Status.CANCELLED"]
+    )
+    enum_marker = st.builds(
+        lambda v: {"__enum__": v},
+        v=st.sampled_from(
+            ["Status.SUBMITTING", "Status.NOTTRADED", "Status.ALLTRADED", "Status.CANCELLED"]
+        ),
+    )
+    return st.one_of(plain, enum_marker)
+
+
+def _position_entry():
+    """Generate a single position data dict."""
+    return st.fixed_dictionaries(
+        {
+            "vt_symbol": st.text(
+                alphabet=st.sampled_from("abcdefghijklmnopqrstuvwxyz0123456789."),
+                min_size=3,
+                max_size=20,
+            ),
+            "direction": _direction_value(),
+            "volume": st.one_of(
+                st.integers(min_value=0, max_value=10000),
+                st.floats(
+                    allow_nan=False, allow_infinity=False, min_value=0, max_value=10000
+                ),
+            ),
+            "open_price": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=0, max_value=1e6
+            ),
+            "pnl": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6
+            ),
+        }
+    )
+
+
+def _positions_dict():
+    """Generate a positions dictionary {key: position_data}."""
+    return st.dictionaries(
+        keys=st.text(
+            alphabet=st.sampled_from("abcdefghijklmnopqrstuvwxyz0123456789._"),
+            min_size=1,
+            max_size=20,
+        ),
+        values=_position_entry(),
+        min_size=0,
+        max_size=10,
+    )
+
+
+def _order_entry():
+    """Generate a single order data dict."""
+    return st.fixed_dictionaries(
+        {
+            "vt_orderid": st.text(
+                alphabet=st.sampled_from("abcdefghijklmnopqrstuvwxyz0123456789._"),
+                min_size=1,
+                max_size=20,
+            ),
+            "vt_symbol": st.text(
+                alphabet=st.sampled_from("abcdefghijklmnopqrstuvwxyz0123456789."),
+                min_size=3,
+                max_size=20,
+            ),
+            "direction": _direction_value(),
+            "offset": _offset_value(),
+            "volume": st.one_of(
+                st.integers(min_value=0, max_value=10000),
+                st.floats(
+                    allow_nan=False, allow_infinity=False, min_value=0, max_value=10000
+                ),
+            ),
+            "price": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=0, max_value=1e6
+            ),
+            "status": _status_value(),
+        }
+    )
+
+
+def _orders_dict():
+    """Generate a pending_orders dictionary {key: order_data}."""
+    return st.dictionaries(
+        keys=st.text(
+            alphabet=st.sampled_from("abcdefghijklmnopqrstuvwxyz0123456789._"),
+            min_size=1,
+            max_size=20,
+        ),
+        values=_order_entry(),
+        min_size=0,
+        max_size=10,
+    )
+
+
+POSITION_REQUIRED_FIELDS = {"vt_symbol", "direction", "volume", "price", "pnl"}
+ORDER_REQUIRED_FIELDS = {
+    "vt_orderid",
+    "vt_symbol",
+    "direction",
+    "offset",
+    "volume",
+    "price",
+    "status",
+}
+
+
+class TestPositionsOrdersTransformProperty:
+    """Property 3: Positions and orders dict-to-list transformation
+
+    **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
+    """
+
+    @given(positions=_positions_dict())
+    @settings(max_examples=100)
+    def test_transform_positions_length_and_fields(self, positions):
+        """transform_positions SHALL produce a list whose length equals the number
+        of entries in the input dict, and each item SHALL contain the required fields."""
+        position_aggregate = {"positions": positions}
+        result = SnapshotJsonTransformer.transform_positions(position_aggregate)
+
+        assert len(result) == len(positions), (
+            f"Expected {len(positions)} positions, got {len(result)}"
+        )
+
+        for item in result:
+            missing = POSITION_REQUIRED_FIELDS - set(item.keys())
+            assert not missing, f"Position item missing fields: {missing}"
+
+    @given(orders=_orders_dict())
+    @settings(max_examples=100)
+    def test_transform_orders_length_and_fields(self, orders):
+        """transform_orders SHALL produce a list whose length equals the number
+        of entries in the input dict, and each item SHALL contain the required fields."""
+        position_aggregate = {"pending_orders": orders}
+        result = SnapshotJsonTransformer.transform_orders(position_aggregate)
+
+        assert len(result) == len(orders), (
+            f"Expected {len(orders)} orders, got {len(result)}"
+        )
+
+        for item in result:
+            missing = ORDER_REQUIRED_FIELDS - set(item.keys())
+            assert not missing, f"Order item missing fields: {missing}"
