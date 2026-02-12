@@ -211,3 +211,84 @@ class TestResolveSpecialMarkersProperty:
         assert _no_marker_keys(result), (
             f"Marker key still present in resolved output: {result!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Property 2: Bars extraction preserves record count and data
+# ---------------------------------------------------------------------------
+
+
+def _bar_record():
+    """Generate a single bar record with datetime, open, close, low, high, volume."""
+    return st.fixed_dictionaries(
+        {
+            "datetime": st.text(
+                alphabet=st.sampled_from("0123456789-T: "),
+                min_size=10,
+                max_size=25,
+            ),
+            "open": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6
+            ),
+            "close": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6
+            ),
+            "low": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6
+            ),
+            "high": st.floats(
+                allow_nan=False, allow_infinity=False, min_value=-1e6, max_value=1e6
+            ),
+            "volume": st.integers(min_value=0, max_value=1_000_000),
+        }
+    )
+
+
+def _bar_records_list():
+    """Generate a non-empty list of bar records."""
+    return st.lists(_bar_record(), min_size=1, max_size=20)
+
+
+class TestBarsExtractionProperty:
+    """Property 2: Bars extraction preserves record count and data
+
+    **Validates: Requirements 3.1, 3.2**
+    """
+
+    @given(records=_bar_records_list())
+    @settings(max_examples=100)
+    def test_bars_extraction_preserves_record_count_and_data(self, records):
+        """For any list of bar records, extracting dates/ohlc/volumes SHALL produce
+        three lists of equal length matching the input record count, with correct values."""
+        vt_symbol = "test2501.SHFE"
+        target_aggregate = {
+            "instruments": {
+                vt_symbol: {
+                    "bars": {"__dataframe__": True, "records": records},
+                }
+            }
+        }
+
+        result = SnapshotJsonTransformer.transform_instruments(target_aggregate)
+
+        assert vt_symbol in result, f"Expected {vt_symbol} in result"
+        instrument = result[vt_symbol]
+
+        dates = instrument["dates"]
+        ohlc = instrument["ohlc"]
+        volumes = instrument["volumes"]
+
+        # Length invariant: all three lists match input record count
+        assert len(dates) == len(records)
+        assert len(ohlc) == len(records)
+        assert len(volumes) == len(records)
+
+        # Data invariant: each element matches the corresponding input record
+        for i, record in enumerate(records):
+            assert ohlc[i] == [
+                record["open"],
+                record["close"],
+                record["low"],
+                record["high"],
+            ], f"ohlc[{i}] mismatch"
+            assert volumes[i] == record["volume"], f"volumes[{i}] mismatch"
