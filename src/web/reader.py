@@ -171,6 +171,73 @@ class SnapshotJsonTransformer:
 
         return result
 
+    @staticmethod
+    def transform_positions(position_aggregate: dict) -> list:
+        """转换持仓数据为前端格式
+
+        Args:
+            position_aggregate: snapshot_json 中的 position_aggregate 字段
+
+        Returns:
+            [{"vt_symbol": ..., "direction": ..., "volume": ..., "price": ..., "pnl": ...}, ...]
+        """
+        positions = position_aggregate.get("positions", {})
+        result = []
+
+        for _key, pos_data in positions.items():
+            direction = pos_data.get("direction", "")
+            if isinstance(direction, dict):
+                direction = SnapshotJsonTransformer.resolve_special_markers(direction)
+
+            result.append({
+                "vt_symbol": pos_data.get("vt_symbol", ""),
+                "direction": direction,
+                "volume": pos_data.get("volume", 0),
+                "price": pos_data.get("open_price", 0),
+                "pnl": pos_data.get("pnl", 0),
+            })
+
+        return result
+
+    @staticmethod
+    def transform_orders(position_aggregate: dict) -> list:
+        """转换挂单数据为前端格式
+
+        Args:
+            position_aggregate: snapshot_json 中的 position_aggregate 字段
+
+        Returns:
+            [{"vt_orderid": ..., "vt_symbol": ..., "direction": ..., "offset": ..., "volume": ..., "price": ..., "status": ...}, ...]
+        """
+        pending_orders = position_aggregate.get("pending_orders", {})
+        result = []
+
+        for _key, order_data in pending_orders.items():
+            direction = order_data.get("direction", "")
+            if isinstance(direction, dict):
+                direction = SnapshotJsonTransformer.resolve_special_markers(direction)
+
+            offset = order_data.get("offset", "")
+            if isinstance(offset, dict):
+                offset = SnapshotJsonTransformer.resolve_special_markers(offset)
+
+            status = order_data.get("status", "")
+            if isinstance(status, dict):
+                status = SnapshotJsonTransformer.resolve_special_markers(status)
+
+            result.append({
+                "vt_orderid": order_data.get("vt_orderid", ""),
+                "vt_symbol": order_data.get("vt_symbol", ""),
+                "direction": direction,
+                "offset": offset,
+                "volume": order_data.get("volume", 0),
+                "price": order_data.get("price", 0),
+                "status": status,
+            })
+
+        return result
+
+
 
 class SnapshotReader:
     def __init__(self, monitor_dir="data/monitor"):

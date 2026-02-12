@@ -276,3 +276,161 @@ class TestTransformInstruments:
         }
         result = SnapshotJsonTransformer.transform_instruments(target_aggregate)
         assert result["rb2501.SHFE"]["last_price"] == 30.0
+
+
+class TestTransformPositions:
+    """测试 transform_positions 方法"""
+
+    def test_basic_position(self):
+        """正常持仓数据转换"""
+        position_aggregate = {
+            "positions": {
+                "rb2501.SHFE.LONG": {
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": {"__enum__": "Direction.LONG"},
+                    "volume": 1,
+                    "open_price": 3500.0,
+                    "pnl": 100.0,
+                }
+            }
+        }
+        result = SnapshotJsonTransformer.transform_positions(position_aggregate)
+        assert len(result) == 1
+        assert result[0] == {
+            "vt_symbol": "rb2501.SHFE",
+            "direction": "Direction.LONG",
+            "volume": 1,
+            "price": 3500.0,
+            "pnl": 100.0,
+        }
+
+    def test_empty_positions(self):
+        """空持仓返回空列表"""
+        assert SnapshotJsonTransformer.transform_positions({}) == []
+        assert SnapshotJsonTransformer.transform_positions({"positions": {}}) == []
+
+    def test_multiple_positions(self):
+        """多个持仓"""
+        position_aggregate = {
+            "positions": {
+                "rb2501.SHFE.LONG": {
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": {"__enum__": "Direction.LONG"},
+                    "volume": 2,
+                    "open_price": 3500.0,
+                    "pnl": 200.0,
+                },
+                "pp2601.DCE.SHORT": {
+                    "vt_symbol": "pp2601.DCE",
+                    "direction": {"__enum__": "Direction.SHORT"},
+                    "volume": 3,
+                    "open_price": 7800.0,
+                    "pnl": -50.0,
+                },
+            }
+        }
+        result = SnapshotJsonTransformer.transform_positions(position_aggregate)
+        assert len(result) == 2
+        symbols = {p["vt_symbol"] for p in result}
+        assert symbols == {"rb2501.SHFE", "pp2601.DCE"}
+
+    def test_direction_as_plain_string(self):
+        """direction 为普通字符串（非 __enum__ 标记）"""
+        position_aggregate = {
+            "positions": {
+                "key1": {
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": "Direction.LONG",
+                    "volume": 1,
+                    "open_price": 3500.0,
+                    "pnl": 0.0,
+                }
+            }
+        }
+        result = SnapshotJsonTransformer.transform_positions(position_aggregate)
+        assert result[0]["direction"] == "Direction.LONG"
+
+
+class TestTransformOrders:
+    """测试 transform_orders 方法"""
+
+    def test_basic_order(self):
+        """正常挂单数据转换"""
+        position_aggregate = {
+            "pending_orders": {
+                "order_001": {
+                    "vt_orderid": "CTP.001",
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": {"__enum__": "Direction.LONG"},
+                    "offset": {"__enum__": "Offset.OPEN"},
+                    "volume": 1,
+                    "price": 3500.0,
+                    "status": {"__enum__": "Status.SUBMITTING"},
+                }
+            }
+        }
+        result = SnapshotJsonTransformer.transform_orders(position_aggregate)
+        assert len(result) == 1
+        assert result[0] == {
+            "vt_orderid": "CTP.001",
+            "vt_symbol": "rb2501.SHFE",
+            "direction": "Direction.LONG",
+            "offset": "Offset.OPEN",
+            "volume": 1,
+            "price": 3500.0,
+            "status": "Status.SUBMITTING",
+        }
+
+    def test_empty_orders(self):
+        """空挂单返回空列表"""
+        assert SnapshotJsonTransformer.transform_orders({}) == []
+        assert SnapshotJsonTransformer.transform_orders({"pending_orders": {}}) == []
+
+    def test_multiple_orders(self):
+        """多个挂单"""
+        position_aggregate = {
+            "pending_orders": {
+                "order_001": {
+                    "vt_orderid": "CTP.001",
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": {"__enum__": "Direction.LONG"},
+                    "offset": {"__enum__": "Offset.OPEN"},
+                    "volume": 1,
+                    "price": 3500.0,
+                    "status": {"__enum__": "Status.SUBMITTING"},
+                },
+                "order_002": {
+                    "vt_orderid": "CTP.002",
+                    "vt_symbol": "pp2601.DCE",
+                    "direction": {"__enum__": "Direction.SHORT"},
+                    "offset": {"__enum__": "Offset.CLOSE"},
+                    "volume": 2,
+                    "price": 7800.0,
+                    "status": {"__enum__": "Status.NOTTRADED"},
+                },
+            }
+        }
+        result = SnapshotJsonTransformer.transform_orders(position_aggregate)
+        assert len(result) == 2
+        order_ids = {o["vt_orderid"] for o in result}
+        assert order_ids == {"CTP.001", "CTP.002"}
+
+    def test_fields_as_plain_strings(self):
+        """direction/offset/status 为普通字符串"""
+        position_aggregate = {
+            "pending_orders": {
+                "order_001": {
+                    "vt_orderid": "CTP.001",
+                    "vt_symbol": "rb2501.SHFE",
+                    "direction": "Direction.LONG",
+                    "offset": "Offset.OPEN",
+                    "volume": 1,
+                    "price": 3500.0,
+                    "status": "Status.ALLTRADED",
+                }
+            }
+        }
+        result = SnapshotJsonTransformer.transform_orders(position_aggregate)
+        assert result[0]["direction"] == "Direction.LONG"
+        assert result[0]["offset"] == "Offset.OPEN"
+        assert result[0]["status"] == "Status.ALLTRADED"
