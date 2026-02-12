@@ -32,6 +32,9 @@ from .domain.domain_service.signal_service import SignalService
 from .domain.domain_service.position_sizing_service import PositionSizingService
 from .domain.domain_service.option_selector_service import OptionSelectorService
 from .domain.domain_service.future_selection_service import BaseFutureSelector
+from .domain.domain_service.greeks_calculator import GreeksCalculator
+from .domain.domain_service.portfolio_risk_aggregator import PortfolioRiskAggregator
+from .domain.domain_service.smart_order_executor import SmartOrderExecutor
 from .domain.entity.position import Position
 from .domain.event.event_types import (
     EVENT_STRATEGY_ALERT,
@@ -39,8 +42,13 @@ from .domain.event.event_types import (
     ManualCloseDetectedEvent,
     ManualOpenDetectedEvent,
     RiskLimitExceededEvent,
+    GreeksRiskBreachEvent,
+    OrderTimeoutEvent,
+    OrderRetryExhaustedEvent,
     StrategyAlertData,
 )
+from .domain.value_object.risk import RiskThresholds
+from .domain.value_object.order_execution import OrderExecutionConfig
 from .infrastructure.gateway.vnpy_market_data_gateway import VnpyMarketDataGateway
 from .infrastructure.gateway.vnpy_account_gateway import VnpyAccountGateway
 from .infrastructure.gateway.vnpy_trade_execution_gateway import VnpyTradeExecutionGateway
@@ -138,6 +146,9 @@ class StrategyEntry(StrategyTemplate):
         self.position_sizing_service: Optional[PositionSizingService] = None
         self.future_selection_service: Optional[BaseFutureSelector] = None
         self.option_selector_service: Optional[OptionSelectorService] = None
+        self.greeks_calculator: Optional[GreeksCalculator] = None
+        self.portfolio_risk_aggregator: Optional[PortfolioRiskAggregator] = None
+        self.smart_order_executor: Optional[SmartOrderExecutor] = None
 
         # ── 基础设施网关 (在 on_init 中初始化) ──
         self.market_gateway: Optional[VnpyMarketDataGateway] = None
@@ -205,6 +216,39 @@ class StrategyEntry(StrategyTemplate):
         self.option_selector_service = OptionSelectorService(
             strike_level=self.strike_level
         )
+
+        # ── Greeks 风控 & 订单执行增强 ──
+        try:
+            strategy_config_path = str(Path(__file__).resolve().parents[2] / "config" / "strategy_config.yaml")
+            full_config = ConfigLoader.load_yaml(strategy_config_path)
+        except Exception:
+            full_config = {}
+
+        greeks_risk_cfg = full_config.get("greeks_risk", {})
+        position_limits = greeks_risk_cfg.get("position_limits", {})
+        portfolio_limits = greeks_risk_cfg.get("portfolio_limits", {})
+
+        risk_thresholds = RiskThresholds(
+            position_delta_limit=position_limits.get("delta", 0.8),
+            position_gamma_limit=position_limits.get("gamma", 0.1),
+            position_vega_limit=position_limits.get("vega", 50.0),
+            portfolio_delta_limit=portfolio_limits.get("delta", 5.0),
+            portfolio_gamma_limit=portfolio_limits.get("gamma", 1.0),
+            portfolio_vega_limit=portfolio_limits.get("vega", 500.0),
+        )
+
+        order_exec_cfg = full_config.get("order_execution", {})
+        order_config = OrderExecutionConfig(
+            timeout_seconds=order_exec_cfg.get("timeout_seconds", 30),
+            max_retries=order_exec_cfg.get("max_retries", 3),
+            slippage_ticks=order_exec_cfg.get("slippage_ticks", 2),
+        )
+
+        self.greeks_calculator = GreeksCalculator()
+        self.portfolio_risk_aggregator = PortfolioRiskAggregator(risk_thresholds)
+        self.smart_order_executor = SmartOrderExecutor(order_config)
+        self.logger.info(f"Greeks 风控已启用: position_limits={position_limits}, portfolio_limits={portfolio_limits}")
+        self.logger.info(f"订单执行增强已启用: timeout={order_config.timeout_seconds}s, max_retries={order_config.max_retries}")
 
         # ______________________________  3. 创建领域聚合根  ______________________________
 

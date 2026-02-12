@@ -104,20 +104,20 @@
     - **Property 13: ManagedOrder 序列化 Round-Trip**
     - **Validates: Requirements 9.4**
 
-- [ ] 7. Checkpoint - 订单执行验证
+- [x] 7. Checkpoint - 订单执行验证
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. 配置集成与编排
-  - [ ] 8.1 扩展 YAML 配置
+- [x] 8. 配置集成与编排
+  - [x] 8.1 扩展 YAML 配置
     - 在 `config/strategy_config.yaml` 中新增 greeks_risk 和 order_execution 配置节
     - _Requirements: 5.1, 5.2, 5.3_
-  - [ ] 8.2 在 StrategyEntry 中集成新服务
+  - [x] 8.2 在 StrategyEntry 中集成新服务
     - 在 StrategyEntry.__init__ 中初始化 GreeksCalculator, PortfolioRiskAggregator, SmartOrderExecutor
     - 在开仓流程中插入 Greeks 风控检查
     - 在下单流程中使用 SmartOrderExecutor 的自适应价格
     - 在 on_timer 或 on_bar 中调用超时检查
     - _Requirements: 1.1, 3.1, 4.1, 6.1, 7.1_
-  - [ ] 8.3 单元测试: 配置加载与默认值回退
+  - [x] 8.3 单元测试: 配置加载与默认值回退
     - 测试 YAML 配置解析
     - 测试缺失配置时的默认值
     - _Requirements: 5.1, 5.2, 5.3_
