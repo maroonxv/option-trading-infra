@@ -63,38 +63,38 @@
 - [x] 3. Checkpoint - 高级订单模块验证
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 4. 实现 DeltaHedgingEngine
-  - [ ] 4.1 创建 `src/strategy/domain/domain_service/delta_hedging_engine.py`，实现 check_and_hedge 和 from_yaml_config 方法
+- [x] 4. 实现 DeltaHedgingEngine
+  - [x] 4.1 创建 `src/strategy/domain/domain_service/delta_hedging_engine.py`，实现 check_and_hedge 和 from_yaml_config 方法
     - check_and_hedge: 判断 |portfolio_delta - target_delta| > hedging_band，计算 hedge_volume = round((target_delta - portfolio_delta) / (hedge_instrument_delta * hedge_instrument_multiplier))，hedge_volume == 0 时不生成指令
     - from_yaml_config: 从字典创建实例，缺失字段使用 HedgingConfig 默认值
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 7.1, 7.3_
-  - [ ] 4.2 编写 Delta 对冲正确性属性测试
+  - [x] 4.2 编写 Delta 对冲正确性属性测试
     - **Property 7: Delta 对冲正确性**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4**
-  - [ ] 4.3 编写 DeltaHedgingEngine 单元测试
+  - [x] 4.3 编写 DeltaHedgingEngine 单元测试
     - 具体数值验证 (已知 Delta 偏离的对冲手数)
     - 无效配置 (multiplier <= 0, delta == 0)
     - from_yaml_config 默认值回退
     - _Requirements: 5.1, 5.2, 5.3, 7.1, 7.3_
 
-- [ ] 5. 实现 GammaScalpingEngine
-  - [ ] 5.1 创建 `src/strategy/domain/domain_service/gamma_scalping_engine.py`，实现 check_and_rebalance 和 from_yaml_config 方法
+- [x] 5. 实现 GammaScalpingEngine
+  - [x] 5.1 创建 `src/strategy/domain/domain_service/gamma_scalping_engine.py`，实现 check_and_rebalance 和 from_yaml_config 方法
     - check_and_rebalance: gamma <= 0 时拒绝; |portfolio_delta| > rebalance_threshold 时计算再平衡手数使 delta 归零
     - from_yaml_config: 从字典创建实例，缺失字段使用 GammaScalpConfig 默认值
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 7.2, 7.4_
-  - [ ] 5.2 编写 Gamma Scalping 正确性属性测试
+  - [x] 5.2 编写 Gamma Scalping 正确性属性测试
     - **Property 8: Gamma Scalping 正确性**
     - **Validates: Requirements 6.1, 6.3, 6.4**
-  - [ ] 5.3 编写 Gamma Scalping 负 Gamma 拒绝属性测试
+  - [x] 5.3 编写 Gamma Scalping 负 Gamma 拒绝属性测试
     - **Property 9: Gamma Scalping 负 Gamma 拒绝**
     - **Validates: Requirements 6.2**
-  - [ ] 5.4 编写 GammaScalpingEngine 单元测试
+  - [x] 5.4 编写 GammaScalpingEngine 单元测试
     - 负 Gamma 拒绝
     - 具体再平衡数值验证
     - from_yaml_config 默认值回退
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 7.2, 7.4_
 
-- [ ] 6. Checkpoint - 对冲引擎模块验证
+- [x] 6. Checkpoint - 对冲引擎模块验证
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 7. 实现 VolSurfaceBuilder
