@@ -1,7 +1,15 @@
 import os
 import pickle
+from dataclasses import dataclass
 from typing import Any, Dict, Optional
 from logging import Logger
+
+
+@dataclass
+class ArchiveNotFound:
+    """表示数据库中无该策略状态记录的结果类型"""
+    strategy_name: str
+
 
 class StateRepository:
     """
