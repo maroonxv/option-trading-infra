@@ -68,14 +68,14 @@
     - _Requirements: 1.2, 1.3, 2.4, 2.5_
 
 - [ ] 4. 更新 Web App 数据源
-  - [-] 4.1 修改 `src/web/app.py` 数据源优先级
+  - [x] 4.1 修改 `src/web/app.py` 数据源优先级
     - 新增 `StrategyStateReader` 实例（使用环境变量配置）
     - 修改 `list_strategies_best_effort`: StrategyStateReader → MySQLSnapshotReader
     - 修改 `get_snapshot_best_effort`: StrategyStateReader → MySQLSnapshotReader
     - 修改 `mysql_ready` 函数适配新的数据源检查逻辑
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [~] 4.2 移除 pickle 依赖
+  - [-] 4.2 移除 pickle 依赖
     - 移除 `SnapshotReader` 的 import 和 `pickle_reader` 实例
     - 移除 `list_strategies_best_effort` 和 `get_snapshot_best_effort` 中的 pickle 回退逻辑
     - 保留 `MySQLSnapshotReader` 用于 events/bars API

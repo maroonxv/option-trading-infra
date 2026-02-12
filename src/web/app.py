@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request
-from reader import SnapshotReader, MySQLSnapshotReader, StrategyStateReader
+from reader import MySQLSnapshotReader, StrategyStateReader
 import os
 import json
 
@@ -39,7 +39,6 @@ if SETTINGS is not None and os.getenv("VNPY_DATABASE_DRIVER"):
     except Exception:
         pass
 
-pickle_reader = SnapshotReader()
 mysql_reader = MySQLSnapshotReader()
 state_reader = StrategyStateReader({
     "host": os.getenv("VNPY_DATABASE_HOST", ""),
@@ -93,8 +92,7 @@ def list_strategies_best_effort():
         rows = mysql_reader.list_available_strategies()
         if rows:
             return rows
-    # 3. Fall back to pickle
-    return pickle_reader.list_available_strategies()
+    return []
 
 def get_snapshot_best_effort(variant_name: str):
     # 1. Try StrategyStateReader (strategy_state table)
@@ -109,8 +107,7 @@ def get_snapshot_best_effort(variant_name: str):
         data = mysql_reader.get_strategy_data(variant_name)
         if data:
             return data
-    # 3. Fall back to pickle
-    return pickle_reader.get_strategy_data(variant_name)
+    return None
 
 socketio = None
 if SocketIO is not None:
