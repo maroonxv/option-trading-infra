@@ -24,7 +24,7 @@
   - [x] 2.2 为 ExchangeResolver 编写属性测试
     - **Property 2: 交易所解析一致性**
     - **Validates: Requirements 3.1**
-  - [~] 2.3 实现 `src/backtesting/contract/expiry_calculator.py`
+  - [-] 2.3 实现 `src/backtesting/contract/expiry_calculator.py`
     - ExpiryCalculator.calculate()：根据交易所规则计算到期日
     - ExpiryCalculator.get_trading_days()：获取交易日列表
     - 支持手动配置优先、chinese_calendar 节假日排除
