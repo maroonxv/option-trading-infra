@@ -15,6 +15,73 @@ project_root = os.path.dirname(os.path.dirname(current_dir))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+class SnapshotJsonTransformer:
+    """将 strategy_state 的 snapshot_json 转换为前端格式"""
+
+    @staticmethod
+    def resolve_special_markers(obj: Any) -> Any:
+        """递归解析 JSON 中的特殊类型标记
+
+        解析规则:
+        - __dataframe__: 返回 records 列表（递归解析）
+        - __datetime__: 解析 ISO 字符串，返回 "YYYY-MM-DD HH:MM:SS" 格式
+        - __date__: 原样返回日期字符串
+        - __enum__: 原样返回枚举字符串
+        - __set__: 返回 values 列表（递归解析）
+        - __dataclass__: 移除 __dataclass__ 键，返回剩余字段（递归解析）
+        - 未知标记/普通 dict: 递归解析所有值
+        - list: 递归解析每个元素
+        - 基本类型 (str, int, float, bool, None): 原样返回
+        """
+        if isinstance(obj, dict):
+            # __dataframe__ 标记
+            if "__dataframe__" in obj:
+                records = obj.get("records", [])
+                return [SnapshotJsonTransformer.resolve_special_markers(r) for r in records]
+
+            # __datetime__ 标记
+            if "__datetime__" in obj:
+                raw = obj["__datetime__"]
+                try:
+                    dt = datetime.fromisoformat(str(raw))
+                    return dt.strftime("%Y-%m-%d %H:%M:%S")
+                except (ValueError, TypeError):
+                    return str(raw)
+
+            # __date__ 标记
+            if "__date__" in obj:
+                return str(obj["__date__"])
+
+            # __enum__ 标记
+            if "__enum__" in obj:
+                return str(obj["__enum__"])
+
+            # __set__ 标记
+            if "__set__" in obj:
+                values = obj.get("values", [])
+                return [SnapshotJsonTransformer.resolve_special_markers(v) for v in values]
+
+            # __dataclass__ 标记
+            if "__dataclass__" in obj:
+                return {
+                    k: SnapshotJsonTransformer.resolve_special_markers(v)
+                    for k, v in obj.items()
+                    if k != "__dataclass__"
+                }
+
+            # 普通 dict: 递归解析所有值
+            return {
+                k: SnapshotJsonTransformer.resolve_special_markers(v)
+                for k, v in obj.items()
+            }
+
+        if isinstance(obj, list):
+            return [SnapshotJsonTransformer.resolve_special_markers(item) for item in obj]
+
+        # 基本类型: str, int, float, bool, None
+        return obj
+
+
 class SnapshotReader:
     def __init__(self, monitor_dir="data/monitor"):
         # 将项目根目录添加到 sys.path 以允许反序列化策略对象
@@ -219,6 +286,75 @@ class SnapshotReader:
                 "status": str(order.status) if hasattr(order, "status") else "Unknown"
             })
         return result
+
+
+    class SnapshotJsonTransformer:
+        """将 strategy_state 的 snapshot_json 转换为前端格式"""
+
+        @staticmethod
+        def resolve_special_markers(obj: Any) -> Any:
+            """递归解析 JSON 中的特殊类型标记
+
+            解析规则:
+            - __dataframe__: 返回 records 列表（递归解析）
+            - __datetime__: 解析 ISO 字符串，返回 "YYYY-MM-DD HH:MM:SS" 格式
+            - __date__: 原样返回日期字符串
+            - __enum__: 原样返回枚举字符串
+            - __set__: 返回 values 列表（递归解析）
+            - __dataclass__: 移除 __dataclass__ 键，返回剩余字段（递归解析）
+            - 未知标记/普通 dict: 递归解析所有值
+            - list: 递归解析每个元素
+            - 基本类型 (str, int, float, bool, None): 原样返回
+            """
+            if isinstance(obj, dict):
+                # __dataframe__ 标记
+                if "__dataframe__" in obj:
+                    records = obj.get("records", [])
+                    return [SnapshotJsonTransformer.resolve_special_markers(r) for r in records]
+
+                # __datetime__ 标记
+                if "__datetime__" in obj:
+                    raw = obj["__datetime__"]
+                    try:
+                        dt = datetime.fromisoformat(str(raw))
+                        return dt.strftime("%Y-%m-%d %H:%M:%S")
+                    except (ValueError, TypeError):
+                        return str(raw)
+
+                # __date__ 标记
+                if "__date__" in obj:
+                    return str(obj["__date__"])
+
+                # __enum__ 标记
+                if "__enum__" in obj:
+                    return str(obj["__enum__"])
+
+                # __set__ 标记
+                if "__set__" in obj:
+                    values = obj.get("values", [])
+                    return [SnapshotJsonTransformer.resolve_special_markers(v) for v in values]
+
+                # __dataclass__ 标记
+                if "__dataclass__" in obj:
+                    return {
+                        k: SnapshotJsonTransformer.resolve_special_markers(v)
+                        for k, v in obj.items()
+                        if k != "__dataclass__"
+                    }
+
+                # 普通 dict: 递归解析所有值
+                return {
+                    k: SnapshotJsonTransformer.resolve_special_markers(v)
+                    for k, v in obj.items()
+                }
+
+            if isinstance(obj, list):
+                return [SnapshotJsonTransformer.resolve_special_markers(item) for item in obj]
+
+            # 基本类型: str, int, float, bool, None
+            return obj
+
+
 
 
 class MySQLSnapshotReader:
