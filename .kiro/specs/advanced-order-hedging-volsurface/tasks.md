@@ -97,42 +97,42 @@
 - [x] 6. Checkpoint - 对冲引擎模块验证
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. 实现 VolSurfaceBuilder
-  - [ ] 7.1 创建 `src/strategy/domain/domain_service/vol_surface_builder.py`，实现 build_surface 方法
+- [x] 7. 实现 VolSurfaceBuilder
+  - [x] 7.1 创建 `src/strategy/domain/domain_service/vol_surface_builder.py`，实现 build_surface 方法
     - 从 VolQuote 列表构建 VolSurfaceSnapshot，过滤 implied_vol <= 0 的报价
     - strikes 和 expiries 升序排列，vol_matrix 维度 = len(expiries) x len(strikes)
     - _Requirements: 8.1_
-  - [ ] 7.2 编写波动率曲面构建正确性属性测试
+  - [x] 7.2 编写波动率曲面构建正确性属性测试
     - **Property 10: 波动率曲面构建正确性**
     - **Validates: Requirements 8.1**
-  - [ ] 7.3 实现 query_vol 方法 (双线性插值)
+  - [x] 7.3 实现 query_vol 方法 (双线性插值)
     - 查询点在网格内时双线性插值，超出范围返回 VolQueryResult(success=False)
     - _Requirements: 8.2, 8.3_
-  - [ ] 7.4 编写波动率曲面插值有界性属性测试
+  - [x] 7.4 编写波动率曲面插值有界性属性测试
     - **Property 11: 波动率曲面插值有界性**
     - **Validates: Requirements 8.2**
-  - [ ] 7.5 实现 extract_smile 方法
+  - [x] 7.5 实现 extract_smile 方法
     - 提取指定 time_to_expiry 的波动率微笑，支持插值
     - _Requirements: 9.1, 9.2, 9.3_
-  - [ ] 7.6 编写波动率微笑提取属性测试
+  - [x] 7.6 编写波动率微笑提取属性测试
     - **Property 13: 波动率微笑提取正确性与排序**
     - **Validates: Requirements 9.1, 9.2, 9.3**
-  - [ ] 7.7 实现 extract_term_structure 方法
+  - [x] 7.7 实现 extract_term_structure 方法
     - 提取指定 strike 的期限结构，支持插值
     - _Requirements: 10.1, 10.2, 10.3_
-  - [ ] 7.8 编写期限结构提取属性测试
+  - [x] 7.8 编写期限结构提取属性测试
     - **Property 14: 期限结构提取正确性与排序**
     - **Validates: Requirements 10.1, 10.2, 10.3**
-  - [ ] 7.9 编写波动率曲面序列化 Round-Trip 属性测试
+  - [x] 7.9 编写波动率曲面序列化 Round-Trip 属性测试
     - **Property 12: 波动率曲面序列化 Round-Trip**
     - **Validates: Requirements 8.4, 8.5**
-  - [ ] 7.10 编写 VolSurfaceBuilder 单元测试
+  - [x] 7.10 编写 VolSurfaceBuilder 单元测试
     - 边界查询 (超出范围返回错误)
     - 报价不足 (< 2 strikes 或 < 2 expiries)
     - 无效报价过滤 (implied_vol <= 0)
     - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 8. Checkpoint - 波动率曲面模块验证
+- [x] 8. Checkpoint - 波动率曲面模块验证
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 9. 配置集成与 StrategyEntry 编排
