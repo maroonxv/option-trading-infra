@@ -53,7 +53,7 @@
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 3. 实现 StrategyStateReader
-  - [-] 3.1 实现 `StrategyStateReader` 类
+  - [x] 3.1 实现 `StrategyStateReader` 类
     - 在 `src/web/reader.py` 中新增 `StrategyStateReader` 类
     - 使用 pymysql 连接 MySQL，从环境变量读取配置
     - 实现 `list_available_strategies`: 查询 `strategy_state` 表的 distinct strategy_name 和 MAX(saved_at)
@@ -61,7 +61,7 @@
     - 所有方法捕获异常，不抛出
     - _Requirements: 1.1, 1.2, 1.3, 2.1, 2.4, 2.5_
 
-  - [~] 3.2 编写 StrategyStateReader 的单元测试
+  - [-] 3.2 编写 StrategyStateReader 的单元测试
     - 测试数据库连接失败返回空列表/None
     - 测试 malformed JSON 返回 None
     - 测试正常快照的完整转换流程
