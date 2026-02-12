@@ -81,22 +81,22 @@
 - [x] 7. Checkpoint - 持久化层验证
   - Ensure all tests pass, ask the user if questions arise.
 
-- [-] 8. 实现 AutoSaveService
+- [x] 8. 实现 AutoSaveService
   - [x] 8.1 创建 `src/strategy/infrastructure/persistence/auto_save_service.py`，实现 `AutoSaveService` 类
     - 构造函数接受 `StateRepository`、`strategy_name`、`interval_seconds`（默认 60）、`logger`
     - 实现 `maybe_save(snapshot_fn)` — 基于 `time.monotonic()` 判断是否到达保存间隔
     - 实现 `force_save(snapshot_fn)` — 强制保存
     - 保存失败时捕获异常并记录日志，不中断策略执行
     - _Requirements: 1.1, 1.2, 1.3, 1.5_
-  - [-] 8.2 编写 AutoSaveService 属性测试
+  - [x] 8.2 编写 AutoSaveService 属性测试
     - **Property 1: Auto-save interval gating**
     - **Validates: Requirements 1.1, 1.3**
-  - [-] 8.3 编写 AutoSaveService 单元测试
+  - [x] 8.3 编写 AutoSaveService 单元测试
     - 测试默认间隔 60 秒、写入失败不中断
     - _Requirements: 1.2, 1.5_
 
 - [ ] 9. 集成到 StrategyEntry
-  - [~] 9.1 修改 `src/strategy/strategy_entry.py`
+  - [-] 9.1 修改 `src/strategy/strategy_entry.py`
     - 在 `on_init` 中：创建 `JsonSerializer`、`MigrationChain`、`StateRepository`（注入 DatabaseFactory）
     - 在 `on_init` 中：非回测模式下创建 `AutoSaveService`
     - 在 `on_init` 中：调用 `StateRepository.load()`，ArchiveNotFound 时使用空状态，CorruptionError 时 fail-fast

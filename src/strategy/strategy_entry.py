@@ -55,8 +55,13 @@ from .infrastructure.gateway.vnpy_trade_execution_gateway import VnpyTradeExecut
 from .infrastructure.reporting.feishu_handler import FeishuEventHandler
 from .infrastructure.logging.logging_utils import setup_strategy_logger
 from .infrastructure.monitoring.strategy_monitor import StrategyMonitor
-from .infrastructure.persistence.state_repository import StateRepository
+from .infrastructure.persistence.state_repository import StateRepository, ArchiveNotFound
+from .infrastructure.persistence.json_serializer import JsonSerializer
+from .infrastructure.persistence.migration_chain import MigrationChain
+from .infrastructure.persistence.auto_save_service import AutoSaveService
+from .infrastructure.persistence.exceptions import CorruptionError
 from .infrastructure.persistence.history_data_repository import HistoryDataRepository
+from src.main.bootstrap.database_factory import DatabaseFactory
 from .infrastructure.utils.contract_helper import ContractHelper
 
 
@@ -158,6 +163,7 @@ class StrategyEntry(StrategyTemplate):
         # ── 基础设施: 监控与持久化 (在 on_init 中初始化) ──
         self.monitor: Optional[StrategyMonitor] = None
         self.state_repository: Optional[StateRepository] = None
+        self.auto_save_service: Optional[AutoSaveService] = None
 
         # ── 飞书 ──
         self.feishu_handler: Optional[FeishuEventHandler] = None
@@ -279,7 +285,20 @@ class StrategyEntry(StrategyTemplate):
             monitor_db_config=monitor_db_config,
             logger=self.logger
         )
-        self.state_repository = StateRepository(logger=self.logger)
+        self.state_repository = StateRepository(
+            serializer=JsonSerializer(MigrationChain()),
+            database_factory=DatabaseFactory.get_instance(),
+            logger=self.logger,
+        )
+
+        # AutoSaveService 仅在非回测模式下创建
+        if not self.backtesting:
+            self.auto_save_service = AutoSaveService(
+                state_repository=self.state_repository,
+                strategy_name=self.strategy_name,
+                interval_seconds=60.0,
+                logger=self.logger,
+            )
 
         # 初始快照
         self._record_snapshot()
@@ -319,16 +338,24 @@ class StrategyEntry(StrategyTemplate):
                 self.warming_up = False
         else:
             # 实盘 warmup: load_state + universe_validation + MySQL replay
-            pickle_dir = project_root / "data" / "pickle"
-            pickle_dir.mkdir(parents=True, exist_ok=True)
-            state_path = str(pickle_dir / f"{self.strategy_name}.state.pkl")
-
             try:
-                loaded = self._load_state(state_path)
-                if not loaded:
-                    self.logger.warning(f"未加载到策略状态: {state_path}")
+                result = self.state_repository.load(self.strategy_name)
+                if isinstance(result, ArchiveNotFound):
+                    self.logger.info(f"首次启动，无历史状态: {self.strategy_name}")
+                else:
+                    # Restore aggregates from snapshot
+                    if "target_aggregate" in result:
+                        self.target_aggregate = InstrumentManager.from_snapshot(result["target_aggregate"])
+                    if "position_aggregate" in result:
+                        self.position_aggregate = PositionAggregate.from_snapshot(result["position_aggregate"])
+                    if "current_dt" in result:
+                        self.current_dt = result["current_dt"]
+                    self.logger.info(f"策略状态已恢复: {self.strategy_name}")
+            except CorruptionError as e:
+                self.logger.error(f"策略状态损坏，拒绝启动: {e}")
+                raise
             except Exception:
-                self.logger.error(f"加载策略状态失败: {state_path}", exc_info=True)
+                self.logger.error(f"加载策略状态失败: {self.strategy_name}", exc_info=True)
                 raise
 
             try:
@@ -399,10 +426,8 @@ class StrategyEntry(StrategyTemplate):
         self.logger.info("策略停止")
 
         # 保存状态 - 仅在非回测模式下
-        if not self.backtesting:
-            project_root = Path(__file__).resolve().parents[2]
-            pickle_path = str(project_root / "data" / "pickle" / f"{self.strategy_name}.state.pkl")
-            self._dump_state(pickle_path)
+        if self.auto_save_service:
+            self.auto_save_service.force_save(self._create_snapshot)
 
         # 注销飞书处理器
         if self.feishu_handler:
@@ -456,6 +481,10 @@ class StrategyEntry(StrategyTemplate):
             self.pbg.update_bars(bars)
         else:
             self._process_bars(bars)
+
+        # 周期性自动保存 (非回测模式)
+        if self.auto_save_service and not self.warming_up:
+            self.auto_save_service.maybe_save(self._create_snapshot)
 
     def on_window_bars(self, bars: Dict[str, BarData]) -> None:
         """合成K线回调 — 直接编排领域逻辑"""
@@ -700,47 +729,16 @@ class StrategyEntry(StrategyTemplate):
                 self.logger.error(f"品种 {product} 换月检查失败: {e}")
 
     # ═══════════════════════════════════════════════════════════════════
-    #  状态持久化 (原 load_state / dump_state)
+    #  状态持久化
     # ═══════════════════════════════════════════════════════════════════
 
-    def _load_state(self, state_path: str) -> bool:
-        """
-        从文件加载策略状态 (聚合根快照)
-
-        Returns:
-            True 如果成功加载
-        """
-        if not self.state_repository:
-            return False
-
-        state = self.state_repository.load(state_path)
-        if not state:
-            return False
-
-        try:
-            if "target_aggregate" in state:
-                self.target_aggregate = InstrumentManager.from_snapshot(state["target_aggregate"])
-            if "position_aggregate" in state:
-                self.position_aggregate = PositionAggregate.from_snapshot(state["position_aggregate"])
-            if "current_dt" in state:
-                self.current_dt = state["current_dt"]
-            self.logger.info(f"策略状态已恢复: {state_path}")
-            return True
-        except Exception as e:
-            self.logger.error(f"恢复策略状态失败: {e}")
-            return False
-
-    def _dump_state(self, state_path: str) -> None:
-        """保存策略状态 (聚合根快照) 到文件"""
-        if not self.state_repository or not self.target_aggregate:
-            return
-
-        state = {
+    def _create_snapshot(self) -> Dict[str, Any]:
+        """创建聚合根快照用于持久化"""
+        return {
             "target_aggregate": self.target_aggregate.to_snapshot(),
             "position_aggregate": self.position_aggregate.to_snapshot(),
             "current_dt": self.current_dt,
         }
-        self.state_repository.save(state_path, state)
 
     # ═══════════════════════════════════════════════════════════════════
     #  监控与事件
