@@ -24,28 +24,28 @@
     - 在 `src/strategy/domain/event/event_types.py` 中新增三个事件 dataclass
     - _Requirements: 4.3, 6.2, 8.2_
 
-- [ ] 2. 实现 GreeksCalculator 领域服务
-  - [ ] 2.1 实现 Black-Scholes Greeks 计算
+- [x] 2. 实现 GreeksCalculator 领域服务
+  - [x] 2.1 实现 Black-Scholes Greeks 计算
     - 在 `src/strategy/domain/domain_service/` 下新建 `greeks_calculator.py`
     - 实现 calculate_greeks 方法 (Delta, Gamma, Theta, Vega)
     - 实现 bs_price 方法
     - 处理边界条件: time_to_expiry=0, volatility<=0
     - _Requirements: 1.1, 1.2, 1.3, 1.5_
-  - [ ] 2.2 Property test: Greeks 计算有效性
+  - [x] 2.2 Property test: Greeks 计算有效性
     - **Property 1: Greeks 计算对所有有效输入产生有效结果**
     - **Validates: Requirements 1.1**
-  - [ ] 2.3 Property test: Put-Call Parity
+  - [x] 2.3 Property test: Put-Call Parity
     - **Property 2: Put-Call Parity 不变量**
     - **Validates: Requirements 1.4**
-  - [ ] 2.4 Property test: 到期时 Greeks 边界值
+  - [x] 2.4 Property test: 到期时 Greeks 边界值
     - **Property 3: 到期时 Greeks 边界值**
     - **Validates: Requirements 1.3**
-  - [ ] 2.5 实现隐含波动率求解
+  - [x] 2.5 实现隐含波动率求解
     - 在 greeks_calculator.py 中实现 calculate_implied_volatility 方法
     - 使用牛顿法迭代求解
     - 处理边界条件: 未收敛、市场价格低于内在价值
     - _Requirements: 2.1, 2.2, 2.4_
-  - [ ] 2.6 Property test: IV Round-Trip
+  - [x] 2.6 Property test: IV Round-Trip
     - **Property 4: 隐含波动率 Round-Trip**
     - **Validates: Requirements 2.1, 2.3**
 
