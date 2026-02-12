@@ -22,15 +22,28 @@ SignalService - 信号判断领域服务（模板）
 4. check_close_signal() 接收 position 参数，可根据持仓方向、开仓信号等
    决定平仓逻辑。position.signal 存储了开仓时的信号字符串。
 
-5. 示例实现请参考: src/strategy/domain/impl/demo_signal_service.py
+5. 直接在本文件中实现你的信号逻辑即可
 """
+from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
-
-from ..interface.signal_service import ISignalService
 
 if TYPE_CHECKING:
     from ..entity.target_instrument import TargetInstrument
     from ..entity.position import Position
+
+
+class ISignalService(ABC):
+    """信号生成服务接口"""
+
+    @abstractmethod
+    def check_open_signal(self, instrument: "TargetInstrument") -> Optional[str]:
+        """检查开仓信号"""
+        pass
+
+    @abstractmethod
+    def check_close_signal(self, instrument: "TargetInstrument", position: "Position") -> Optional[str]:
+        """检查平仓信号"""
+        pass
 
 
 class SignalService(ISignalService):

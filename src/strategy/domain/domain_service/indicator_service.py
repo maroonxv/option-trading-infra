@@ -24,14 +24,22 @@ IndicatorService - 指标计算领域服务（模板）
    - 在本类中协调调用各计算服务
    - 或者直接在 calculate_bar() 中实现所有计算
 
-5. 示例实现请参考: src/strategy/domain/impl/demo_indicator_service.py
+5. 直接在本文件中实现你的指标计算逻辑即可
 """
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
-
-from ..interface.indicator_service import IIndicatorService
 
 if TYPE_CHECKING:
     from ..entity.target_instrument import TargetInstrument
+
+
+class IIndicatorService(ABC):
+    """指标计算服务接口"""
+
+    @abstractmethod
+    def calculate_bar(self, instrument: "TargetInstrument", bar: dict) -> None:
+        """K 线更新时的指标计算逻辑"""
+        pass
 
 
 class IndicatorService(IIndicatorService):
