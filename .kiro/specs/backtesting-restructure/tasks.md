@@ -6,18 +6,18 @@
 
 ## 任务
 
-- [ ] 1. 创建模块结构和静态配置
+- [x] 1. 创建模块结构和静态配置
   - [x] 1.1 创建目录结构和 `__init__.py` 文件
     - 创建 `src/backtesting/__init__.py`、`src/backtesting/contract/__init__.py`、`src/backtesting/discovery/__init__.py`
     - _Requirements: 1.1_
-  - [-] 1.2 创建 `src/backtesting/config.py`，提取静态配置数据和 BacktestConfig 数据类
+  - [x] 1.2 创建 `src/backtesting/config.py`，提取静态配置数据和 BacktestConfig 数据类
     - 从 `vt_symbol_generator.py` 提取 EXCHANGE_MAP、FUTURE_OPTION_MAP、OPTION_FUTURE_MAP、PRODUCT_SPECS、MANUAL_EXPIRY_CONFIG
     - 实现 BacktestConfig dataclass，支持 from_args() 方法
     - 不包含任何硬编码日期值
     - _Requirements: 1.2, 8.1, 8.2, 8.4, 8.5_
 
 - [ ] 2. 实现合约基础组件
-  - [~] 2.1 实现 `src/backtesting/contract/exchange_resolver.py`
+  - [x] 2.1 实现 `src/backtesting/contract/exchange_resolver.py`
     - ExchangeResolver.resolve()：从 EXCHANGE_MAP 查找，未知品种抛出 ValueError
     - ExchangeResolver.is_czce()：判断是否郑商所品种
     - _Requirements: 3.1, 3.2_
