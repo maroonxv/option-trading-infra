@@ -62,7 +62,7 @@
     - SymbolGenerator.generate_recent()：生成近期合约代码（无硬编码开始日期）
     - 郑商所三位格式、其他交易所四位格式
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
-  - [~] 6.2 为 SymbolGenerator 编写属性测试
+  - [x] 6.2 为 SymbolGenerator 编写属性测试
     - **Property 1: 合约代码生成格式正确性**
     - **Validates: Requirements 2.1, 2.2, 2.3**
   - [~] 6.3 实现 `src/backtesting/discovery/option_discovery.py`
