@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any, List, Optional, Callable, Iterator, Dict
 import pandas as pd
 import re
@@ -201,3 +202,35 @@ class ContractHelper:
         if match:
             return match.group(1).lower() == product_code.lower()
         return False
+
+    @staticmethod
+    def get_expiry_from_symbol(symbol: str) -> Optional[date]:
+        """
+        从合约代码解析到期日
+        示例: rb2501 -> 2025-01-15 (估算)
+             SA501 -> 2025-01-15 (估算)
+        """
+        match = re.search(r"(\d{3,4})$", symbol)
+        if not match:
+            return None
+
+        digits = match.group(1)
+        current_year = date.today().year
+
+        if len(digits) == 4:
+            year_suffix = int(digits[:2])
+            month = int(digits[2:])
+            year = 2000 + year_suffix
+        elif len(digits) == 3:
+            year_suffix = int(digits[0])
+            month = int(digits[1:])
+            year = (current_year // 10) * 10 + year_suffix
+            if year < current_year - 1:
+                year += 10
+        else:
+            return None
+
+        try:
+            return date(year, month, 15)
+        except ValueError:
+            return None

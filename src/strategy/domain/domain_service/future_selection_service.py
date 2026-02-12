@@ -1,7 +1,7 @@
 from datetime import date
 from typing import List, Optional, Callable
 from vnpy.trader.object import ContractData
-from src.main.utils.contract_utils import ContractUtils
+from src.strategy.infrastructure.utils.contract_helper import ContractHelper
 
 
 class BaseFutureSelector:
