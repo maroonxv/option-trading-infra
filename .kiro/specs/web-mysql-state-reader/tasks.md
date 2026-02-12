@@ -6,7 +6,7 @@
 
 ## Tasks
 
-- [ ] 1. 实现 SnapshotJsonTransformer 转换器
+- [x] 1. 实现 SnapshotJsonTransformer 转换器
   - [x] 1.1 实现 `resolve_special_markers` 方法
     - 在 `src/web/reader.py` 中新增 `SnapshotJsonTransformer` 类
     - 实现递归解析 `__dataframe__`、`__datetime__`、`__date__`、`__enum__`、`__set__`、`__dataclass__` 标记
@@ -49,11 +49,11 @@
     - **Property 4: Full snapshot transform produces all required Frontend_Format fields**
     - **Validates: Requirements 2.2, 2.3, 3.1**
 
-- [~] 2. Checkpoint - 确保转换器测试通过
+- [x] 2. Checkpoint - 确保转换器测试通过
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 3. 实现 StrategyStateReader
-  - [~] 3.1 实现 `StrategyStateReader` 类
+  - [-] 3.1 实现 `StrategyStateReader` 类
     - 在 `src/web/reader.py` 中新增 `StrategyStateReader` 类
     - 使用 pymysql 连接 MySQL，从环境变量读取配置
     - 实现 `list_available_strategies`: 查询 `strategy_state` 表的 distinct strategy_name 和 MAX(saved_at)

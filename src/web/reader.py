@@ -288,6 +288,131 @@ class SnapshotJsonTransformer:
         }
 
 
+class StrategyStateReader:
+    """从 strategy_state 表读取策略状态并转换为前端格式"""
+
+    def __init__(self, db_config: dict):
+        """
+        Args:
+            db_config: 数据库连接配置 {host, port, user, password, database}
+        """
+        self._db_config = db_config or {}
+
+    def _db_available(self) -> bool:
+        cfg = self._db_config or {}
+        return bool(cfg.get("host") and cfg.get("user") and cfg.get("database"))
+
+    def _connect(self):
+        if not self._db_available():
+            return None
+        try:
+            import pymysql
+        except Exception:
+            return None
+        try:
+            return pymysql.connect(
+                host=self._db_config["host"],
+                port=int(self._db_config.get("port", 3306)),
+                user=self._db_config["user"],
+                password=self._db_config.get("password", ""),
+                database=self._db_config["database"],
+                charset="utf8mb4",
+                autocommit=True,
+                cursorclass=pymysql.cursors.DictCursor,
+            )
+        except Exception:
+            return None
+
+    def list_available_strategies(self) -> List[Dict[str, Any]]:
+        """查询所有策略名称及最新更新时间
+
+        Returns:
+            [{"variant": "15m", "last_update": "2025-01-15 14:30:00", "file_size": None}, ...]
+            出错时返回空列表
+        """
+        conn = self._connect()
+        if conn is None:
+            return []
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT strategy_name, MAX(saved_at) AS last_update
+                    FROM strategy_state
+                    GROUP BY strategy_name
+                    ORDER BY strategy_name
+                    """
+                )
+                rows = cursor.fetchall() or []
+            result = []
+            for r in rows:
+                dt = r.get("last_update")
+                if isinstance(dt, datetime):
+                    dt_text = dt.strftime("%Y-%m-%d %H:%M:%S")
+                else:
+                    dt_text = str(dt) if dt else ""
+                result.append({
+                    "variant": r.get("strategy_name", ""),
+                    "last_update": dt_text,
+                    "file_size": None,
+                })
+            return result
+        except Exception:
+            return []
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    def get_strategy_data(self, strategy_name: str) -> Optional[Dict[str, Any]]:
+        """读取指定策略的最新快照并转换为前端格式
+
+        Args:
+            strategy_name: 策略名称（对应前端的 variant）
+
+        Returns:
+            前端格式的字典，或 None（无数据/解析失败）
+        """
+        if not strategy_name:
+            return None
+        conn = self._connect()
+        if conn is None:
+            return None
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT snapshot_json
+                    FROM strategy_state
+                    WHERE strategy_name=%s
+                    ORDER BY saved_at DESC
+                    LIMIT 1
+                    """,
+                    (strategy_name,),
+                )
+                row = cursor.fetchone()
+            if not row:
+                return None
+            snapshot = row.get("snapshot_json")
+            if snapshot is None:
+                return None
+            # snapshot_json 可能是 dict（pymysql JSON 自动解析）或 str
+            if isinstance(snapshot, str):
+                try:
+                    snapshot = json.loads(snapshot)
+                except (json.JSONDecodeError, ValueError):
+                    return None
+            if not isinstance(snapshot, dict):
+                return None
+            return SnapshotJsonTransformer.transform(snapshot, strategy_name)
+        except Exception:
+            return None
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 class SnapshotReader:
