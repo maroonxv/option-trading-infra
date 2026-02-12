@@ -15,10 +15,10 @@
     - _Requirements: 2.1_
 
 - [-] 2. 实现 MigrationChain
-  - [-] 2.1 创建 `src/strategy/infrastructure/persistence/migration_chain.py`，实现 `MigrationChain` 类
+  - [x] 2.1 创建 `src/strategy/infrastructure/persistence/migration_chain.py`，实现 `MigrationChain` 类
     - 实现 `register(from_version, fn)` 和 `migrate(data, from_version, to_version)` 方法
     - _Requirements: 4.3, 4.4_
-  - [~] 2.2 编写 MigrationChain 属性测试
+  - [-] 2.2 编写 MigrationChain 属性测试
     - **Property 8: Migration chain sequential application**
     - **Validates: Requirements 4.3**
 
