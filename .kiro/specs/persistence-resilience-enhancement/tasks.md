@@ -22,29 +22,29 @@
     - **Property 8: Migration chain sequential application**
     - **Validates: Requirements 4.3**
 
-- [-] 3. 实现 JsonSerializer
+- [x] 3. 实现 JsonSerializer
   - [x] 3.1 创建 `src/strategy/infrastructure/persistence/json_serializer.py`，实现 `JsonSerializer` 类
     - 实现自定义 `JSONEncoder` 处理 DataFrame、datetime、date、set、Enum、dataclass
     - 实现 `serialize()` 方法，自动注入 `schema_version`
     - 实现 `deserialize()` 方法，支持类型还原和版本迁移
     - _Requirements: 4.1, 4.2, 4.5, 4.6_
-  - [-] 3.2 编写 JsonSerializer 属性测试
+  - [x] 3.2 编写 JsonSerializer 属性测试
     - **Property 7: JSON serialization round-trip**
     - **Validates: Requirements 4.1, 4.2, 4.5, 4.6, 4.8**
-  - [-] 3.3 编写 JsonSerializer 单元测试
+  - [x] 3.3 编写 JsonSerializer 单元测试
     - 测试空 DataFrame、嵌套 datetime、Enum、set 等边界情况
     - _Requirements: 4.5, 4.6_
 
-- [~] 4. Checkpoint - 序列化层验证
+- [x] 4. Checkpoint - 序列化层验证
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 5. 实现 DatabaseFactory
-  - [~] 5.1 创建 `src/main/bootstrap/database_factory.py`，实现 `DatabaseFactory` 单例类
+  - [x] 5.1 创建 `src/main/bootstrap/database_factory.py`，实现 `DatabaseFactory` 单例类
     - 实现 `get_instance()`、`initialize(eager, timeout)`、`get_database()`、`get_peewee_db()`
     - 实现 `validate_env_vars()` 静态方法和 `validate_connection()` 方法
     - 内部封装 `vnpy_mysql` 表名配置 (dbbardata, dbtickdata)
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 3.1, 3.2, 3.4, 3.5_
-  - [~] 5.2 创建 `src/strategy/infrastructure/persistence/strategy_state_model.py`，定义 `StrategyStateModel` Peewee 模型
+  - [x] 5.2 创建 `src/strategy/infrastructure/persistence/strategy_state_model.py`，定义 `StrategyStateModel` Peewee 模型
     - 包含 id (AutoField)、strategy_name、snapshot_json、schema_version、saved_at 字段
     - 定义复合索引 (strategy_name, saved_at)
     - _Requirements: 1.4_
