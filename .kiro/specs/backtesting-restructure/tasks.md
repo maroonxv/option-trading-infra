@@ -16,7 +16,7 @@
     - 不包含任何硬编码日期值
     - _Requirements: 1.2, 8.1, 8.2, 8.4, 8.5_
 
-- [ ] 2. 实现合约基础组件
+- [x] 2. 实现合约基础组件
   - [x] 2.1 实现 `src/backtesting/contract/exchange_resolver.py`
     - ExchangeResolver.resolve()：从 EXCHANGE_MAP 查找，未知品种抛出 ValueError
     - ExchangeResolver.is_czce()：判断是否郑商所品种
@@ -33,11 +33,11 @@
     - **Property 4: 到期日计算交易所规则正确性**
     - **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
 
-- [~] 3. Checkpoint - 确保所有测试通过
+- [x] 3. Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请询问用户。
 
 - [ ] 4. 实现合约工厂和注册表
-  - [~] 4.1 实现 `src/backtesting/contract/contract_factory.py`
+  - [-] 4.1 实现 `src/backtesting/contract/contract_factory.py`
     - ContractFactory.create()：解析 vt_symbol 构建 ContractData
     - 支持期货格式（rb2505.SHFE）和期权格式（MO2601-C-6300.CFFEX、rb2505C3000.SHFE）
     - 期权反向映射（MO→IM）、自动填充 size/pricetick
