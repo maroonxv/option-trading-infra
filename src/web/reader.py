@@ -237,6 +237,57 @@ class SnapshotJsonTransformer:
 
         return result
 
+    @staticmethod
+    def transform(snapshot: dict, strategy_name: str) -> dict:
+        """主转换入口
+
+        Args:
+            snapshot: strategy_state 表中的 snapshot_json（已解析为 dict）
+            strategy_name: 策略名称
+
+        Returns:
+            {
+                "timestamp": "2025-01-15 14:30:00",
+                "variant": "15m",
+                "instruments": {...},
+                "positions": [...],
+                "orders": [...]
+            }
+        """
+        # 1. Extract timestamp from current_dt
+        current_dt = snapshot.get("current_dt", "")
+        if isinstance(current_dt, dict):
+            timestamp = SnapshotJsonTransformer.resolve_special_markers(current_dt)
+        elif isinstance(current_dt, str) and current_dt:
+            try:
+                dt = datetime.fromisoformat(current_dt)
+                timestamp = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except (ValueError, TypeError):
+                timestamp = current_dt
+        else:
+            timestamp = ""
+
+        # 2. variant = strategy_name
+        variant = strategy_name
+
+        # 3. instruments from target_aggregate
+        target_aggregate = snapshot.get("target_aggregate", {})
+        instruments = SnapshotJsonTransformer.transform_instruments(target_aggregate)
+
+        # 4. positions and orders from position_aggregate
+        position_aggregate = snapshot.get("position_aggregate", {})
+        positions = SnapshotJsonTransformer.transform_positions(position_aggregate)
+        orders = SnapshotJsonTransformer.transform_orders(position_aggregate)
+
+        return {
+            "timestamp": timestamp,
+            "variant": variant,
+            "instruments": instruments,
+            "positions": positions,
+            "orders": orders,
+        }
+
+
 
 
 class SnapshotReader:

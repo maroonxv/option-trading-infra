@@ -434,3 +434,104 @@ class TestTransformOrders:
         assert result[0]["direction"] == "Direction.LONG"
         assert result[0]["offset"] == "Offset.OPEN"
         assert result[0]["status"] == "Status.ALLTRADED"
+
+
+class TestTransform:
+    """测试 transform 主入口方法"""
+
+    def test_full_snapshot(self):
+        """完整快照转换"""
+        snapshot = {
+            "current_dt": {"__datetime__": "2025-01-15T14:30:00+08:00"},
+            "target_aggregate": {
+                "instruments": {
+                    "rb2501.SHFE": {
+                        "bars": {
+                            "__dataframe__": True,
+                            "records": [
+                                {"datetime": "2025-01-15 14:29:00", "open": 3500.0, "close": 3505.0, "low": 3498.0, "high": 3510.0, "volume": 1200},
+                            ]
+                        },
+                        "indicators": {"hv_20": 0.25},
+                    }
+                }
+            },
+            "position_aggregate": {
+                "positions": {
+                    "rb2501.SHFE.LONG": {
+                        "vt_symbol": "rb2501.SHFE",
+                        "direction": {"__enum__": "Direction.LONG"},
+                        "volume": 1,
+                        "open_price": 3500.0,
+                        "pnl": 100.0,
+                    }
+                },
+                "pending_orders": {
+                    "order_001": {
+                        "vt_orderid": "CTP.001",
+                        "vt_symbol": "rb2501.SHFE",
+                        "direction": {"__enum__": "Direction.LONG"},
+                        "offset": {"__enum__": "Offset.OPEN"},
+                        "volume": 1,
+                        "price": 3500.0,
+                        "status": {"__enum__": "Status.SUBMITTING"},
+                    }
+                },
+            },
+        }
+        result = SnapshotJsonTransformer.transform(snapshot, "15m")
+
+        assert result["timestamp"] == "2025-01-15 14:30:00"
+        assert result["variant"] == "15m"
+        assert "rb2501.SHFE" in result["instruments"]
+        assert len(result["positions"]) == 1
+        assert len(result["orders"]) == 1
+        assert set(result.keys()) == {"timestamp", "variant", "instruments", "positions", "orders"}
+
+    def test_missing_current_dt(self):
+        """current_dt 缺失时 timestamp 为空字符串"""
+        snapshot = {}
+        result = SnapshotJsonTransformer.transform(snapshot, "test")
+        assert result["timestamp"] == ""
+
+    def test_current_dt_as_plain_string(self):
+        """current_dt 为普通字符串"""
+        snapshot = {"current_dt": "2025-01-15T14:30:00"}
+        result = SnapshotJsonTransformer.transform(snapshot, "test")
+        assert result["timestamp"] == "2025-01-15 14:30:00"
+
+    def test_current_dt_unparseable_string(self):
+        """current_dt 为无法解析的字符串，原样返回"""
+        snapshot = {"current_dt": "not-a-date"}
+        result = SnapshotJsonTransformer.transform(snapshot, "test")
+        assert result["timestamp"] == "not-a-date"
+
+    def test_missing_target_aggregate(self):
+        """target_aggregate 缺失时 instruments 为空 dict"""
+        snapshot = {"current_dt": "2025-01-15T10:00:00"}
+        result = SnapshotJsonTransformer.transform(snapshot, "test")
+        assert result["instruments"] == {}
+
+    def test_missing_position_aggregate(self):
+        """position_aggregate 缺失时 positions 和 orders 为空列表"""
+        snapshot = {"current_dt": "2025-01-15T10:00:00"}
+        result = SnapshotJsonTransformer.transform(snapshot, "test")
+        assert result["positions"] == []
+        assert result["orders"] == []
+
+    def test_variant_equals_strategy_name(self):
+        """variant 应等于传入的 strategy_name"""
+        snapshot = {}
+        result = SnapshotJsonTransformer.transform(snapshot, "my_strategy_30m")
+        assert result["variant"] == "my_strategy_30m"
+
+    def test_empty_snapshot(self):
+        """完全空的 snapshot 应返回所有默认值"""
+        result = SnapshotJsonTransformer.transform({}, "test")
+        assert result == {
+            "timestamp": "",
+            "variant": "test",
+            "instruments": {},
+            "positions": [],
+            "orders": [],
+        }

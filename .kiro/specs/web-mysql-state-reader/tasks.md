@@ -40,7 +40,7 @@
     - **Property 3: Positions and orders dict-to-list transformation**
     - **Validates: Requirements 4.1, 4.2, 4.3, 4.4**
 
-  - [~] 1.7 实现 `transform` 主入口方法
+  - [x] 1.7 实现 `transform` 主入口方法
     - 组合 timestamp（从 current_dt）、variant（从 strategy_name）、instruments、positions、orders
     - 处理缺失字段的默认值
     - _Requirements: 2.2, 2.3_
