@@ -37,12 +37,12 @@
   - 确保所有测试通过，如有问题请询问用户。
 
 - [ ] 4. 实现合约工厂和注册表
-  - [-] 4.1 实现 `src/backtesting/contract/contract_factory.py`
+  - [x] 4.1 实现 `src/backtesting/contract/contract_factory.py`
     - ContractFactory.create()：解析 vt_symbol 构建 ContractData
     - 支持期货格式（rb2505.SHFE）和期权格式（MO2601-C-6300.CFFEX、rb2505C3000.SHFE）
     - 期权反向映射（MO→IM）、自动填充 size/pricetick
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
-  - [~] 4.2 为 ContractFactory 编写属性测试
+  - [-] 4.2 为 ContractFactory 编写属性测试
     - **Property 5: 期货合约构建正确性**
     - **Property 6: 期权合约构建正确性**
     - **Validates: Requirements 5.1, 5.2, 5.3, 5.4**
