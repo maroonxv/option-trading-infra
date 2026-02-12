@@ -7,10 +7,10 @@
 ## 任务
 
 - [ ] 1. 创建模块结构和静态配置
-  - [-] 1.1 创建目录结构和 `__init__.py` 文件
+  - [x] 1.1 创建目录结构和 `__init__.py` 文件
     - 创建 `src/backtesting/__init__.py`、`src/backtesting/contract/__init__.py`、`src/backtesting/discovery/__init__.py`
     - _Requirements: 1.1_
-  - [~] 1.2 创建 `src/backtesting/config.py`，提取静态配置数据和 BacktestConfig 数据类
+  - [-] 1.2 创建 `src/backtesting/config.py`，提取静态配置数据和 BacktestConfig 数据类
     - 从 `vt_symbol_generator.py` 提取 EXCHANGE_MAP、FUTURE_OPTION_MAP、OPTION_FUTURE_MAP、PRODUCT_SPECS、MANUAL_EXPIRY_CONFIG
     - 实现 BacktestConfig dataclass，支持 from_args() 方法
     - 不包含任何硬编码日期值
