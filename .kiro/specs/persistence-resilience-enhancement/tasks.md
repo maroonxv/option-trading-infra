@@ -57,7 +57,7 @@
     - 测试 eager vs lazy 初始化、不回退 SQLite、日志输出
     - _Requirements: 3.4, 3.5, 5.5_
 
-- [-] 6. 改造 StateRepository
+- [x] 6. 改造 StateRepository
   - [x] 6.1 重写 `src/strategy/infrastructure/persistence/state_repository.py`
     - 构造函数接受 `JsonSerializer` 和 `DatabaseFactory`
     - 实现 `save(strategy_name, data)` — INSERT 追加到 strategy_state 表
@@ -65,7 +65,7 @@
     - 实现 `verify_integrity(strategy_name)` — 验证 JSON 可解析且包含 schema_version
     - 实现 `cleanup(strategy_name, keep_days)` — 清理旧快照
     - _Requirements: 1.4, 2.1, 2.2, 2.4, 2.5, 4.1, 4.8_
-  - [-] 6.2 编写 StateRepository 属性测试
+  - [x] 6.2 编写 StateRepository 属性测试
     - **Property 2: Save then load returns latest snapshot**
     - **Validates: Requirements 1.4**
     - **Property 3: Non-existent strategy returns ArchiveNotFound**
@@ -74,15 +74,15 @@
     - **Validates: Requirements 2.2, 2.4**
     - **Property 5: Integrity check without full deserialization**
     - **Validates: Requirements 2.5**
-  - [~] 6.3 编写 StateRepository 单元测试
+  - [x] 6.3 编写 StateRepository 单元测试
     - 测试 cleanup 清理旧快照、CorruptionError 包含正确信息
     - _Requirements: 2.3, 2.4_
 
-- [~] 7. Checkpoint - 持久化层验证
+- [x] 7. Checkpoint - 持久化层验证
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 8. 实现 AutoSaveService
-  - [~] 8.1 创建 `src/strategy/infrastructure/persistence/auto_save_service.py`，实现 `AutoSaveService` 类
+- [-] 8. 实现 AutoSaveService
+  - [-] 8.1 创建 `src/strategy/infrastructure/persistence/auto_save_service.py`，实现 `AutoSaveService` 类
     - 构造函数接受 `StateRepository`、`strategy_name`、`interval_seconds`（默认 60）、`logger`
     - 实现 `maybe_save(snapshot_fn)` — 基于 `time.monotonic()` 判断是否到达保存间隔
     - 实现 `force_save(snapshot_fn)` — 强制保存
