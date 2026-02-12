@@ -53,11 +53,11 @@
     - **Property 7: 合约注册表 round-trip**
     - **Validates: Requirements 7.1, 7.2, 7.3**
 
-- [-] 5. Checkpoint - 确保所有测试通过
+- [x] 5. Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请询问用户。
 
 - [ ] 6. 实现合约发现组件
-  - [~] 6.1 实现 `src/backtesting/discovery/symbol_generator.py`
+  - [x] 6.1 实现 `src/backtesting/discovery/symbol_generator.py`
     - SymbolGenerator.generate_for_range()：生成时间范围内的 vt_symbol
     - SymbolGenerator.generate_recent()：生成近期合约代码（无硬编码开始日期）
     - 郑商所三位格式、其他交易所四位格式
