@@ -56,7 +56,7 @@
 - [x] 5. Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请询问用户。
 
-- [ ] 6. 实现合约发现组件
+- [x] 6. 实现合约发现组件
   - [x] 6.1 实现 `src/backtesting/discovery/symbol_generator.py`
     - SymbolGenerator.generate_for_range()：生成时间范围内的 vt_symbol
     - SymbolGenerator.generate_recent()：生成近期合约代码（无硬编码开始日期）
@@ -65,14 +65,14 @@
   - [x] 6.2 为 SymbolGenerator 编写属性测试
     - **Property 1: 合约代码生成格式正确性**
     - **Validates: Requirements 2.1, 2.2, 2.3**
-  - [-] 6.3 实现 `src/backtesting/discovery/option_discovery.py`
+  - [x] 6.3 实现 `src/backtesting/discovery/option_discovery.py`
     - OptionDiscoveryService.discover()：从数据库查找关联期权
     - 使用 FUTURE_OPTION_MAP 进行前缀匹配
     - 数据库失败时返回空列表
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
 - [ ] 7. 实现回测执行器和 CLI
-  - [~] 7.1 实现 `src/backtesting/runner.py`
+  - [x] 7.1 实现 `src/backtesting/runner.py`
     - BacktestRunner.run()：完整回测流程编排
     - 使用 ContractRegistry 替代 monkey-patching
     - 空 vt_symbols 时终止执行
