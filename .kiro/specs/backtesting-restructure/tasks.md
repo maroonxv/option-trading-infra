@@ -77,7 +77,7 @@
     - 使用 ContractRegistry 替代 monkey-patching
     - 空 vt_symbols 时终止执行
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
-  - [~] 7.2 实现 `src/backtesting/cli.py`
+  - [x] 7.2 实现 `src/backtesting/cli.py`
     - argparse CLI 入口
     - 支持 config、start、end、capital、rate、slippage、no-chart 参数
     - _Requirements: 10.1, 10.2, 10.3_
