@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request
-from reader import SnapshotReader, MySQLSnapshotReader
+from reader import SnapshotReader, MySQLSnapshotReader, StrategyStateReader
 import os
 import json
 
@@ -41,6 +41,13 @@ if SETTINGS is not None and os.getenv("VNPY_DATABASE_DRIVER"):
 
 pickle_reader = SnapshotReader()
 mysql_reader = MySQLSnapshotReader()
+state_reader = StrategyStateReader({
+    "host": os.getenv("VNPY_DATABASE_HOST", ""),
+    "port": int(os.getenv("VNPY_DATABASE_PORT", "3306") or 3306),
+    "user": os.getenv("VNPY_DATABASE_USER", ""),
+    "password": os.getenv("VNPY_DATABASE_PASSWORD", ""),
+    "database": os.getenv("VNPY_DATABASE_DATABASE", ""),
+})
 
 use_mysql = str(os.getenv("MONITOR_USE_MYSQL", "1")).lower() not in ("0", "false", "no", "off", "")
 
@@ -74,17 +81,35 @@ def mysql_ready() -> bool:
     return ready
 
 def list_strategies_best_effort():
+    # 1. Try StrategyStateReader (strategy_state table)
+    try:
+        rows = state_reader.list_available_strategies()
+        if rows:
+            return rows
+    except Exception:
+        pass
+    # 2. Fall back to MySQLSnapshotReader (monitor_signal_snapshot table)
     if mysql_ready():
         rows = mysql_reader.list_available_strategies()
         if rows:
             return rows
+    # 3. Fall back to pickle
     return pickle_reader.list_available_strategies()
 
 def get_snapshot_best_effort(variant_name: str):
+    # 1. Try StrategyStateReader (strategy_state table)
+    try:
+        data = state_reader.get_strategy_data(variant_name)
+        if data:
+            return data
+    except Exception:
+        pass
+    # 2. Fall back to MySQLSnapshotReader (monitor_signal_snapshot table)
     if mysql_ready():
         data = mysql_reader.get_strategy_data(variant_name)
         if data:
             return data
+    # 3. Fall back to pickle
     return pickle_reader.get_strategy_data(variant_name)
 
 socketio = None
