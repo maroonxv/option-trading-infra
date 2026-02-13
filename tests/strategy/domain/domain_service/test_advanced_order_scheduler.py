@@ -367,3 +367,53 @@ class TestAdvancedOrderSchedulerUnit:
         start = datetime(2025, 1, 1, 9, 0, 0)
         with pytest.raises(ValueError):
             scheduler.submit_vwap(make_instruction(10), 300, [0.5, -0.1], start)
+
+
+    def test_classic_iceberg_get_pending_children_sequential(self):
+        """经典冰山单: get_pending_children 仅在前一笔成交后返回下一笔"""
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(50)
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume=20)
+        # 应有 3 笔子单: 20, 20, 10
+        assert len(order.child_orders) == 3
+
+        now = datetime(2025, 1, 1, 9, 0, 0)
+
+        # 初始状态: 只返回第一笔
+        pending = scheduler.get_pending_children(now)
+        assert len(pending) == 1
+        assert pending[0].child_id == order.child_orders[0].child_id
+
+        # 标记第一笔为已提交（模拟提交）
+        order.child_orders[0].is_submitted = True
+
+        # 第一笔已提交但未成交: 不返回任何子单
+        pending = scheduler.get_pending_children(now)
+        assert len(pending) == 0
+
+        # 第一笔成交
+        scheduler.on_child_filled(order.child_orders[0].child_id)
+
+        # 第一笔成交后: 返回第二笔
+        pending = scheduler.get_pending_children(now)
+        assert len(pending) == 1
+        assert pending[0].child_id == order.child_orders[1].child_id
+
+        # 标记第二笔为已提交并成交
+        order.child_orders[1].is_submitted = True
+        scheduler.on_child_filled(order.child_orders[1].child_id)
+
+        # 第二笔成交后: 返回第三笔
+        pending = scheduler.get_pending_children(now)
+        assert len(pending) == 1
+        assert pending[0].child_id == order.child_orders[2].child_id
+
+        # 标记第三笔为已提交并成交
+        order.child_orders[2].is_submitted = True
+        scheduler.on_child_filled(order.child_orders[2].child_id)
+
+        # 全部成交后: 不再返回子单
+        pending = scheduler.get_pending_children(now)
+        assert len(pending) == 0
+        assert order.status == AdvancedOrderStatus.COMPLETED
+

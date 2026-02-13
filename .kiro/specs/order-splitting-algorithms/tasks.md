@@ -41,7 +41,7 @@
     - 实现参数校验、子单拆分（含随机化）和价格偏移逻辑
     - 确保随机化后总量精确等于原始委托总量
     - _Requirements: 2.1, 2.2, 2.3, 2.7, 2.8_
-  - [-] 3.2 扩展 get_pending_children 支持 CLASSIC_ICEBERG 类型
+  - [x] 3.2 扩展 get_pending_children 支持 CLASSIC_ICEBERG 类型
     - 在 `get_pending_children` 中新增 `CLASSIC_ICEBERG` 分支：前一笔成交后才提交下一笔
     - _Requirements: 2.4_
   - [~] 3.3 扩展 on_child_filled 和 cancel_order 支持经典冰山单事件
