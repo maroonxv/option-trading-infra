@@ -58,7 +58,7 @@
 - [x] 4. Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请向用户确认。
 
-- [ ] 5. 实现增强型 TWAP 算法
+- [x] 5. 实现增强型 TWAP 算法
   - [x] 5.1 实现 submit_enhanced_twap 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)` 方法
     - 实现参数校验、均匀分配和时间调度逻辑
@@ -74,7 +74,7 @@
     - **Property 6: 增强型 TWAP 拆分正确性**
     - **Validates: Requirements 3.1, 3.2**
 
-- [ ] 6. 实现跨算法通用测试
+- [x] 6. 实现跨算法通用测试
   - [x] 6.1 编写成交量追踪不变量属性测试
     - **Property 7: 成交量追踪不变量**
     - **Validates: Requirements 4.1, 4.2**
@@ -85,7 +85,7 @@
     - **Property 9: 无效参数拒绝**
     - **Validates: Requirements 1.5, 2.7, 2.8, 3.6**
 
-- [~] 7. Final Checkpoint - 确保所有测试通过
+- [x] 7. Final Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请向用户确认。
 
 ## 备注
