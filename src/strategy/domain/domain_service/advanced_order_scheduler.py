@@ -17,6 +17,7 @@ from src.strategy.domain.value_object.advanced_order import (
 from src.strategy.domain.event.event_types import (
     DomainEvent, IcebergCompleteEvent, IcebergCancelledEvent,
     TWAPCompleteEvent, VWAPCompleteEvent, TimedSplitCompleteEvent,
+    ClassicIcebergCompleteEvent, ClassicIcebergCancelledEvent,
 )
 
 
@@ -382,6 +383,13 @@ class AdvancedOrderScheduler:
                                 total_volume=total_vol,
                                 filled_volume=order.filled_volume,
                             ))
+                        elif order.request.order_type == AdvancedOrderType.CLASSIC_ICEBERG:
+                            events.append(ClassicIcebergCompleteEvent(
+                                order_id=order.order_id,
+                                vt_symbol=vt_symbol,
+                                total_volume=total_vol,
+                                filled_volume=order.filled_volume,
+                            ))
                     return events
         return events
 
@@ -440,6 +448,13 @@ class AdvancedOrderScheduler:
 
         if order.request.order_type == AdvancedOrderType.ICEBERG:
             events.append(IcebergCancelledEvent(
+                order_id=order.order_id,
+                vt_symbol=vt_symbol,
+                filled_volume=order.filled_volume,
+                remaining_volume=remaining,
+            ))
+        elif order.request.order_type == AdvancedOrderType.CLASSIC_ICEBERG:
+            events.append(ClassicIcebergCancelledEvent(
                 order_id=order.order_id,
                 vt_symbol=vt_symbol,
                 filled_volume=order.filled_volume,

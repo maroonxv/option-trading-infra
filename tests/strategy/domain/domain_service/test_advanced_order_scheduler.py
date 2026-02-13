@@ -19,6 +19,7 @@ from src.strategy.domain.value_object.advanced_order import (
 from src.strategy.domain.event.event_types import (
     IcebergCompleteEvent, IcebergCancelledEvent,
     TWAPCompleteEvent, VWAPCompleteEvent,
+    ClassicIcebergCompleteEvent, ClassicIcebergCancelledEvent,
 )
 
 
@@ -417,3 +418,72 @@ class TestAdvancedOrderSchedulerUnit:
         assert len(pending) == 0
         assert order.status == AdvancedOrderStatus.COMPLETED
 
+
+    def test_classic_iceberg_on_child_filled_complete_event(self):
+        """经典冰山单: 全部成交时发布 ClassicIcebergCompleteEvent"""
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(30)
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume=10)
+        assert len(order.child_orders) == 3
+
+        # 逐笔成交
+        events1 = scheduler.on_child_filled(order.child_orders[0].child_id)
+        assert len(events1) == 0  # 未全部成交，无完成事件
+
+        events2 = scheduler.on_child_filled(order.child_orders[1].child_id)
+        assert len(events2) == 0
+
+        events3 = scheduler.on_child_filled(order.child_orders[2].child_id)
+        assert len(events3) == 1
+        evt = events3[0]
+        assert isinstance(evt, ClassicIcebergCompleteEvent)
+        assert evt.order_id == order.order_id
+        assert evt.vt_symbol == "IO2506-C-4000.CFFEX"
+        assert evt.total_volume == 30
+        assert evt.filled_volume == 30
+        assert order.status == AdvancedOrderStatus.COMPLETED
+
+    def test_classic_iceberg_cancel_order_event(self):
+        """经典冰山单: 取消时发布 ClassicIcebergCancelledEvent"""
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(50)
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume=20)
+        # 3 笔子单: 20, 20, 10
+
+        # 成交第一笔
+        order.child_orders[0].is_submitted = True
+        scheduler.on_child_filled(order.child_orders[0].child_id)
+
+        # 提交第二笔但未成交
+        order.child_orders[1].is_submitted = True
+
+        # 取消订单
+        cancel_ids, events = scheduler.cancel_order(order.order_id)
+
+        # 应返回已提交未成交的子单 ID
+        assert order.child_orders[1].child_id in cancel_ids
+        assert order.child_orders[0].child_id not in cancel_ids  # 已成交不需撤销
+
+        assert len(events) == 1
+        evt = events[0]
+        assert isinstance(evt, ClassicIcebergCancelledEvent)
+        assert evt.order_id == order.order_id
+        assert evt.vt_symbol == "IO2506-C-4000.CFFEX"
+        assert evt.filled_volume == 20
+        assert evt.remaining_volume == 30  # 20 + 10 未成交
+        assert order.status == AdvancedOrderStatus.CANCELLED
+
+    def test_classic_iceberg_cancel_already_completed(self):
+        """经典冰山单: 取消已完成的订单不产生事件"""
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(10)
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume=10)
+
+        # 成交唯一子单
+        scheduler.on_child_filled(order.child_orders[0].child_id)
+        assert order.status == AdvancedOrderStatus.COMPLETED
+
+        # 尝试取消已完成的订单
+        cancel_ids, events = scheduler.cancel_order(order.order_id)
+        assert cancel_ids == []
+        assert events == []
