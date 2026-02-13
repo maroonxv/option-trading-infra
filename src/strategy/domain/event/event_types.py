@@ -259,6 +259,41 @@ class VWAPCompleteEvent(DomainEvent):
     total_volume: int = 0
 
 
+@dataclass
+class TimedSplitCompleteEvent(DomainEvent):
+    """定时拆单完成事件"""
+    order_id: str = ""
+    vt_symbol: str = ""
+    total_volume: int = 0
+    filled_volume: int = 0
+
+
+@dataclass
+class ClassicIcebergCompleteEvent(DomainEvent):
+    """经典冰山单完成事件"""
+    order_id: str = ""
+    vt_symbol: str = ""
+    total_volume: int = 0
+    filled_volume: int = 0
+
+
+@dataclass
+class ClassicIcebergCancelledEvent(DomainEvent):
+    """经典冰山单取消事件"""
+    order_id: str = ""
+    vt_symbol: str = ""
+    filled_volume: int = 0
+    remaining_volume: int = 0
+
+
+@dataclass
+class EnhancedTWAPCompleteEvent(DomainEvent):
+    """增强型 TWAP 完成事件"""
+    order_id: str = ""
+    vt_symbol: str = ""
+    total_volume: int = 0
+
+
 # ========== 对冲引擎事件 ==========
 @dataclass
 class HedgeExecutedEvent(DomainEvent):

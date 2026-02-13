@@ -12,11 +12,11 @@
     - 在 `AdvancedOrderRequest` 中新增 `interval_seconds`、`per_order_volume`、`volume_randomize_ratio`、`price_offset_ticks`、`price_tick` 字段
     - 在 `ChildOrder` 中新增 `price_offset: float = 0.0` 字段
     - _Requirements: 1.1, 2.1, 2.3, 3.1_
-  - [-] 1.2 更新 AdvancedOrder 的 to_dict/from_dict 以支持新字段
+  - [x] 1.2 更新 AdvancedOrder 的 to_dict/from_dict 以支持新字段
     - 在 `to_dict` 中序列化新增的 `AdvancedOrderRequest` 字段和 `ChildOrder.price_offset`
     - 在 `from_dict` 中反序列化新增字段
     - _Requirements: 5.1, 5.2, 5.3_
-  - [~] 1.3 新增领域事件类型
+  - [-] 1.3 新增领域事件类型
     - 在 `src/strategy/domain/event/event_types.py` 中新增 `TimedSplitCompleteEvent`、`ClassicIcebergCompleteEvent`、`ClassicIcebergCancelledEvent`、`EnhancedTWAPCompleteEvent`
     - _Requirements: 1.4, 2.5, 2.6, 3.4_
 
