@@ -59,11 +59,11 @@
   - 确保所有测试通过，如有问题请向用户确认。
 
 - [ ] 5. 实现增强型 TWAP 算法
-  - [-] 5.1 实现 submit_enhanced_twap 方法
+  - [x] 5.1 实现 submit_enhanced_twap 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)` 方法
     - 实现参数校验、均匀分配和时间调度逻辑
     - _Requirements: 3.1, 3.2, 3.6_
-  - [~] 5.2 扩展 get_pending_children 支持 ENHANCED_TWAP 类型
+  - [x] 5.2 扩展 get_pending_children 支持 ENHANCED_TWAP 类型
     - 在 `get_pending_children` 中新增 `ENHANCED_TWAP` 分支：按 scheduled_time 提交
     - _Requirements: 3.3_
   - [~] 5.3 扩展 on_child_filled 和 cancel_order 支持增强型 TWAP 事件

@@ -781,6 +781,50 @@ class TestAdvancedOrderSchedulerUnit:
         with pytest.raises(ValueError):
             scheduler.submit_enhanced_twap(make_instruction(100), 300, 0, start)
 
+    def test_enhanced_twap_get_pending_children_by_scheduled_time(self):
+        """增强型 TWAP: get_pending_children 按 scheduled_time 返回可提交子单"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        order = scheduler.submit_enhanced_twap(make_instruction(100), 300, 5, start)
+
+        # 在 start_time 之前，不应有可提交子单
+        before_start = start - timedelta(seconds=1)
+        pending = scheduler.get_pending_children(before_start)
+        assert len(pending) == 0
+
+        # 恰好在 start_time，应返回第一个子单
+        pending = scheduler.get_pending_children(start)
+        assert len(pending) == 1
+        assert pending[0].child_id == order.child_orders[0].child_id
+
+        # 在 start + 60s（第二个时间片），应返回前两个子单（第一个未提交）
+        t1 = start + timedelta(seconds=60)
+        pending = scheduler.get_pending_children(t1)
+        assert len(pending) == 2
+        child_ids = {c.child_id for c in pending}
+        assert order.child_orders[0].child_id in child_ids
+        assert order.child_orders[1].child_id in child_ids
+
+        # 标记第一个子单为已提交，再查询应只返回第二个
+        order.child_orders[0].is_submitted = True
+        pending = scheduler.get_pending_children(t1)
+        assert len(pending) == 1
+        assert pending[0].child_id == order.child_orders[1].child_id
+
+        # 在最后一个时间片之后，所有未提交子单都应返回
+        t_end = start + timedelta(seconds=300)
+        # 重置提交状态
+        order.child_orders[0].is_submitted = False
+        pending = scheduler.get_pending_children(t_end)
+        assert len(pending) == 5
+
+        # 已成交的子单不应返回
+        order.child_orders[0].is_filled = True
+        pending = scheduler.get_pending_children(t_end)
+        assert len(pending) == 4
+        assert all(c.child_id != order.child_orders[0].child_id for c in pending)
+
+
 
 
 
