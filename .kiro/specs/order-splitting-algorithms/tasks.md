@@ -21,11 +21,11 @@
     - _Requirements: 1.4, 2.5, 2.6, 3.4_
 
 - [-] 2. 实现定时拆单算法
-  - [-] 2.1 实现 submit_timed_split 方法
+  - [x] 2.1 实现 submit_timed_split 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_timed_split(instruction, interval_seconds, per_order_volume, start_time)` 方法
     - 实现参数校验、子单拆分和时间调度逻辑
     - _Requirements: 1.1, 1.2, 1.5_
-  - [~] 2.2 扩展 get_pending_children 支持 TIMED_SPLIT 类型
+  - [-] 2.2 扩展 get_pending_children 支持 TIMED_SPLIT 类型
     - 在 `get_pending_children` 中新增 `TIMED_SPLIT` 分支：按 scheduled_time 提交
     - _Requirements: 1.3_
   - [~] 2.3 扩展 on_child_filled 支持 TIMED_SPLIT 完成事件

@@ -329,8 +329,13 @@ class AdvancedOrderScheduler:
                         if all_prev_filled:
                             pending.append(child)
                         break  # 冰山单一次只提交一个
-            else:
-                # TWAP/VWAP: 到达调度时间的子单
+            elif order.request.order_type in (
+                AdvancedOrderType.TWAP,
+                AdvancedOrderType.VWAP,
+                AdvancedOrderType.TIMED_SPLIT,
+                AdvancedOrderType.ENHANCED_TWAP,
+            ):
+                # TWAP/VWAP/TIMED_SPLIT/ENHANCED_TWAP: 到达调度时间的子单
                 for child in order.child_orders:
                     if (not child.is_submitted and not child.is_filled
                             and child.scheduled_time is not None
