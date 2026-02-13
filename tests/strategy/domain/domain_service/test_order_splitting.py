@@ -108,3 +108,129 @@ class TestEnhancedTWAPProperty:
             assert abs(actual_interval - expected_interval) <= 1.0, (
                 f"Slice {i}: actual_interval={actual_interval}, expected={expected_interval}"
             )
+
+# --- Strategies for Property 7 ---
+
+@st.composite
+def order_type_strategy(draw):
+    """随机选择一种新订单类型并生成对应的有效参数和订单"""
+    order_type = draw(st.sampled_from(["timed_split", "classic_iceberg", "enhanced_twap"]))
+    total_volume = draw(st.integers(min_value=1, max_value=500))
+    instruction = make_instruction(total_volume)
+    scheduler = AdvancedOrderScheduler()
+    start_time = datetime(2025, 1, 1, 10, 0, 0)
+
+    if order_type == "timed_split":
+        per_order_volume = draw(st.integers(min_value=1, max_value=max(1, total_volume)))
+        interval_seconds = draw(st.integers(min_value=1, max_value=3600))
+        order = scheduler.submit_timed_split(instruction, interval_seconds, per_order_volume, start_time)
+    elif order_type == "classic_iceberg":
+        per_order_volume = draw(st.integers(min_value=1, max_value=max(1, total_volume)))
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume)
+    else:  # enhanced_twap
+        num_slices = draw(st.integers(min_value=1, max_value=min(100, total_volume)))
+        time_window_seconds = draw(st.integers(min_value=1, max_value=86400))
+        order = scheduler.submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)
+
+    return scheduler, order
+
+
+class TestFilledVolumeTrackingProperty:
+    """Feature: order-splitting-algorithms, Property 7: 成交量追踪不变量"""
+
+    @given(data=st.data())
+    @settings(max_examples=100)
+    def test_property7_filled_volume_invariant(self, data):
+        """
+        **Validates: Requirements 4.1, 4.2**
+
+        For any order type and any child fill sequence,
+        filled_volume always equals the sum of volumes of all filled children.
+        """
+        scheduler, order = data.draw(order_type_strategy())
+        child_ids = [c.child_id for c in order.child_orders]
+
+        # 随机选择一个子集并打乱顺序作为成交序列
+        num_to_fill = data.draw(st.integers(min_value=0, max_value=len(child_ids)))
+        fill_indices = data.draw(
+            st.permutations(range(len(child_ids))).map(lambda p: list(p[:num_to_fill]))
+        )
+
+        filled_set = set()
+        for idx in fill_indices:
+            child_id = child_ids[idx]
+            scheduler.on_child_filled(child_id)
+            filled_set.add(idx)
+
+            # 不变量: filled_volume == 所有已成交子单的 volume 之和
+            expected_filled = sum(
+                order.child_orders[i].volume for i in filled_set
+            )
+            assert order.filled_volume == expected_filled, (
+                f"After filling child {idx} ({child_id}): "
+                f"filled_volume={order.filled_volume}, expected={expected_filled}"
+            )
+
+
+
+# --- Strategies for Property 7 ---
+
+@st.composite
+def order_type_strategy(draw):
+    """随机选择一种新订单类型并生成对应的有效参数和订单"""
+    order_type = draw(st.sampled_from(["timed_split", "classic_iceberg", "enhanced_twap"]))
+    total_volume = draw(st.integers(min_value=1, max_value=500))
+    instruction = make_instruction(total_volume)
+    scheduler = AdvancedOrderScheduler()
+    start_time = datetime(2025, 1, 1, 10, 0, 0)
+
+    if order_type == "timed_split":
+        per_order_volume = draw(st.integers(min_value=1, max_value=max(1, total_volume)))
+        interval_seconds = draw(st.integers(min_value=1, max_value=3600))
+        order = scheduler.submit_timed_split(instruction, interval_seconds, per_order_volume, start_time)
+    elif order_type == "classic_iceberg":
+        per_order_volume = draw(st.integers(min_value=1, max_value=max(1, total_volume)))
+        order = scheduler.submit_classic_iceberg(instruction, per_order_volume)
+    else:  # enhanced_twap
+        num_slices = draw(st.integers(min_value=1, max_value=min(100, total_volume)))
+        time_window_seconds = draw(st.integers(min_value=1, max_value=86400))
+        order = scheduler.submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)
+
+    return scheduler, order
+
+
+class TestFilledVolumeTrackingProperty:
+    """Feature: order-splitting-algorithms, Property 7: 成交量追踪不变量"""
+
+    @given(data=st.data())
+    @settings(max_examples=100)
+    def test_property7_filled_volume_invariant(self, data):
+        """
+        **Validates: Requirements 4.1, 4.2**
+
+        For any order type and any child fill sequence,
+        filled_volume always equals the sum of volumes of all filled children.
+        """
+        scheduler, order = data.draw(order_type_strategy())
+        child_ids = [c.child_id for c in order.child_orders]
+
+        # 随机选择一个子集并打乱顺序作为成交序列
+        num_to_fill = data.draw(st.integers(min_value=0, max_value=len(child_ids)))
+        fill_indices = data.draw(
+            st.permutations(range(len(child_ids))).map(lambda p: list(p[:num_to_fill]))
+        )
+
+        filled_set = set()
+        for idx in fill_indices:
+            child_id = child_ids[idx]
+            scheduler.on_child_filled(child_id)
+            filled_set.add(idx)
+
+            # 不变量: filled_volume == 所有已成交子单的 volume 之和
+            expected_filled = sum(
+                order.child_orders[i].volume for i in filled_set
+            )
+            assert order.filled_volume == expected_filled, (
+                f"After filling child {idx} ({child_id}): "
+                f"filled_volume={order.filled_volume}, expected={expected_filled}"
+            )

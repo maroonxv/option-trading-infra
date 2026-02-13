@@ -75,7 +75,7 @@
     - **Validates: Requirements 3.1, 3.2**
 
 - [ ] 6. 实现跨算法通用测试
-  - [~] 6.1 编写成交量追踪不变量属性测试
+  - [x] 6.1 编写成交量追踪不变量属性测试
     - **Property 7: 成交量追踪不变量**
     - **Validates: Requirements 4.1, 4.2**
   - [~] 6.2 编写序列化 Round-Trip 属性测试
