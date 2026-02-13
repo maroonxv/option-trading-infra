@@ -20,7 +20,7 @@
     - 在 `src/strategy/domain/event/event_types.py` 中新增 `TimedSplitCompleteEvent`、`ClassicIcebergCompleteEvent`、`ClassicIcebergCancelledEvent`、`EnhancedTWAPCompleteEvent`
     - _Requirements: 1.4, 2.5, 2.6, 3.4_
 
-- [-] 2. 实现定时拆单算法
+- [x] 2. 实现定时拆单算法
   - [x] 2.1 实现 submit_timed_split 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_timed_split(instruction, interval_seconds, per_order_volume, start_time)` 方法
     - 实现参数校验、子单拆分和时间调度逻辑
@@ -35,8 +35,8 @@
     - **Property 1: 定时拆单拆分正确性**
     - **Validates: Requirements 1.1, 1.2**
 
-- [ ] 3. 实现经典冰山单算法
-  - [~] 3.1 实现 submit_classic_iceberg 方法
+- [-] 3. 实现经典冰山单算法
+  - [-] 3.1 实现 submit_classic_iceberg 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_classic_iceberg(instruction, per_order_volume, volume_randomize_ratio, price_offset_ticks, price_tick)` 方法
     - 实现参数校验、子单拆分（含随机化）和价格偏移逻辑
     - 确保随机化后总量精确等于原始委托总量

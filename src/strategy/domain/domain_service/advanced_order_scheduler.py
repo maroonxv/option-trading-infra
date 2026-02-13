@@ -4,6 +4,7 @@ AdvancedOrderScheduler - 高级订单调度器
 统一管理冰山单、TWAP、VWAP 的拆单逻辑和子单生命周期。
 """
 import math
+import random
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
@@ -165,6 +166,73 @@ class AdvancedOrderScheduler:
             status=AdvancedOrderStatus.EXECUTING,
             child_orders=child_orders,
             slice_schedule=slice_schedule,
+        )
+        self._orders[order_id] = order
+        return order
+
+    def submit_classic_iceberg(
+        self,
+        instruction: OrderInstruction,
+        per_order_volume: int,
+        volume_randomize_ratio: float = 0.0,
+        price_offset_ticks: int = 0,
+        price_tick: float = 0.0,
+    ) -> AdvancedOrder:
+        """提交经典冰山单"""
+        total_volume = instruction.volume
+        if total_volume <= 0:
+            raise ValueError("总量必须大于 0")
+        if per_order_volume <= 0:
+            raise ValueError("每笔数量必须大于 0")
+        if volume_randomize_ratio < 0 or volume_randomize_ratio >= 1:
+            raise ValueError("随机比例必须在 [0, 1) 范围内")
+        if price_offset_ticks > 0 and price_tick <= 0:
+            raise ValueError("使用价格偏移时 price_tick 必须大于 0")
+
+        order_id = str(uuid.uuid4())
+        request = AdvancedOrderRequest(
+            order_type=AdvancedOrderType.CLASSIC_ICEBERG,
+            instruction=instruction,
+            per_order_volume=per_order_volume,
+            volume_randomize_ratio=volume_randomize_ratio,
+            price_offset_ticks=price_offset_ticks,
+            price_tick=price_tick,
+        )
+
+        # 拆分子单
+        child_orders: List[ChildOrder] = []
+        remaining = total_volume
+        idx = 0
+        while remaining > 0:
+            if volume_randomize_ratio > 0 and remaining > 1:
+                low = per_order_volume * (1 - volume_randomize_ratio)
+                high = per_order_volume * (1 + volume_randomize_ratio)
+                randomized = random.uniform(low, high)
+                vol = max(1, min(round(randomized), remaining))
+            else:
+                vol = min(per_order_volume, remaining)
+
+            # 价格偏移
+            if price_offset_ticks > 0 and price_tick > 0:
+                offset = random.uniform(-price_offset_ticks, price_offset_ticks) * price_tick
+            else:
+                offset = 0.0
+
+            child = ChildOrder(
+                child_id=f"{order_id}_child_{idx}",
+                parent_id=order_id,
+                volume=vol,
+                price_offset=offset,
+            )
+            child_orders.append(child)
+            remaining -= vol
+            idx += 1
+
+        order = AdvancedOrder(
+            order_id=order_id,
+            request=request,
+            status=AdvancedOrderStatus.EXECUTING,
+            child_orders=child_orders,
         )
         self._orders[order_id] = order
         return order
