@@ -35,7 +35,7 @@
     - **Property 1: 定时拆单拆分正确性**
     - **Validates: Requirements 1.1, 1.2**
 
-- [-] 3. 实现经典冰山单算法
+- [x] 3. 实现经典冰山单算法
   - [x] 3.1 实现 submit_classic_iceberg 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_classic_iceberg(instruction, per_order_volume, volume_randomize_ratio, price_offset_ticks, price_tick)` 方法
     - 实现参数校验、子单拆分（含随机化）和价格偏移逻辑
@@ -55,11 +55,11 @@
     - **Property 5: 经典冰山单取消正确性**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5, 2.6**
 
-- [~] 4. Checkpoint - 确保所有测试通过
+- [x] 4. Checkpoint - 确保所有测试通过
   - 确保所有测试通过，如有问题请向用户确认。
 
 - [ ] 5. 实现增强型 TWAP 算法
-  - [~] 5.1 实现 submit_enhanced_twap 方法
+  - [-] 5.1 实现 submit_enhanced_twap 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)` 方法
     - 实现参数校验、均匀分配和时间调度逻辑
     - _Requirements: 3.1, 3.2, 3.6_

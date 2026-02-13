@@ -18,6 +18,7 @@ from src.strategy.domain.event.event_types import (
     DomainEvent, IcebergCompleteEvent, IcebergCancelledEvent,
     TWAPCompleteEvent, VWAPCompleteEvent, TimedSplitCompleteEvent,
     ClassicIcebergCompleteEvent, ClassicIcebergCancelledEvent,
+    EnhancedTWAPCompleteEvent,
 )
 
 
@@ -237,6 +238,60 @@ class AdvancedOrderScheduler:
         )
         self._orders[order_id] = order
         return order
+
+    def submit_enhanced_twap(
+        self,
+        instruction: OrderInstruction,
+        time_window_seconds: int,
+        num_slices: int,
+        start_time: datetime,
+    ) -> AdvancedOrder:
+        """提交增强型 TWAP"""
+        total_volume = instruction.volume
+        if total_volume <= 0:
+            raise ValueError("总量必须大于 0")
+        if time_window_seconds <= 0:
+            raise ValueError("时间窗口必须大于 0")
+        if num_slices <= 0:
+            raise ValueError("分片数必须大于 0")
+
+        order_id = str(uuid.uuid4())
+        request = AdvancedOrderRequest(
+            order_type=AdvancedOrderType.ENHANCED_TWAP,
+            instruction=instruction,
+            time_window_seconds=time_window_seconds,
+            num_slices=num_slices,
+        )
+
+        # 均匀分配: 基础量 + 余数分配给前几片
+        base_vol = total_volume // num_slices
+        remainder = total_volume % num_slices
+        interval = time_window_seconds / num_slices
+
+        child_orders: List[ChildOrder] = []
+        slice_schedule: List[SliceEntry] = []
+        for i in range(num_slices):
+            vol = base_vol + (1 if i < remainder else 0)
+            scheduled = start_time + timedelta(seconds=round(interval * i))
+            child = ChildOrder(
+                child_id=f"{order_id}_child_{i}",
+                parent_id=order_id,
+                volume=vol,
+                scheduled_time=scheduled,
+            )
+            child_orders.append(child)
+            slice_schedule.append(SliceEntry(scheduled_time=scheduled, volume=vol))
+
+        order = AdvancedOrder(
+            order_id=order_id,
+            request=request,
+            status=AdvancedOrderStatus.EXECUTING,
+            child_orders=child_orders,
+            slice_schedule=slice_schedule,
+        )
+        self._orders[order_id] = order
+        return order
+
 
     def submit_twap(self, instruction: OrderInstruction, time_window_seconds: int,
                     num_slices: int, start_time: datetime) -> AdvancedOrder:

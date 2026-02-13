@@ -733,6 +733,54 @@ class TestAdvancedOrderSchedulerUnit:
         assert cancel_ids == []
         assert events == []
 
+    def test_enhanced_twap_300s_5slices(self):
+        """增强型 TWAP: 300 秒 / 5 片, 100 总量 -> 均匀分配"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        order = scheduler.submit_enhanced_twap(make_instruction(100), 300, 5, start)
+        assert len(order.child_orders) == 5
+        assert order.request.order_type == AdvancedOrderType.ENHANCED_TWAP
+        vols = [c.volume for c in order.child_orders]
+        assert sum(vols) == 100
+        assert all(v == 20 for v in vols)
+        # 间隔应为 60 秒
+        for i in range(1, 5):
+            t0 = order.child_orders[i - 1].scheduled_time
+            t1 = order.child_orders[i].scheduled_time
+            assert (t1 - t0).total_seconds() == 60.0
+
+    def test_enhanced_twap_remainder_distribution(self):
+        """增强型 TWAP: 余数分配到前几片, 各片差异不超过 1"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        order = scheduler.submit_enhanced_twap(make_instruction(13), 300, 5, start)
+        vols = [c.volume for c in order.child_orders]
+        assert sum(vols) == 13
+        assert max(vols) - min(vols) <= 1
+        # 13 // 5 = 2, 余 3 -> 前 3 片各 3, 后 2 片各 2
+        assert vols == [3, 3, 3, 2, 2]
+
+    def test_enhanced_twap_invalid_volume(self):
+        """增强型 TWAP: 总量 <= 0 抛出 ValueError"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        with pytest.raises(ValueError):
+            scheduler.submit_enhanced_twap(make_instruction(0), 300, 5, start)
+
+    def test_enhanced_twap_invalid_time_window(self):
+        """增强型 TWAP: time_window_seconds <= 0 抛出 ValueError"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        with pytest.raises(ValueError):
+            scheduler.submit_enhanced_twap(make_instruction(100), 0, 5, start)
+
+    def test_enhanced_twap_invalid_num_slices(self):
+        """增强型 TWAP: num_slices <= 0 抛出 ValueError"""
+        scheduler = AdvancedOrderScheduler()
+        start = datetime(2025, 1, 1, 9, 0, 0)
+        with pytest.raises(ValueError):
+            scheduler.submit_enhanced_twap(make_instruction(100), 300, 0, start)
+
 
 
 
