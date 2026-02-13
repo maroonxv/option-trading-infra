@@ -6,7 +6,7 @@
 
 ## 任务
 
-- [-] 1. 扩展值对象和领域事件
+- [x] 1. 扩展值对象和领域事件
   - [x] 1.1 扩展 AdvancedOrderType 枚举和 AdvancedOrderRequest 数据类
     - 在 `src/strategy/domain/value_object/advanced_order.py` 中新增 `TIMED_SPLIT`、`CLASSIC_ICEBERG`、`ENHANCED_TWAP` 枚举值
     - 在 `AdvancedOrderRequest` 中新增 `interval_seconds`、`per_order_volume`、`volume_randomize_ratio`、`price_offset_ticks`、`price_tick` 字段
@@ -16,12 +16,12 @@
     - 在 `to_dict` 中序列化新增的 `AdvancedOrderRequest` 字段和 `ChildOrder.price_offset`
     - 在 `from_dict` 中反序列化新增字段
     - _Requirements: 5.1, 5.2, 5.3_
-  - [-] 1.3 新增领域事件类型
+  - [x] 1.3 新增领域事件类型
     - 在 `src/strategy/domain/event/event_types.py` 中新增 `TimedSplitCompleteEvent`、`ClassicIcebergCompleteEvent`、`ClassicIcebergCancelledEvent`、`EnhancedTWAPCompleteEvent`
     - _Requirements: 1.4, 2.5, 2.6, 3.4_
 
-- [ ] 2. 实现定时拆单算法
-  - [~] 2.1 实现 submit_timed_split 方法
+- [-] 2. 实现定时拆单算法
+  - [-] 2.1 实现 submit_timed_split 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_timed_split(instruction, interval_seconds, per_order_volume, start_time)` 方法
     - 实现参数校验、子单拆分和时间调度逻辑
     - _Requirements: 1.1, 1.2, 1.5_
