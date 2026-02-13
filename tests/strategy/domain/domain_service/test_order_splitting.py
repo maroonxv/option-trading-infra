@@ -11,6 +11,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from src.strategy.domain.domain_service.advanced_order_scheduler import AdvancedOrderScheduler
+from src.strategy.domain.value_object.advanced_order import AdvancedOrder
 from src.strategy.domain.value_object.order_instruction import OrderInstruction, Direction, Offset
 
 
@@ -234,3 +235,63 @@ class TestFilledVolumeTrackingProperty:
                 f"After filling child {idx} ({child_id}): "
                 f"filled_volume={order.filled_volume}, expected={expected_filled}"
             )
+
+
+class TestSerializationRoundTripProperty:
+    """Feature: order-splitting-algorithms, Property 8: 序列化 Round-Trip"""
+
+    @given(data=st.data())
+    @settings(max_examples=100)
+    def test_property8_serialization_round_trip(self, data):
+        """
+        **Validates: Requirements 5.1, 5.2, 5.3**
+
+        For any valid AdvancedOrder (timed_split, classic_iceberg, enhanced_twap),
+        serializing to dict then deserializing should produce an equivalent object.
+        """
+        _scheduler, order = data.draw(order_type_strategy())
+
+        # Round-trip: to_dict -> from_dict
+        d = order.to_dict()
+        restored = AdvancedOrder.from_dict(d)
+
+        # Verify top-level fields
+        assert restored.order_id == order.order_id
+        assert restored.status == order.status
+        assert restored.filled_volume == order.filled_volume
+
+        # Verify request fields
+        assert restored.request.order_type == order.request.order_type
+        assert restored.request.instruction.vt_symbol == order.request.instruction.vt_symbol
+        assert restored.request.instruction.direction == order.request.instruction.direction
+        assert restored.request.instruction.offset == order.request.instruction.offset
+        assert restored.request.instruction.volume == order.request.instruction.volume
+        assert restored.request.instruction.price == order.request.instruction.price
+        assert restored.request.instruction.signal == order.request.instruction.signal
+        assert restored.request.instruction.order_type == order.request.instruction.order_type
+        assert restored.request.batch_size == order.request.batch_size
+        assert restored.request.time_window_seconds == order.request.time_window_seconds
+        assert restored.request.num_slices == order.request.num_slices
+        assert restored.request.volume_profile == order.request.volume_profile
+        assert restored.request.interval_seconds == order.request.interval_seconds
+        assert restored.request.per_order_volume == order.request.per_order_volume
+        assert restored.request.volume_randomize_ratio == order.request.volume_randomize_ratio
+        assert restored.request.price_offset_ticks == order.request.price_offset_ticks
+        assert restored.request.price_tick == order.request.price_tick
+
+        # Verify child_orders
+        assert len(restored.child_orders) == len(order.child_orders)
+        for orig, rest in zip(order.child_orders, restored.child_orders):
+            assert rest.child_id == orig.child_id
+            assert rest.parent_id == orig.parent_id
+            assert rest.volume == orig.volume
+            assert rest.scheduled_time == orig.scheduled_time
+            assert rest.is_submitted == orig.is_submitted
+            assert rest.is_filled == orig.is_filled
+            assert rest.price_offset == orig.price_offset
+
+        # Verify slice_schedule
+        assert len(restored.slice_schedule) == len(order.slice_schedule)
+        for orig_s, rest_s in zip(order.slice_schedule, restored.slice_schedule):
+            assert rest_s.scheduled_time == orig_s.scheduled_time
+            assert rest_s.volume == orig_s.volume

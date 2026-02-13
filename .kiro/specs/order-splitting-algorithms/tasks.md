@@ -78,7 +78,7 @@
   - [x] 6.1 编写成交量追踪不变量属性测试
     - **Property 7: 成交量追踪不变量**
     - **Validates: Requirements 4.1, 4.2**
-  - [~] 6.2 编写序列化 Round-Trip 属性测试
+  - [x] 6.2 编写序列化 Round-Trip 属性测试
     - **Property 8: 序列化 Round-Trip**
     - **Validates: Requirements 5.1, 5.2, 5.3**
   - [~] 6.3 编写无效参数拒绝属性测试
