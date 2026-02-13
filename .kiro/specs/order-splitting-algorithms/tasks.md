@@ -36,12 +36,12 @@
     - **Validates: Requirements 1.1, 1.2**
 
 - [-] 3. 实现经典冰山单算法
-  - [-] 3.1 实现 submit_classic_iceberg 方法
+  - [x] 3.1 实现 submit_classic_iceberg 方法
     - 在 `AdvancedOrderScheduler` 中新增 `submit_classic_iceberg(instruction, per_order_volume, volume_randomize_ratio, price_offset_ticks, price_tick)` 方法
     - 实现参数校验、子单拆分（含随机化）和价格偏移逻辑
     - 确保随机化后总量精确等于原始委托总量
     - _Requirements: 2.1, 2.2, 2.3, 2.7, 2.8_
-  - [~] 3.2 扩展 get_pending_children 支持 CLASSIC_ICEBERG 类型
+  - [-] 3.2 扩展 get_pending_children 支持 CLASSIC_ICEBERG 类型
     - 在 `get_pending_children` 中新增 `CLASSIC_ICEBERG` 分支：前一笔成交后才提交下一笔
     - _Requirements: 2.4_
   - [~] 3.3 扩展 on_child_filled 和 cancel_order 支持经典冰山单事件

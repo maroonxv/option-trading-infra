@@ -392,8 +392,8 @@ class AdvancedOrderScheduler:
             if order.status != AdvancedOrderStatus.EXECUTING:
                 continue
 
-            if order.request.order_type == AdvancedOrderType.ICEBERG:
-                # 冰山单: 前一批已成交才提交下一批
+            if order.request.order_type in (AdvancedOrderType.ICEBERG, AdvancedOrderType.CLASSIC_ICEBERG):
+                # 冰山单/经典冰山单: 前一批已成交才提交下一批
                 for child in order.child_orders:
                     if not child.is_submitted and not child.is_filled:
                         # 检查前面所有子单是否已成交
