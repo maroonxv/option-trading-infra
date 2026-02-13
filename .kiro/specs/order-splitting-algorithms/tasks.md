@@ -70,7 +70,7 @@
     - 在 `on_child_filled` 中新增 `ENHANCED_TWAP` 分支：全部成交时发布 `EnhancedTWAPCompleteEvent`
     - 在 `cancel_order` 中扩展取消逻辑
     - _Requirements: 3.4, 3.5_
-  - [~] 5.4 编写增强型 TWAP 属性测试
+  - [x] 5.4 编写增强型 TWAP 属性测试
     - **Property 6: 增强型 TWAP 拆分正确性**
     - **Validates: Requirements 3.1, 3.2**
 

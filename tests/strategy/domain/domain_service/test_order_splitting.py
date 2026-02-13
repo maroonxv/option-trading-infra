@@ -64,3 +64,47 @@ class TestTimedSplitProperty:
         for i, child in enumerate(order.child_orders):
             expected_time = start_time + timedelta(seconds=interval_seconds * i)
             assert child.scheduled_time == expected_time
+
+
+class TestEnhancedTWAPProperty:
+    """Feature: order-splitting-algorithms, Property 6: 增强型 TWAP 拆分正确性"""
+
+    @given(
+        total_volume=st.integers(min_value=1, max_value=10000),
+        time_window_seconds=st.integers(min_value=1, max_value=86400),
+        num_slices=st.integers(min_value=1, max_value=100),
+    )
+    @settings(max_examples=100)
+    def test_property6_enhanced_twap_correctness(self, total_volume, time_window_seconds, num_slices):
+        """
+        **Validates: Requirements 3.1, 3.2**
+
+        For any valid total_volume, time_window_seconds and num_slices:
+        - 各片数量差异不超过 1（max - min ≤ 1）
+        - 所有子单 volume 之和 == total_volume
+        - 相邻时间片间隔 == time_window_seconds / num_slices（±1 秒舍入误差）
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        start_time = datetime(2025, 1, 1, 10, 0, 0)
+
+        order = scheduler.submit_enhanced_twap(instruction, time_window_seconds, num_slices, start_time)
+
+        children = order.child_orders
+        assert len(children) == num_slices
+
+        volumes = [c.volume for c in children]
+
+        # 各片数量差异不超过 1（max - min ≤ 1）
+        assert max(volumes) - min(volumes) <= 1
+
+        # 所有子单 volume 之和 == total_volume
+        assert sum(volumes) == total_volume
+
+        # 相邻时间片间隔 == time_window_seconds / num_slices（±1 秒舍入误差）
+        expected_interval = time_window_seconds / num_slices
+        for i in range(1, len(children)):
+            actual_interval = (children[i].scheduled_time - children[i - 1].scheduled_time).total_seconds()
+            assert abs(actual_interval - expected_interval) <= 1.0, (
+                f"Slice {i}: actual_interval={actual_interval}, expected={expected_interval}"
+            )
