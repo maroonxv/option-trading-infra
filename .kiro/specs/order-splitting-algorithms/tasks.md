@@ -44,11 +44,11 @@
   - [x] 3.2 扩展 get_pending_children 支持 CLASSIC_ICEBERG 类型
     - 在 `get_pending_children` 中新增 `CLASSIC_ICEBERG` 分支：前一笔成交后才提交下一笔
     - _Requirements: 2.4_
-  - [-] 3.3 扩展 on_child_filled 和 cancel_order 支持经典冰山单事件
+  - [x] 3.3 扩展 on_child_filled 和 cancel_order 支持经典冰山单事件
     - 在 `on_child_filled` 中新增 `CLASSIC_ICEBERG` 分支：全部成交时发布 `ClassicIcebergCompleteEvent`
     - 在 `cancel_order` 中新增 `CLASSIC_ICEBERG` 分支：发布 `ClassicIcebergCancelledEvent`
     - _Requirements: 2.5, 2.6_
-  - [~] 3.4 编写经典冰山单属性测试
+  - [x] 3.4 编写经典冰山单属性测试
     - **Property 2: 经典冰山单拆分正确性（含随机化不变量）**
     - **Property 3: 经典冰山单价格偏移范围**
     - **Property 4: 经典冰山单生命周期——顺序执行与完成**

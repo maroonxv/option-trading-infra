@@ -303,6 +303,251 @@ class TestAdvancedOrderSerializationProperty:
             assert rest.scheduled_time == orig.scheduled_time
 
 
+# ========== 经典冰山单属性测试 (Property 2-5) ==========
+
+
+class TestClassicIcebergSplitProperty:
+    """
+    Feature: order-splitting-algorithms, Property 2: 经典冰山单拆分正确性（含随机化不变量）
+    Validates: Requirements 2.1, 2.2
+    """
+
+    @settings(max_examples=200)
+    @given(
+        total_volume=st.integers(min_value=1, max_value=1000),
+        per_order_volume=st.integers(min_value=1, max_value=200),
+        volume_randomize_ratio=st.just(0.0),
+    )
+    def test_property2_no_randomization_volume_sum_and_bounds(
+        self, total_volume, per_order_volume, volume_randomize_ratio
+    ):
+        """
+        Property 2 (ratio==0): 所有子单 volume 之和 == total_volume,
+        每笔子单 volume <= per_order_volume, 每笔子单 volume >= 1
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        order = scheduler.submit_classic_iceberg(
+            instruction,
+            per_order_volume=per_order_volume,
+            volume_randomize_ratio=volume_randomize_ratio,
+        )
+
+        volumes = [c.volume for c in order.child_orders]
+
+        # 所有子单 volume 之和精确等于 total_volume
+        assert sum(volumes) == total_volume
+
+        # 当 ratio == 0 时，每笔子单 volume <= per_order_volume
+        for v in volumes:
+            assert v <= per_order_volume
+
+        # 每笔子单 volume >= 1
+        for v in volumes:
+            assert v >= 1
+
+    @settings(max_examples=200)
+    @given(
+        total_volume=st.integers(min_value=2, max_value=1000),
+        per_order_volume=st.integers(min_value=1, max_value=200),
+        volume_randomize_ratio=st.floats(
+            min_value=0.01, max_value=0.99,
+            allow_nan=False, allow_infinity=False,
+        ),
+    )
+    def test_property2_with_randomization_volume_sum_and_range(
+        self, total_volume, per_order_volume, volume_randomize_ratio
+    ):
+        """
+        Property 2 (ratio>0): 所有子单 volume 之和 == total_volume,
+        非最后一笔子单 volume 在 per_order_volume × (1 ± ratio) 范围内,
+        每笔子单 volume >= 1
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        order = scheduler.submit_classic_iceberg(
+            instruction,
+            per_order_volume=per_order_volume,
+            volume_randomize_ratio=volume_randomize_ratio,
+        )
+
+        volumes = [c.volume for c in order.child_orders]
+
+        # 所有子单 volume 之和精确等于 total_volume
+        assert sum(volumes) == total_volume
+
+        # 每笔子单 volume >= 1
+        for v in volumes:
+            assert v >= 1
+
+        # 非最后一笔子单 volume 在 per_order_volume × (1 ± ratio) 范围内
+        low = per_order_volume * (1 - volume_randomize_ratio)
+        high = per_order_volume * (1 + volume_randomize_ratio)
+        for v in volumes[:-1]:
+            # 由于 round + clamp(1, remaining)，允许边界上的整数舍入
+            assert v >= max(1, math.floor(low - 0.5)), (
+                f"child volume {v} < floor(low={low})"
+            )
+            assert v <= math.ceil(high + 0.5), (
+                f"child volume {v} > ceil(high={high})"
+            )
+
+
+class TestClassicIcebergPriceOffsetProperty:
+    """
+    Feature: order-splitting-algorithms, Property 3: 经典冰山单价格偏移范围
+    Validates: Requirements 2.3
+    """
+
+    @settings(max_examples=200)
+    @given(
+        total_volume=st.integers(min_value=1, max_value=500),
+        per_order_volume=st.integers(min_value=1, max_value=100),
+        price_offset_ticks=st.integers(min_value=1, max_value=20),
+        price_tick=st.floats(
+            min_value=0.01, max_value=10.0,
+            allow_nan=False, allow_infinity=False,
+        ),
+    )
+    def test_property3_price_offset_within_bounds(
+        self, total_volume, per_order_volume, price_offset_ticks, price_tick
+    ):
+        """
+        Property 3: 每笔子单的 price_offset 绝对值 <= price_offset_ticks × price_tick
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        order = scheduler.submit_classic_iceberg(
+            instruction,
+            per_order_volume=per_order_volume,
+            volume_randomize_ratio=0.0,
+            price_offset_ticks=price_offset_ticks,
+            price_tick=price_tick,
+        )
+
+        max_offset = price_offset_ticks * price_tick
+        for child in order.child_orders:
+            assert abs(child.price_offset) <= max_offset + 1e-9, (
+                f"price_offset {child.price_offset} exceeds max {max_offset}"
+            )
+
+
+class TestClassicIcebergLifecycleProperty:
+    """
+    Feature: order-splitting-algorithms, Property 4: 经典冰山单生命周期——顺序执行与完成
+    Validates: Requirements 2.4, 2.5
+    """
+
+    @settings(max_examples=200)
+    @given(
+        total_volume=st.integers(min_value=1, max_value=300),
+        per_order_volume=st.integers(min_value=1, max_value=100),
+    )
+    def test_property4_sequential_execution_and_completion(
+        self, total_volume, per_order_volume
+    ):
+        """
+        Property 4: get_pending_children 每次最多返回 1 笔子单,
+        仅当前面所有子单已成交时才返回下一笔,
+        全部成交后父订单状态为 COMPLETED,
+        恰好产生 1 个 ClassicIcebergCompleteEvent
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        order = scheduler.submit_classic_iceberg(
+            instruction, per_order_volume=per_order_volume
+        )
+        now = datetime(2025, 1, 1, 9, 0, 0)
+        n = len(order.child_orders)
+
+        all_events = []
+        for i in range(n):
+            # 每次最多返回 1 笔子单
+            pending = scheduler.get_pending_children(now)
+            assert len(pending) <= 1, (
+                f"Expected at most 1 pending child, got {len(pending)}"
+            )
+            assert len(pending) == 1, (
+                f"Expected 1 pending child at step {i}, got 0"
+            )
+            child = pending[0]
+
+            # 验证返回的是正确顺序的子单
+            assert child.child_id == order.child_orders[i].child_id
+
+            child.is_submitted = True
+            events = scheduler.on_child_filled(child.child_id)
+            all_events.extend(events)
+
+        # 全部成交后父订单状态为 COMPLETED
+        final_order = scheduler.get_order(order.order_id)
+        assert final_order.status == AdvancedOrderStatus.COMPLETED
+        assert final_order.filled_volume == total_volume
+
+        # 恰好产生 1 个 ClassicIcebergCompleteEvent
+        complete_events = [
+            e for e in all_events if isinstance(e, ClassicIcebergCompleteEvent)
+        ]
+        assert len(complete_events) == 1
+        assert complete_events[0].total_volume == total_volume
+        assert complete_events[0].filled_volume == total_volume
+
+
+class TestClassicIcebergCancelProperty:
+    """
+    Feature: order-splitting-algorithms, Property 5: 经典冰山单取消正确性
+    Validates: Requirements 2.6
+    """
+
+    @settings(max_examples=200)
+    @given(
+        total_volume=st.integers(min_value=2, max_value=300),
+        per_order_volume=st.integers(min_value=1, max_value=100),
+        fill_count=st.integers(min_value=0, max_value=50),
+    )
+    def test_property5_cancel_after_partial_fill(
+        self, total_volume, per_order_volume, fill_count
+    ):
+        """
+        Property 5: 部分成交后取消——父订单状态为 CANCELLED,
+        产生 1 个 ClassicIcebergCancelledEvent,
+        事件中 filled_volume + remaining_volume == total_volume
+        """
+        scheduler = AdvancedOrderScheduler()
+        instruction = make_instruction(total_volume)
+        order = scheduler.submit_classic_iceberg(
+            instruction, per_order_volume=per_order_volume
+        )
+        now = datetime(2025, 1, 1, 9, 0, 0)
+        n = len(order.child_orders)
+
+        # 成交 fill_count 笔（不超过 n-1 以确保有剩余可取消）
+        fills = min(fill_count, n - 1)
+        for _ in range(fills):
+            pending = scheduler.get_pending_children(now)
+            if not pending:
+                break
+            pending[0].is_submitted = True
+            scheduler.on_child_filled(pending[0].child_id)
+
+        # 取消订单
+        cancel_ids, events = scheduler.cancel_order(order.order_id)
+
+        # 父订单状态为 CANCELLED
+        final_order = scheduler.get_order(order.order_id)
+        assert final_order.status == AdvancedOrderStatus.CANCELLED
+
+        # 产生 1 个 ClassicIcebergCancelledEvent
+        cancel_events = [
+            e for e in events if isinstance(e, ClassicIcebergCancelledEvent)
+        ]
+        assert len(cancel_events) == 1
+
+        # filled_volume + remaining_volume == total_volume
+        evt = cancel_events[0]
+        assert evt.filled_volume + evt.remaining_volume == total_volume
+
+
 # ========== 单元测试 ==========
 
 class TestAdvancedOrderSchedulerUnit:
@@ -487,3 +732,7 @@ class TestAdvancedOrderSchedulerUnit:
         cancel_ids, events = scheduler.cancel_order(order.order_id)
         assert cancel_ids == []
         assert events == []
+
+
+
+
