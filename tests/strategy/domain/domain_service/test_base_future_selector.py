@@ -4,7 +4,7 @@ from datetime import date
 from typing import List
 from vnpy.trader.object import ContractData, Exchange, Product
 
-from src.strategy.domain.domain_service.future_selection_service import BaseFutureSelector
+from src.strategy.domain.domain_service.selection.future_selection_service import BaseFutureSelector
 
 # Helper to create dummy ContractData
 def create_contract(symbol: str) -> ContractData:

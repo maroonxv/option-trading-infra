@@ -60,7 +60,7 @@
     - `.domain.domain_service.option_selector_service` → `.domain.domain_service.selection.option_selector_service`
     - `.domain.domain_service.future_selection_service` → `.domain.domain_service.selection.future_selection_service`
     - _需求：3.1_
-  - [~] 5.3 更新测试文件 `test_base_future_selector.py` 的导入路径
+  - [x] 5.3 更新测试文件 `test_base_future_selector.py` 的导入路径
     - `src.strategy.domain.domain_service.future_selection_service` → `src.strategy.domain.domain_service.selection.future_selection_service`
     - _需求：4.1_
 
