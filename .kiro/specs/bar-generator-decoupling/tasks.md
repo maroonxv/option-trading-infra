@@ -2,7 +2,7 @@
 
 ## 任务 1：创建 BarPipeline 具体类
 
-- [-] 1.1 创建目录和包文件
+- [x] 1.1 创建目录和包文件
   - 创建目录 `src/strategy/infrastructure/bar_pipeline/`
   - 创建 `src/strategy/infrastructure/bar_pipeline/__init__.py`，导出 `BarPipeline` 类：
     ```python
@@ -11,7 +11,7 @@
     ```
   - **Validates: Requirements 2.1**
 
-- [~] 1.2 实现 BarPipeline 具体类
+- [-] 1.2 实现 BarPipeline 具体类
   - 文件：`src/strategy/infrastructure/bar_pipeline/bar_pipeline.py`
   - BarPipeline 是一个**具体类**（非抽象基类），不使用 ABC、不使用继承体系
   - 构造函数签名：
