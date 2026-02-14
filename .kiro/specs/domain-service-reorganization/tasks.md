@@ -36,7 +36,7 @@
     - `src.strategy.domain.domain_service.gamma_scalping_engine` → `src.strategy.domain.domain_service.hedging.gamma_scalping_engine`
     - _需求：4.1_
 
-- [ ] 4. 移动 execution 组文件并更新导入
+- [x] 4. 移动 execution 组文件并更新导入
   - [x] 4.1 移动 `smart_order_executor.py` 和 `advanced_order_scheduler.py` 到 `execution/`
     - 移动文件到 `execution/` 子目录
     - `smart_order_executor.py`：将相对导入 `..` 调整为 `...`
@@ -51,7 +51,7 @@
     - _需求：4.1_
 
 - [ ] 5. 移动 selection 组文件并更新导入
-  - [~] 5.1 移动 `option_selector_service.py` 和 `future_selection_service.py` 到 `selection/`
+  - [-] 5.1 移动 `option_selector_service.py` 和 `future_selection_service.py` 到 `selection/`
     - 移动文件到 `selection/` 子目录
     - `option_selector_service.py`：将相对导入 `..` 调整为 `...`
     - `future_selection_service.py`：使用绝对导入，无需调整相对路径

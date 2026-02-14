@@ -7,7 +7,7 @@ from typing import Optional, List, Callable, Any
 
 import pandas as pd
 
-from ..value_object.option_contract import OptionContract, OptionType
+from ...value_object.option_contract import OptionContract, OptionType
 
 
 class OptionSelectorService:
