@@ -26,7 +26,7 @@
     - `src.strategy.domain.domain_service.vol_surface_builder` → `src.strategy.domain.domain_service.pricing.vol_surface_builder`
     - _需求：4.1_
 
-- [ ] 3. 移动 hedging 组文件并更新导入
+- [x] 3. 移动 hedging 组文件并更新导入
   - [x] 3.1 移动 `delta_hedging_engine.py` 和 `gamma_scalping_engine.py` 到 `hedging/`
     - 移动文件到 `hedging/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`
@@ -37,7 +37,7 @@
     - _需求：4.1_
 
 - [ ] 4. 移动 execution 组文件并更新导入
-  - [~] 4.1 移动 `smart_order_executor.py` 和 `advanced_order_scheduler.py` 到 `execution/`
+  - [-] 4.1 移动 `smart_order_executor.py` 和 `advanced_order_scheduler.py` 到 `execution/`
     - 移动文件到 `execution/` 子目录
     - `smart_order_executor.py`：将相对导入 `..` 调整为 `...`
     - `advanced_order_scheduler.py`：使用绝对导入，无需调整相对路径
