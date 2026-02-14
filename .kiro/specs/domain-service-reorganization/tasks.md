@@ -6,7 +6,7 @@
 
 ## 任务
 
-- [ ] 1. 创建子目录结构
+- [x] 1. 创建子目录结构
   - [x] 1.1 在 `src/strategy/domain/domain_service/` 下创建 6 个子目录并添加空 `__init__.py`
     - 创建 `pricing/`、`hedging/`、`execution/`、`selection/`、`risk/`、`signal/` 目录
     - 每个目录下创建空的 `__init__.py`
@@ -14,7 +14,7 @@
     - _需求：1.1, 1.2, 1.3_
 
 - [ ] 2. 移动 pricing 组文件并更新导入
-  - [~] 2.1 移动 `greeks_calculator.py` 和 `vol_surface_builder.py` 到 `pricing/`
+  - [-] 2.1 移动 `greeks_calculator.py` 和 `vol_surface_builder.py` 到 `pricing/`
     - 移动文件到 `pricing/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`（多一层）
     - _需求：2.1_

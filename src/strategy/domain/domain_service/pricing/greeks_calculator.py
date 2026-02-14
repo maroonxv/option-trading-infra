@@ -7,7 +7,7 @@ GreeksCalculator 领域服务
 import math
 from typing import Optional
 
-from ..value_object.greeks import GreeksInput, GreeksResult, IVResult
+from ...value_object.greeks import GreeksInput, GreeksResult, IVResult
 
 
 def _norm_cdf(x: float) -> float:
