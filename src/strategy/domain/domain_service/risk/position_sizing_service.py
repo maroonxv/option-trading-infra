@@ -3,8 +3,8 @@ PositionSizingService - 计算【考虑了当日开仓限额、品种开仓限�
 """
 from typing import List, Optional
 
-from ..value_object.order_instruction import OrderInstruction, Direction, Offset
-from ..entity.position import Position
+from ...value_object.order_instruction import OrderInstruction, Direction, Offset
+from ...entity.position import Position
 
 
 class PositionSizingService:

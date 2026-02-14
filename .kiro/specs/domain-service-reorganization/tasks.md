@@ -50,7 +50,7 @@
     - `src.strategy.domain.domain_service.advanced_order_scheduler` → `src.strategy.domain.domain_service.execution.advanced_order_scheduler`
     - _需求：4.1_
 
-- [ ] 5. 移动 selection 组文件并更新导入
+- [x] 5. 移动 selection 组文件并更新导入
   - [x] 5.1 移动 `option_selector_service.py` 和 `future_selection_service.py` 到 `selection/`
     - 移动文件到 `selection/` 子目录
     - `option_selector_service.py`：将相对导入 `..` 调整为 `...`
@@ -65,7 +65,7 @@
     - _需求：4.1_
 
 - [ ] 6. 移动 risk 组文件并更新导入
-  - [~] 6.1 移动 `portfolio_risk_aggregator.py` 和 `position_sizing_service.py` 到 `risk/`
+  - [-] 6.1 移动 `portfolio_risk_aggregator.py` 和 `position_sizing_service.py` 到 `risk/`
     - 移动文件到 `risk/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`
     - _需求：2.5_
