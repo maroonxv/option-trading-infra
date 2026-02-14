@@ -77,23 +77,23 @@
     - `src.strategy.domain.domain_service.portfolio_risk_aggregator` → `src.strategy.domain.domain_service.risk.portfolio_risk_aggregator`
     - _需求：4.1_
 
-- [ ] 7. 移动 signal 组文件并更新导入
+- [x] 7. 移动 signal 组文件并更新导入
   - [x] 7.1 移动 `signal_service.py` 和 `indicator_service.py` 到 `signal/`
     - 移动文件到 `signal/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`
     - _需求：2.6_
-  - [-] 7.2 更新 `strategy_entry.py` 中 `indicator_service` 和 `signal_service` 的导入路径
+  - [x] 7.2 更新 `strategy_entry.py` 中 `indicator_service` 和 `signal_service` 的导入路径
     - `.domain.domain_service.indicator_service` → `.domain.domain_service.signal.indicator_service`
     - `.domain.domain_service.signal_service` → `.domain.domain_service.signal.signal_service`
     - _需求：3.1_
 
-- [~] 8. 全局导入路径扫描与修复
+- [x] 8. 全局导入路径扫描与修复
   - 使用 grep 全局搜索 `from.*domain_service\.(greeks_calculator|vol_surface_builder|delta_hedging_engine|gamma_scalping_engine|smart_order_executor|advanced_order_scheduler|option_selector_service|future_selection_service|portfolio_risk_aggregator|position_sizing_service|signal_service|indicator_service)` 确认无遗漏的旧导入路径
   - 修复任何遗漏的导入引用
   - 确认 Domain_Service_Root 下不再有散落的 `.py` 服务文件
   - _需求：2.7, 3.2, 3.3_
 
-- [~] 9. 检查点 - 运行全量测试验证
+- [x] 9. 检查点 - 运行全量测试验证
   - 运行 `pytest tests/strategy/domain/domain_service/` 确认所有领域服务测试通过
   - 运行 `pytest tests/strategy/` 确认策略模块整体无回归
   - 确认所有测试通过，如有问题请向用户确认
