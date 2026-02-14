@@ -97,18 +97,12 @@ class StrategyEntry(StrategyTemplate):
     # 期权选择
     strike_level: int = 3
 
-    # K线合成参数
-    bar_window: int = 15
-    bar_interval: str = "MINUTE"
-
     # VnPy 参数声明
     parameters = [
         "feishu_webhook",
         "max_positions",
         "position_ratio",
         "strike_level",
-        "bar_window",
-        "bar_interval",
     ]
 
     def __init__(

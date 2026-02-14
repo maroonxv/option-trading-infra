@@ -11,7 +11,7 @@
     ```
   - **Validates: Requirements 2.1**
 
-- [-] 1.2 实现 BarPipeline 具体类
+- [x] 1.2 实现 BarPipeline 具体类
   - 文件：`src/strategy/infrastructure/bar_pipeline/bar_pipeline.py`
   - BarPipeline 是一个**具体类**（非抽象基类），不使用 ABC、不使用继承体系
   - 构造函数签名：
@@ -41,7 +41,7 @@
 
 ## 任务 2：重构 StrategyEntry
 
-- [~] 2.1 移除策略级K线合成参数
+- [-] 2.1 移除策略级K线合成参数
   - 文件：`src/strategy/strategy_entry.py`
   - 从类属性中移除以下两行：
     ```python
