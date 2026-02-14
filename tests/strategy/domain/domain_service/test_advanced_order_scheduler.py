@@ -9,7 +9,7 @@ import pytest
 from datetime import datetime, timedelta
 from hypothesis import given, strategies as st, settings, assume
 
-from src.strategy.domain.domain_service.advanced_order_scheduler import AdvancedOrderScheduler
+from src.strategy.domain.domain_service.execution.advanced_order_scheduler import AdvancedOrderScheduler
 from src.strategy.domain.value_object.order_instruction import (
     OrderInstruction, Direction, Offset, OrderType,
 )

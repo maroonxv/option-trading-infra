@@ -10,7 +10,7 @@ import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from src.strategy.domain.domain_service.advanced_order_scheduler import AdvancedOrderScheduler
+from src.strategy.domain.domain_service.execution.advanced_order_scheduler import AdvancedOrderScheduler
 from src.strategy.domain.value_object.advanced_order import AdvancedOrder
 from src.strategy.domain.value_object.order_instruction import OrderInstruction, Direction, Offset
 

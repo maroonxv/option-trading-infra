@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime, timedelta
 from hypothesis import given, strategies as st, settings, assume
 
-from src.strategy.domain.domain_service.smart_order_executor import SmartOrderExecutor
+from src.strategy.domain.domain_service.execution.smart_order_executor import SmartOrderExecutor
 from src.strategy.domain.value_object.order_instruction import (
     OrderInstruction, Direction, Offset, OrderType,
 )
