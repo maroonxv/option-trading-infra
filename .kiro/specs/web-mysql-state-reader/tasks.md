@@ -67,7 +67,7 @@
     - 测试正常快照的完整转换流程
     - _Requirements: 1.2, 1.3, 2.4, 2.5_
 
-- [ ] 4. 更新 Web App 数据源
+- [x] 4. 更新 Web App 数据源
   - [x] 4.1 修改 `src/web/app.py` 数据源优先级
     - 新增 `StrategyStateReader` 实例（使用环境变量配置）
     - 修改 `list_strategies_best_effort`: StrategyStateReader → MySQLSnapshotReader
@@ -81,12 +81,12 @@
     - 保留 `MySQLSnapshotReader` 用于 events/bars API
     - _Requirements: 7.1, 7.2, 7.3_
 
-  - [-] 4.3 更新 WebSocket poll_db 函数
+  - [x] 4.3 更新 WebSocket poll_db 函数
     - 将 `poll_db` 中的快照轮询改为查询 `strategy_state` 表
     - 保留事件轮询逻辑（仍使用 `monitor_signal_event` 表）
     - _Requirements: 8.3_
 
-- [~] 5. Final checkpoint - 确保所有测试通过
+- [x] 5. Final checkpoint - 确保所有测试通过
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
