@@ -20,6 +20,8 @@ from vnpy_portfoliostrategy import StrategyTemplate, StrategyEngine
 from vnpy_portfoliostrategy.utility import PortfolioBarGenerator
 from vnpy.trader.object import BarData, OrderData, TradeData, PositionData, TickData
 from vnpy.trader.constant import Interval
+
+from src.strategy.infrastructure.bar_pipeline import BarPipeline
 from vnpy.event.engine import Event
 
 
@@ -162,8 +164,8 @@ class StrategyEntry(StrategyTemplate):
         # ── 飞书 ──
         self.feishu_handler: Optional[FeishuEventHandler] = None
 
-        # ── K线合成器 ──
-        self.pbg: Optional[PortfolioBarGenerator] = None
+        # ── K线合成管道 ──
+        self.bar_pipeline: Optional[BarPipeline] = None
 
         # ── 配置上下文 ──
         self.target_products: List[str] = []

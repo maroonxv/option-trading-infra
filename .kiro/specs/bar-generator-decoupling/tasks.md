@@ -41,7 +41,7 @@
 
 ## 任务 2：重构 StrategyEntry
 
-- [-] 2.1 移除策略级K线合成参数
+- [x] 2.1 移除策略级K线合成参数
   - 文件：`src/strategy/strategy_entry.py`
   - 从类属性中移除以下两行：
     ```python
@@ -69,7 +69,7 @@
     ```
   - **Validates: Requirements 4.1**
 
-- [~] 2.2 重构 `__init__` 方法中的 PBG 属性声明
+- [-] 2.2 重构 `__init__` 方法中的 PBG 属性声明
   - 文件：`src/strategy/strategy_entry.py`，`__init__` 方法
   - 将 `self.pbg: Optional[PortfolioBarGenerator] = None` 替换为：
     ```python
