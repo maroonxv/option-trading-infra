@@ -37,12 +37,12 @@
     - _需求：4.1_
 
 - [ ] 4. 移动 execution 组文件并更新导入
-  - [-] 4.1 移动 `smart_order_executor.py` 和 `advanced_order_scheduler.py` 到 `execution/`
+  - [x] 4.1 移动 `smart_order_executor.py` 和 `advanced_order_scheduler.py` 到 `execution/`
     - 移动文件到 `execution/` 子目录
     - `smart_order_executor.py`：将相对导入 `..` 调整为 `...`
     - `advanced_order_scheduler.py`：使用绝对导入，无需调整相对路径
     - _需求：2.3_
-  - [~] 4.2 更新 `strategy_entry.py` 中 `smart_order_executor` 的导入路径
+  - [-] 4.2 更新 `strategy_entry.py` 中 `smart_order_executor` 的导入路径
     - `.domain.domain_service.smart_order_executor` → `.domain.domain_service.execution.smart_order_executor`
     - _需求：3.1_
   - [~] 4.3 更新测试文件 `test_smart_order_executor.py`、`test_advanced_order_scheduler.py`、`test_order_splitting.py` 的导入路径
