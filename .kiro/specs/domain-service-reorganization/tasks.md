@@ -21,7 +21,7 @@
   - [x] 2.2 更新 `strategy_entry.py` 中 `greeks_calculator` 的导入路径
     - `.domain.domain_service.greeks_calculator` → `.domain.domain_service.pricing.greeks_calculator`
     - _需求：3.1_
-  - [~] 2.3 更新测试文件 `test_greeks_calculator.py` 和 `test_vol_surface_builder.py` 的导入路径
+  - [x] 2.3 更新测试文件 `test_greeks_calculator.py` 和 `test_vol_surface_builder.py` 的导入路径
     - `src.strategy.domain.domain_service.greeks_calculator` → `src.strategy.domain.domain_service.pricing.greeks_calculator`
     - `src.strategy.domain.domain_service.vol_surface_builder` → `src.strategy.domain.domain_service.pricing.vol_surface_builder`
     - _需求：4.1_
