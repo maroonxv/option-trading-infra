@@ -266,7 +266,7 @@
   - 至少 100 次迭代
   - **Validates: Requirements 1.1**
 
-- [~] 5.2 Property 2: 直通路径忽略 tick
+- [x] 5.2 Property 2: 直通路径忽略 tick
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline_pbt.py`（同上文件）
   - Tag: `Feature: bar-generator-decoupling, Property 2: 直通路径忽略 tick`
   - 使用 `hypothesis` 生成随机的 `TickData`

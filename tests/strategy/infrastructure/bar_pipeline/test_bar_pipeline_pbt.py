@@ -156,3 +156,42 @@ class TestPassthroughIdentityProperty:
 
         assert len(received) == 1
         assert received[0] is bars
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  Property 2: 直通路径忽略 tick
+#  Feature: bar-generator-decoupling, Property 2: 直通路径忽略 tick
+#  **Validates: Requirements 1.3**
+# ═══════════════════════════════════════════════════════════════════
+
+class TestPassthroughIgnoresTickProperty:
+    """
+    For any tick data, when StrategyEntry has no BarPipeline,
+    on_tick() does nothing — _process_bars is never called and
+    no bar-related side effects occur.
+
+    Feature: bar-generator-decoupling, Property 2: 直通路径忽略 tick
+    **Validates: Requirements 1.3**
+    """
+
+    @given(tick=st.builds(MagicMock))
+    @settings(max_examples=100)
+    def test_on_tick_does_not_call_process_bars(self, tick: object) -> None:
+        """on_tick with no BarPipeline must never invoke _process_bars."""
+        entry = _make_entry()
+        entry._process_bars = MagicMock()
+
+        entry.on_tick(tick)
+
+        entry._process_bars.assert_not_called()
+
+    @given(tick=st.builds(MagicMock))
+    @settings(max_examples=100)
+    def test_on_tick_does_not_set_bar_pipeline(self, tick: object) -> None:
+        """on_tick must not create or assign a bar_pipeline as a side effect."""
+        entry = _make_entry()
+        assert entry.bar_pipeline is None
+
+        entry.on_tick(tick)
+
+        assert entry.bar_pipeline is None
