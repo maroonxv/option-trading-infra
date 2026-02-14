@@ -2,7 +2,7 @@
 
 ## 任务 1：创建 BarPipeline 具体类
 
-- [ ] 1.1 创建目录和包文件
+- [-] 1.1 创建目录和包文件
   - 创建目录 `src/strategy/infrastructure/bar_pipeline/`
   - 创建 `src/strategy/infrastructure/bar_pipeline/__init__.py`，导出 `BarPipeline` 类：
     ```python
@@ -11,7 +11,7 @@
     ```
   - **Validates: Requirements 2.1**
 
-- [ ] 1.2 实现 BarPipeline 具体类
+- [~] 1.2 实现 BarPipeline 具体类
   - 文件：`src/strategy/infrastructure/bar_pipeline/bar_pipeline.py`
   - BarPipeline 是一个**具体类**（非抽象基类），不使用 ABC、不使用继承体系
   - 构造函数签名：
@@ -41,7 +41,7 @@
 
 ## 任务 2：重构 StrategyEntry
 
-- [ ] 2.1 移除策略级K线合成参数
+- [~] 2.1 移除策略级K线合成参数
   - 文件：`src/strategy/strategy_entry.py`
   - 从类属性中移除以下两行：
     ```python
@@ -69,7 +69,7 @@
     ```
   - **Validates: Requirements 4.1**
 
-- [ ] 2.2 重构 `__init__` 方法中的 PBG 属性声明
+- [~] 2.2 重构 `__init__` 方法中的 PBG 属性声明
   - 文件：`src/strategy/strategy_entry.py`，`__init__` 方法
   - 将 `self.pbg: Optional[PortfolioBarGenerator] = None` 替换为：
     ```python
@@ -81,7 +81,7 @@
     ```
   - **Validates: Requirements 3.4**
 
-- [ ] 2.3 重构 `on_init` 中的K线生成器初始化（第5步）
+- [~] 2.3 重构 `on_init` 中的K线生成器初始化（第5步）
   - 文件：`src/strategy/strategy_entry.py`，`on_init` 方法，"5. 初始化组合K线生成器" 部分
   - 删除当前的 PBG 初始化代码（约第 310-325 行）：
     ```python
@@ -118,7 +118,7 @@
     ```
   - **Validates: Requirements 3.1, 4.2, 4.3**
 
-- [ ] 2.4 重构 `on_bars` 方法
+- [~] 2.4 重构 `on_bars` 方法
   - 文件：`src/strategy/strategy_entry.py`，`on_bars` 方法
   - 当前代码（约第 484-487 行）：
     ```python
@@ -137,7 +137,7 @@
   - 保留 `self.last_bars.update(bars)` 和换月检查、补漏检查、自动保存逻辑不变
   - **Validates: Requirements 1.1, 3.2**
 
-- [ ] 2.5 重构 `on_tick` 方法
+- [~] 2.5 重构 `on_tick` 方法
   - 文件：`src/strategy/strategy_entry.py`，`on_tick` 方法
   - 当前代码：
     ```python
@@ -154,7 +154,7 @@
   - 无 BarPipeline 时 `on_tick` 不做任何K线相关处理（与当前行为一致）
   - **Validates: Requirements 1.3, 3.3**
 
-- [ ] 2.6 移除 `on_window_bars` 方法
+- [~] 2.6 移除 `on_window_bars` 方法
   - 文件：`src/strategy/strategy_entry.py`
   - 完整删除 `on_window_bars` 方法（约第 489-492 行）：
     ```python
@@ -167,7 +167,7 @@
   - 该回调职责已由 BarPipeline 内部的 `_on_window_bars` 承担
   - **Validates: Requirements 3.4**
 
-- [ ] 2.7 清理无用导入
+- [~] 2.7 清理无用导入
   - 文件：`src/strategy/strategy_entry.py`
   - 如果 `PortfolioBarGenerator` 不再被直接使用，移除其导入语句：
     ```python
@@ -179,7 +179,7 @@
 
 ## 任务 3：历史数据回放兼容
 
-- [ ] 3.1 重构实盘 warmup 回放回调
+- [~] 3.1 重构实盘 warmup 回放回调
   - 文件：`src/strategy/strategy_entry.py`，`on_init` 方法，warmup 部分
   - 当前代码（约第 388-393 行）：
     ```python
@@ -201,14 +201,14 @@
   - 注意：由于 `on_bars` 内部已经根据 `self.bar_pipeline` 做了分支判断，所以回调仍然传 `self.on_bars` 即可，无需额外修改。但需要确认 warmup 期间 `self.bar_pipeline` 已经创建（步骤5在步骤6之前执行，已满足）
   - **Validates: Requirements 5.1, 5.2**
 
-- [ ] 3.2 确认回测模式兼容性
+- [~] 3.2 确认回测模式兼容性
   - 文件：`src/strategy/strategy_entry.py`，`on_init` 方法，回测 warmup 部分
   - 当前回测 warmup 使用 `self.load_bars(self.warmup_days)`，该方法内部会调用 `on_bars`
   - 确认 `load_bars` → `on_bars` → `bar_pipeline.handle_bars` 或 `_process_bars` 的链路在回测模式下正常工作
   - 无需代码修改，仅需验证
   - **Validates: Requirements 5.3**
 
-- [ ] 3.3 添加 warmup 过程中的 BarPipeline 异常处理
+- [~] 3.3 添加 warmup 过程中的 BarPipeline 异常处理
   - 文件：`src/strategy/strategy_entry.py`，`on_init` 方法
   - 在实盘 warmup 的 try-except 块中，确保 BarPipeline 处理数据失败时能被捕获：
     ```python
@@ -230,7 +230,7 @@
 
 ## 任务 4：单元测试
 
-- [ ] 4.1 编写 BarPipeline 单元测试
+- [~] 4.1 编写 BarPipeline 单元测试
   - 文件：`tests/strategy/infrastructure/bar_pipeline/__init__.py`（创建空包文件）
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline.py`
   - 测试用例：
@@ -241,7 +241,7 @@
   - 使用 `unittest.mock.patch` 或 `unittest.mock.MagicMock` mock PBG
   - **Validates: Requirements 2.2, 2.3, 2.4, 2.5**
 
-- [ ] 4.2 编写 StrategyEntry 重构后的单元测试
+- [~] 4.2 编写 StrategyEntry 重构后的单元测试
   - 文件：`tests/strategy/test_strategy_entry_bar_pipeline.py`
   - 测试用例：
     1. **参数隔离**：断言 `StrategyEntry.parameters` 列表中不包含 `"bar_window"` 和 `"bar_interval"`
@@ -256,7 +256,7 @@
 
 ## 任务 5：属性测试（Property-Based Testing）
 
-- [ ] 5.1 Property 1: 直通路径恒等传递
+- [~] 5.1 Property 1: 直通路径恒等传递
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline_pbt.py`
   - Tag: `Feature: bar-generator-decoupling, Property 1: 直通路径恒等传递`
   - 使用 `hypothesis` 生成随机的 `Dict[str, BarData]`（包含 0~N 个 vt_symbol → BarData 映射）
@@ -266,7 +266,7 @@
   - 至少 100 次迭代
   - **Validates: Requirements 1.1**
 
-- [ ] 5.2 Property 2: 直通路径忽略 tick
+- [~] 5.2 Property 2: 直通路径忽略 tick
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline_pbt.py`（同上文件）
   - Tag: `Feature: bar-generator-decoupling, Property 2: 直通路径忽略 tick`
   - 使用 `hypothesis` 生成随机的 `TickData`
@@ -275,7 +275,7 @@
   - 至少 100 次迭代
   - **Validates: Requirements 1.3**
 
-- [ ] 5.3 Property 3: BarPipeline 创建条件
+- [~] 5.3 Property 3: BarPipeline 创建条件
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline_pbt.py`（同上文件）
   - Tag: `Feature: bar-generator-decoupling, Property 3: BarPipeline 创建条件`
   - 使用 `hypothesis` 生成随机的 setting 字典：
