@@ -26,8 +26,8 @@ from vnpy.event.engine import Event
 
 from .domain.aggregate.target_instrument_aggregate import InstrumentManager
 from .domain.aggregate.position_aggregate import PositionAggregate
-from .domain.domain_service.indicator_service import IndicatorService
-from .domain.domain_service.signal_service import SignalService
+from .domain.domain_service.signal.indicator_service import IndicatorService
+from .domain.domain_service.signal.signal_service import SignalService
 # NOTE: IndicatorService 和 SignalService 是模板类，
 # 使用前请根据策略需求实现 calculate_bar() / check_open_signal() / check_close_signal()
 from .domain.domain_service.risk.position_sizing_service import PositionSizingService

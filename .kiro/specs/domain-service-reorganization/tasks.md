@@ -78,11 +78,11 @@
     - _需求：4.1_
 
 - [ ] 7. 移动 signal 组文件并更新导入
-  - [-] 7.1 移动 `signal_service.py` 和 `indicator_service.py` 到 `signal/`
+  - [x] 7.1 移动 `signal_service.py` 和 `indicator_service.py` 到 `signal/`
     - 移动文件到 `signal/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`
     - _需求：2.6_
-  - [~] 7.2 更新 `strategy_entry.py` 中 `indicator_service` 和 `signal_service` 的导入路径
+  - [-] 7.2 更新 `strategy_entry.py` 中 `indicator_service` 和 `signal_service` 的导入路径
     - `.domain.domain_service.indicator_service` → `.domain.domain_service.signal.indicator_service`
     - `.domain.domain_service.signal_service` → `.domain.domain_service.signal.signal_service`
     - _需求：3.1_
