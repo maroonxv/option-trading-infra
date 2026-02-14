@@ -6,7 +6,7 @@ GammaScalpingEngine 属性测试和单元测试
 import pytest
 from hypothesis import given, strategies as st, settings, assume
 
-from src.strategy.domain.domain_service.gamma_scalping_engine import GammaScalpingEngine
+from src.strategy.domain.domain_service.hedging.gamma_scalping_engine import GammaScalpingEngine
 from src.strategy.domain.value_object.hedging import GammaScalpConfig, ScalpResult
 from src.strategy.domain.value_object.risk import PortfolioGreeks
 from src.strategy.domain.value_object.order_instruction import Direction

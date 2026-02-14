@@ -6,7 +6,7 @@ DeltaHedgingEngine 属性测试和单元测试
 import pytest
 from hypothesis import given, strategies as st, settings, assume
 
-from src.strategy.domain.domain_service.delta_hedging_engine import DeltaHedgingEngine
+from src.strategy.domain.domain_service.hedging.delta_hedging_engine import DeltaHedgingEngine
 from src.strategy.domain.value_object.hedging import HedgingConfig, HedgeResult
 from src.strategy.domain.value_object.risk import PortfolioGreeks
 from src.strategy.domain.value_object.order_instruction import Direction

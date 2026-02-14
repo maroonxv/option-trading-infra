@@ -31,7 +31,7 @@
     - 移动文件到 `hedging/` 子目录
     - 将两个文件中的相对导入 `..` 调整为 `...`
     - _需求：2.2_
-  - [~] 3.2 更新测试文件 `test_delta_hedging_engine.py` 和 `test_gamma_scalping_engine.py` 的导入路径
+  - [x] 3.2 更新测试文件 `test_delta_hedging_engine.py` 和 `test_gamma_scalping_engine.py` 的导入路径
     - `src.strategy.domain.domain_service.delta_hedging_engine` → `src.strategy.domain.domain_service.hedging.delta_hedging_engine`
     - `src.strategy.domain.domain_service.gamma_scalping_engine` → `src.strategy.domain.domain_service.hedging.gamma_scalping_engine`
     - _需求：4.1_
