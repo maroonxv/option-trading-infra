@@ -51,12 +51,12 @@
     - _需求：4.1_
 
 - [ ] 5. 移动 selection 组文件并更新导入
-  - [-] 5.1 移动 `option_selector_service.py` 和 `future_selection_service.py` 到 `selection/`
+  - [x] 5.1 移动 `option_selector_service.py` 和 `future_selection_service.py` 到 `selection/`
     - 移动文件到 `selection/` 子目录
     - `option_selector_service.py`：将相对导入 `..` 调整为 `...`
     - `future_selection_service.py`：使用绝对导入，无需调整相对路径
     - _需求：2.4_
-  - [~] 5.2 更新 `strategy_entry.py` 中 `option_selector_service` 和 `future_selection_service` 的导入路径
+  - [x] 5.2 更新 `strategy_entry.py` 中 `option_selector_service` 和 `future_selection_service` 的导入路径
     - `.domain.domain_service.option_selector_service` → `.domain.domain_service.selection.option_selector_service`
     - `.domain.domain_service.future_selection_service` → `.domain.domain_service.selection.future_selection_service`
     - _需求：3.1_
