@@ -208,7 +208,7 @@
   - 无需代码修改，仅需验证
   - **Validates: Requirements 5.3**
 
-- [-] 3.3 添加 warmup 过程中的 BarPipeline 异常处理
+- [x] 3.3 添加 warmup 过程中的 BarPipeline 异常处理
   - 文件：`src/strategy/strategy_entry.py`，`on_init` 方法
   - 在实盘 warmup 的 try-except 块中，确保 BarPipeline 处理数据失败时能被捕获：
     ```python
@@ -230,7 +230,7 @@
 
 ## 任务 4：单元测试
 
-- [~] 4.1 编写 BarPipeline 单元测试
+- [-] 4.1 编写 BarPipeline 单元测试
   - 文件：`tests/strategy/infrastructure/bar_pipeline/__init__.py`（创建空包文件）
   - 文件：`tests/strategy/infrastructure/bar_pipeline/test_bar_pipeline.py`
   - 测试用例：
