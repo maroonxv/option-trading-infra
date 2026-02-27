@@ -100,7 +100,7 @@
     - 实现内部辅助方法 `_calculate_volume_score`、`_calculate_spread_score`、`_calculate_oi_score`、`_identify_trend`
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8_
 
-  - [~] 5.2 编写 LiquidityRiskMonitor 单元测试
+  - [x] 5.2 编写 LiquidityRiskMonitor 单元测试
     - 创建 `tests/strategy/domain/domain_service/risk/test_liquidity_risk_monitor.py`
     - 测试流动性评分计算
     - 测试流动性趋势识别（improving、stable、deteriorating）
