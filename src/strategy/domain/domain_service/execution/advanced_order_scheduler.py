@@ -496,21 +496,5 @@ class AdvancedOrderScheduler:
         """获取高级订单"""
         return self._orders.get(order_id)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """序列化内部状态为 JSON 兼容字典"""
-        return {
-            "config": {
-                "default_batch_size": self.config.default_batch_size,
-                "default_interval_seconds": self.config.default_interval_seconds,
-                "default_num_slices": self.config.default_num_slices,
-                "default_volume_randomize_ratio": self.config.default_volume_randomize_ratio,
-                "default_price_offset_ticks": self.config.default_price_offset_ticks,
-                "default_price_tick": self.config.default_price_tick,
-            },
-            "orders": {
-                oid: order.to_dict() for oid, order in self._orders.items()
-            },
-        }
-
 
 

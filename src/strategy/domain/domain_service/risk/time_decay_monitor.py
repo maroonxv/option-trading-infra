@@ -190,41 +190,6 @@ class TimeDecayMonitor:
         
         return expiry_groups
     
-    def _calculate_days_to_expiry(
-        self,
-        expiry_date_str: str,
-        current_date: datetime
-    ) -> int | None:
-        """
-        计算距离到期天数
-        
-        Args:
-            expiry_date_str: 到期日字符串（如 "2401", "2509"）
-            current_date: 当前日期
-            
-        Returns:
-            距离到期天数，解析失败返回 None
-        """
-        try:
-            # 解析到期日字符串（YYMM 格式）
-            if len(expiry_date_str) == 4:
-                year = int("20" + expiry_date_str[:2])
-                month = int(expiry_date_str[2:])
-                
-                # 假设到期日是该月的第三个星期五（期权标准）
-                # 简化处理：使用该月的 15 日作为近似
-                expiry_date = datetime(year, month, 15)
-                
-                # 计算天数差
-                days_diff = (expiry_date - current_date).days
-                return days_diff
-            else:
-                logger.warning(f"Invalid expiry date format: {expiry_date_str}")
-                return None
-        except Exception as e:
-            logger.warning(f"Error calculating days to expiry for {expiry_date_str}: {e}")
-            return None
-    
     def _determine_urgency(self, days_to_expiry: int) -> str | None:
         """
         判断到期紧急程度
