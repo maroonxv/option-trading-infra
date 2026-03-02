@@ -32,7 +32,7 @@
     - 配置至少 100 次迭代
     - _需求: 1.5_
 
-- [-] 2. 创建 AdvancedOrderScheduler 序列化器
+- [x] 2. 创建 AdvancedOrderScheduler 序列化器
   - [x] 2.1 实现 AdvancedOrderSchedulerSerializer 类
     - 创建 `src/strategy/infrastructure/persistence/advanced_order_scheduler_serializer.py`
     - 实现 `to_dict` 静态方法，序列化配置和订单状态
@@ -49,7 +49,7 @@
     - 测试错误处理
     - _需求: 7.1, 7.5_
 
-  - [-] 2.3 编写 AdvancedOrderSchedulerSerializer 属性测试
+  - [x] 2.3 编写 AdvancedOrderSchedulerSerializer 属性测试
     - 创建 `tests/strategy/infrastructure/persistence/test_advanced_order_scheduler_serializer_properties.py`
     - **属性 2: AdvancedOrderScheduler 序列化往返保持等价性**
     - **验证需求: 2.5**
@@ -58,8 +58,8 @@
     - 配置至少 100 次迭代
     - _需求: 2.5_
 
-- [ ] 3. 扩展 ContractHelper 合约解析功能
-  - [ ] 3.1 实现 ContractHelper 新增方法
+- [-] 3. 扩展 ContractHelper 合约解析功能
+  - [x] 3.1 实现 ContractHelper 新增方法
     - 修改 `src/strategy/infrastructure/parsing/contract_helper.py`
     - 实现 `extract_expiry_from_symbol` 静态方法
     - 使用正则表达式提取 YYMM 格式的到期日
@@ -68,7 +68,7 @@
     - 处理异常情况，返回 "unknown"
     - _需求: 3.1, 3.2, 3.3, 3.4, 3.5_
 
-  - [ ] 3.2 编写 ContractHelper 扩展功能单元测试
+  - [-] 3.2 编写 ContractHelper 扩展功能单元测试
     - 创建 `tests/strategy/infrastructure/parsing/test_contract_helper_extension.py`
     - 测试各种合约格式的到期日提取（IO、MO、HO、m、c 等）
     - 测试不同行权价的区间分组

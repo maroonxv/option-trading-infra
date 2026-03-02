@@ -234,3 +234,90 @@ class ContractHelper:
             return date(year, month, 15)
         except ValueError:
             return None
+
+    @staticmethod
+    def extract_expiry_from_symbol(vt_symbol: str) -> str:
+        """
+        从合约代码中提取到期日
+        
+        期权合约格式示例: "IO2401-C-4000.CFFEX", "m2509-C-2800.DCE"
+        提取年月部分作为到期日标识
+        
+        Args:
+            vt_symbol: 合约代码
+            
+        Returns:
+            到期日字符串（如 "2401", "2509"），解析失败返回 "unknown"
+            
+        Examples:
+            >>> ContractHelper.extract_expiry_from_symbol("IO2401-C-4000.CFFEX")
+            "2401"
+            >>> ContractHelper.extract_expiry_from_symbol("m2509-C-2800.DCE")
+            "2509"
+        """
+        try:
+            # 移除交易所后缀
+            symbol = vt_symbol.split(".")[0] if "." in vt_symbol else vt_symbol
+            
+            # 匹配 YYMM 格式的年月部分
+            # 支持格式: IO2401-C-4000, m2509-C-2800, IO2401C4000 等
+            match = re.search(r"([a-zA-Z]+)(\d{4})", symbol)
+            if match:
+                yymm = match.group(2)
+                return yymm
+            
+            return "unknown"
+        except Exception:
+            return "unknown"
+    
+    @staticmethod
+    def group_by_strike_range(vt_symbol: str) -> str:
+        """
+        将行权价分组到区间
+        
+        期权合约格式示例: "IO2401-C-4000.CFFEX", "m2509-C-2800.DCE"
+        根据行权价大小自动确定区间宽度：
+        - 行权价 < 1000: 区间宽度 100
+        - 1000 <= 行权价 < 5000: 区间宽度 500
+        - 行权价 >= 5000: 区间宽度 1000
+        
+        Args:
+            vt_symbol: 合约代码
+            
+        Returns:
+            行权价区间字符串（如 "4000-4500", "2800-3000"），解析失败返回 "unknown"
+            
+        Examples:
+            >>> ContractHelper.group_by_strike_range("IO2401-C-4000.CFFEX")
+            "4000-4500"
+            >>> ContractHelper.group_by_strike_range("m2509-C-2800.DCE")
+            "2500-3000"
+        """
+        try:
+            # 移除交易所后缀
+            symbol = vt_symbol.split(".")[0] if "." in vt_symbol else vt_symbol
+            
+            # 匹配行权价部分
+            # 支持格式: IO2401-C-4000, m2509-C-2800, IO2401C4000 等
+            # 使用更精确的模式：先匹配年月，然后匹配期权类型和行权价
+            match = re.search(r"\d{4}[-]?([CP])[-]?(\d+(?:\.\d+)?)", symbol, re.IGNORECASE)
+            if not match:
+                return "unknown"
+            
+            strike = float(match.group(2))
+            
+            # 根据行权价大小确定区间宽度
+            if strike < 1000:
+                interval = 100
+            elif strike < 5000:
+                interval = 500
+            else:
+                interval = 1000
+            
+            # 计算区间下界和上界
+            lower = int(strike // interval) * interval
+            upper = lower + interval
+            
+            return f"{lower}-{upper}"
+        except Exception:
+            return "unknown"
