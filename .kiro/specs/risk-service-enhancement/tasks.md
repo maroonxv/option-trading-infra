@@ -127,7 +127,7 @@
     - 实现内部辅助方法 `_calculate_dimension_concentration`、`_calculate_hhi`、`_group_by_strike_range`
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7_
 
-  - [~] 6.2 编写 ConcentrationMonitor 单元测试
+  - [x] 6.2 编写 ConcentrationMonitor 单元测试
     - 创建 `tests/strategy/domain/domain_service/risk/test_concentration_monitor.py`
     - 测试品种集中度计算
     - 测试到期日集中度计算
