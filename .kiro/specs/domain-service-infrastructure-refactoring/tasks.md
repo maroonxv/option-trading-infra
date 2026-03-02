@@ -117,12 +117,12 @@
     - 配置至少 100 次迭代
     - _需求: 4.2, 4.5_
 
-- [ ] 5. 检查点 - 确保基础设施组件测试通过
+- [x] 5. 检查点 - 确保基础设施组件测试通过
   - 运行所有新增的单元测试和属性测试
   - 确保所有测试通过，如有问题请询问用户
 
 - [ ] 6. 扩展 DomainServiceConfigLoader 配置加载功能
-  - [ ] 6.1 实现配置加载器新增方法
+  - [x] 6.1 实现配置加载器新增方法
     - 修改 `src/main/config/domain_service_config_loader.py`
     - 实现 `create_smart_order_executor` 静态方法
     - 从配置字典提取参数，创建 OrderExecutionConfig
@@ -131,7 +131,7 @@
     - 从配置字典提取参数，创建 AdvancedSchedulerConfig
     - _需求: 6.1, 6.2, 6.3, 6.4_
 
-  - [ ] 6.2 编写 DomainServiceConfigLoader 单元测试
+  - [x] 6.2 编写 DomainServiceConfigLoader 单元测试
     - 创建 `tests/main/config/test_domain_service_config_loader.py`
     - 测试完整配置的加载
     - 测试部分配置的加载（使用默认值）

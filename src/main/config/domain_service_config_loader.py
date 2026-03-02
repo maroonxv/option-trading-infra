@@ -453,3 +453,99 @@ def load_time_decay_config(
     _map_field(kwargs, "critical_expiry_days", overrides, "critical_expiry_days", expiry_warning, "critical_days")
 
     return TimeDecayConfig(**kwargs)
+
+
+# ============================================================================
+# 领域服务实例工厂方法
+# ============================================================================
+
+def create_smart_order_executor(config_dict: dict):
+    """
+    从 YAML 配置字典创建 SmartOrderExecutor 实例
+    
+    Args:
+        config_dict: YAML 配置字典，可能包含部分或全部配置项
+        
+    Returns:
+        SmartOrderExecutor 实例
+        
+    Note:
+        缺失的配置项使用 OrderExecutionConfig 的默认值
+        
+    Examples:
+        >>> config = {
+        ...     "timeout_seconds": 30,
+        ...     "max_retries": 3,
+        ...     "slippage_ticks": 2,
+        ...     "price_tick": 0.2
+        ... }
+        >>> executor = create_smart_order_executor(config)
+    """
+    from src.strategy.domain.domain_service.execution.smart_order_executor import SmartOrderExecutor
+    
+    # 从配置字典提取参数，使用 OrderExecutionConfig 的默认值处理缺失项
+    kwargs = {}
+    
+    if "timeout_seconds" in config_dict:
+        kwargs["timeout_seconds"] = config_dict["timeout_seconds"]
+    if "max_retries" in config_dict:
+        kwargs["max_retries"] = config_dict["max_retries"]
+    if "slippage_ticks" in config_dict:
+        kwargs["slippage_ticks"] = config_dict["slippage_ticks"]
+    if "price_tick" in config_dict:
+        kwargs["price_tick"] = config_dict["price_tick"]
+    
+    # 创建配置对象（缺失的字段使用默认值）
+    config = OrderExecutionConfig(**kwargs)
+    
+    # 创建并返回领域服务实例
+    return SmartOrderExecutor(config)
+
+
+def create_advanced_order_scheduler(config_dict: dict):
+    """
+    从 YAML 配置字典创建 AdvancedOrderScheduler 实例
+    
+    Args:
+        config_dict: YAML 配置字典，可能包含部分或全部配置项
+        
+    Returns:
+        AdvancedOrderScheduler 实例
+        
+    Note:
+        缺失的配置项使用 AdvancedSchedulerConfig 的默认值
+        
+    Examples:
+        >>> config = {
+        ...     "default_batch_size": 10,
+        ...     "default_interval_seconds": 60,
+        ...     "default_num_slices": 5,
+        ...     "default_volume_randomize_ratio": 0.1,
+        ...     "default_price_offset_ticks": 2,
+        ...     "default_price_tick": 0.2
+        ... }
+        >>> scheduler = create_advanced_order_scheduler(config)
+    """
+    from src.strategy.domain.domain_service.execution.advanced_order_scheduler import AdvancedOrderScheduler
+    
+    # 从配置字典提取参数，使用 AdvancedSchedulerConfig 的默认值处理缺失项
+    kwargs = {}
+    
+    if "default_batch_size" in config_dict:
+        kwargs["default_batch_size"] = config_dict["default_batch_size"]
+    if "default_interval_seconds" in config_dict:
+        kwargs["default_interval_seconds"] = config_dict["default_interval_seconds"]
+    if "default_num_slices" in config_dict:
+        kwargs["default_num_slices"] = config_dict["default_num_slices"]
+    if "default_volume_randomize_ratio" in config_dict:
+        kwargs["default_volume_randomize_ratio"] = config_dict["default_volume_randomize_ratio"]
+    if "default_price_offset_ticks" in config_dict:
+        kwargs["default_price_offset_ticks"] = config_dict["default_price_offset_ticks"]
+    if "default_price_tick" in config_dict:
+        kwargs["default_price_tick"] = config_dict["default_price_tick"]
+    
+    # 创建配置对象（缺失的字段使用默认值）
+    config = AdvancedSchedulerConfig(**kwargs)
+    
+    # 创建并返回领域服务实例
+    return AdvancedOrderScheduler(config)
