@@ -178,7 +178,7 @@
 - [x] 8. 检查点 - 流动性、集中度和时间衰减服务验证
   - 确保所有测试通过，如有问题请向用户确认。
 
-- [~] 9. 配置文件和配置加载
+- [x] 9. 配置文件和配置加载
   - [x] 9.1 创建 TOML 配置文件
     - 创建 `config/domain_service/risk/stop_loss_manager.toml`，包含固定止损、移动止损、组合止损配置
     - 创建 `config/domain_service/risk/risk_budget_allocator.toml`，包含分配维度和分配比例配置
@@ -194,13 +194,13 @@
     - _Requirements: 全部_
 
 - [~] 10. 集成与导出
-  - [~] 10.1 更新 `src/strategy/domain/domain_service/risk/__init__.py` 导出
+  - [x] 10.1 更新 `src/strategy/domain/domain_service/risk/__init__.py` 导出
     - 导出五个新增的风险监控服务类
     - 导出所有相关值对象和配置类
     - 定义 `__all__` 列表
     - _Requirements: 全部_
 
-  - [~] 10.2 编写风险服务集成测试
+  - [x] 10.2 编写风险服务集成测试
     - 创建 `tests/strategy/domain/domain_service/risk/test_risk_integration.py`
     - 测试止损管理器与持仓实体的交互
     - 测试风险预算分配器与 PortfolioRiskAggregator 的协同
