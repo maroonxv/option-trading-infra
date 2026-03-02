@@ -139,7 +139,7 @@
     - 测试无效配置的处理
     - _需求: 7.1, 7.5_
 
-  - [ ] 6.3 编写 DomainServiceConfigLoader 属性测试
+  - [x] 6.3 编写 DomainServiceConfigLoader 属性测试
     - 创建 `tests/main/config/test_domain_service_config_loader_properties.py`
     - **属性 7: 配置加载正确性**
     - **验证需求: 6.2, 6.3, 6.4, 6.5**
