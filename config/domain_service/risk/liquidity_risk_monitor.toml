@@ -1,0 +1,16 @@
+# 持仓流动性监控服务配置
+# LiquidityRiskMonitor Configuration
+
+[weights]
+# 流动性评分权重（总和应为 1.0）
+volume_weight = 0.4           # 成交量权重
+spread_weight = 0.3           # 价差权重
+open_interest_weight = 0.3    # 持仓量权重
+
+[thresholds]
+# 流动性评分阈值
+liquidity_score_threshold = 0.3  # 低于此分数触发警告
+
+[historical]
+# 历史数据窗口
+lookback_days = 5             # 回溯天数

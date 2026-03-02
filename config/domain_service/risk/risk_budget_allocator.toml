@@ -1,0 +1,16 @@
+# 风险预算分配服务配置
+# RiskBudgetAllocator Configuration
+
+[allocation]
+# 分配维度：underlying（品种）或 strategy（策略）
+dimension = "underlying"
+
+# 是否允许动态调整
+allow_dynamic_adjustment = false
+
+[allocation.ratios]
+# 分配比例（总和应为 1.0）
+# 示例：按品种分配
+"50ETF" = 0.4
+"300ETF" = 0.3
+"500ETF" = 0.3

@@ -1,0 +1,18 @@
+# 止损管理服务配置
+# StopLossManager Configuration
+
+[fixed_stop]
+# 固定止损配置
+enable = true
+loss_amount = 1000.0          # 单笔止损金额（元）
+loss_percent = 0.5            # 单笔止损百分比（相对开仓价值）
+
+[trailing_stop]
+# 移动止损配置
+enable = false
+stop_percent = 0.3            # 回撤百分比触发移动止损
+
+[portfolio_stop]
+# 组合级止损配置
+enable = true
+daily_loss_limit = 5000.0     # 每日最大亏损限额（元）

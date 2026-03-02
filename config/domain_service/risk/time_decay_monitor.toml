@@ -1,0 +1,7 @@
+# 时间衰减监控服务配置
+# TimeDecayMonitor Configuration
+
+[expiry_warning]
+# 到期提醒配置
+warning_days = 7              # 距离到期 N 天时提醒
+critical_days = 3             # 距离到期 N 天时视为紧急

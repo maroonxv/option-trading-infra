@@ -179,7 +179,7 @@
   - 确保所有测试通过，如有问题请向用户确认。
 
 - [~] 9. 配置文件和配置加载
-  - [~] 9.1 创建 TOML 配置文件
+  - [x] 9.1 创建 TOML 配置文件
     - 创建 `config/domain_service/risk/stop_loss_manager.toml`，包含固定止损、移动止损、组合止损配置
     - 创建 `config/domain_service/risk/risk_budget_allocator.toml`，包含分配维度和分配比例配置
     - 创建 `config/domain_service/risk/liquidity_risk_monitor.toml`，包含权重和阈值配置

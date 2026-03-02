@@ -1,0 +1,16 @@
+# 集中度风险监控服务配置
+# ConcentrationMonitor Configuration
+
+[concentration_limits]
+# 各维度集中度阈值
+underlying_limit = 0.5        # 单一品种占比上限
+expiry_limit = 0.6            # 单一到期日占比上限
+strike_limit = 0.4            # 单一行权价区间占比上限
+
+[hhi]
+# HHI（赫芬达尔指数）阈值
+threshold = 0.25              # HHI 超过此值视为高集中度
+
+[calculation]
+# 计算基准：notional（名义价值）或 margin（保证金）
+basis = "notional"
