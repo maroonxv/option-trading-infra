@@ -150,7 +150,7 @@
     - _需求: 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 7. 重构 SmartOrderExecutor 领域服务
-  - [ ] 7.1 移除 SmartOrderExecutor 的序列化方法
+  - [x] 7.1 移除 SmartOrderExecutor 的序列化方法
     - 修改 `src/strategy/domain/domain_service/execution/smart_order_executor.py`
     - 移除 `to_dict` 方法
     - 移除 `from_dict` 类方法

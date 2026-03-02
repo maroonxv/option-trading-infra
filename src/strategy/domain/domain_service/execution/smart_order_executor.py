@@ -3,6 +3,11 @@ SmartOrderExecutor 领域服务
 
 自适应价格计算、超时管理、重试逻辑。
 不直接调用网关，返回执行指令。
+
+职责变更说明:
+- 序列化/反序列化职责已移至 SmartOrderExecutorSerializer (基础设施层)
+- 配置加载职责已移至 DomainServiceConfigLoader (应用层)
+- 本服务专注于纯业务逻辑：价格计算、超时管理、重试策略
 """
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -21,48 +26,18 @@ class SmartOrderExecutor:
     2. 价格对齐到最小变动价位
     3. 订单超时管理
     4. 订单重试逻辑
+    
+    注意:
+    - 序列化使用 SmartOrderExecutorSerializer (infrastructure/persistence)
+    - 配置加载使用 DomainServiceConfigLoader (main/config)
     """
 
     def __init__(self, config: OrderExecutionConfig) -> None:
         self.config = config
         self._orders: Dict[str, ManagedOrder] = {}
 
-    @classmethod
-    def from_yaml_config(cls, config_dict: dict) -> "SmartOrderExecutor":
-        """从 YAML 配置字典创建实例，缺失字段使用 OrderExecutionConfig 默认值"""
-        defaults = OrderExecutionConfig()
-        config = OrderExecutionConfig(
-            timeout_seconds=config_dict.get("timeout_seconds", defaults.timeout_seconds),
-            max_retries=config_dict.get("max_retries", defaults.max_retries),
-            slippage_ticks=config_dict.get("slippage_ticks", defaults.slippage_ticks),
-            price_tick=config_dict.get("price_tick", defaults.price_tick),
-        )
-        return cls(config)
 
-    def to_dict(self) -> Dict[str, Any]:
-        """序列化内部状态为 JSON 兼容字典"""
-        return {
-            "config": {
-                "timeout_seconds": self.config.timeout_seconds,
-                "max_retries": self.config.max_retries,
-                "slippage_ticks": self.config.slippage_ticks,
-                "price_tick": self.config.price_tick,
-            },
-            "orders": {
-                oid: order.to_dict() for oid, order in self._orders.items()
-            },
-        }
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any], config: Optional[OrderExecutionConfig] = None) -> "SmartOrderExecutor":
-        """从字典恢复内部状态"""
-        if config is None:
-            cfg_data = data.get("config", {})
-            config = OrderExecutionConfig(**cfg_data)
-        executor = cls(config)
-        for oid, order_data in data.get("orders", {}).items():
-            executor._orders[oid] = ManagedOrder.from_dict(order_data)
-        return executor
 
     def calculate_adaptive_price(
         self,
