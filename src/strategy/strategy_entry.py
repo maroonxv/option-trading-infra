@@ -40,9 +40,11 @@ from .domain.domain_service.risk.portfolio_risk_aggregator import PortfolioRiskA
 from .domain.domain_service.execution.smart_order_executor import SmartOrderExecutor
 from .domain.event.event_types import (
     EVENT_STRATEGY_ALERT,
+    CombinationStatusChangedEvent,
     DomainEvent,
     ManualCloseDetectedEvent,
     ManualOpenDetectedEvent,
+    PositionClosedEvent,
     RiskLimitExceededEvent,
     GreeksRiskBreachEvent,
     OrderTimeoutEvent,
@@ -1038,7 +1040,10 @@ class StrategyEntry(StrategyTemplate):
 
     def _publish_domain_events(self) -> None:
         """
-        从 PositionAggregate 提取领域事件并发布到 VnPy EventEngine
+        从 PositionAggregate 提取领域事件并发布到 VnPy EventEngine。
+
+        同时将 PositionClosedEvent 转换为 CombinationAggregate 的状态同步调用，
+        完成 Position -> Combination 的事件驱动联动。
         """
         if not self.position_aggregate:
             return
@@ -1054,6 +1059,13 @@ class StrategyEntry(StrategyTemplate):
         for domain_event in events:
             # 日志记录
             self.logger.info(f"领域事件: {domain_event.event_name} - {domain_event}")
+
+            # 通过领域事件驱动组合状态同步
+            if isinstance(domain_event, PositionClosedEvent):
+                self._sync_combination_status_on_position_closed(
+                    domain_event=domain_event,
+                    event_engine=event_engine,
+                )
 
             # 发布到 EventEngine (飞书等订阅者会收到)
             if event_engine:
@@ -1077,3 +1089,44 @@ class StrategyEntry(StrategyTemplate):
                     )
                     vnpy_event = Event(type=EVENT_STRATEGY_ALERT, data=alert_data)
                     event_engine.put(vnpy_event)
+
+    def _sync_combination_status_on_position_closed(
+        self,
+        domain_event: PositionClosedEvent,
+        event_engine: Optional[Any],
+    ) -> None:
+        """消费 PositionClosedEvent 并同步相关组合状态。"""
+        if not self.position_aggregate or not self.combination_aggregate:
+            return
+
+        closed_vt_symbols = self.position_aggregate.get_closed_vt_symbols()
+        self.combination_aggregate.sync_combination_status(
+            vt_symbol=domain_event.vt_symbol,
+            closed_vt_symbols=closed_vt_symbols,
+        )
+
+        combination_events = self.combination_aggregate.pop_domain_events()
+        for combination_event in combination_events:
+            self.logger.info(
+                f"组合领域事件: {combination_event.event_name} - {combination_event}"
+            )
+            if event_engine and isinstance(
+                combination_event, CombinationStatusChangedEvent
+            ):
+                alert_data = StrategyAlertData(
+                    strategy_name=self.strategy_name,
+                    alert_type="combination_status",
+                    message=(
+                        f"组合状态变更: {combination_event.combination_id} "
+                        f"{combination_event.old_status} -> {combination_event.new_status}"
+                    ),
+                    timestamp=combination_event.timestamp,
+                    extra={
+                        "combination_id": combination_event.combination_id,
+                        "combination_type": combination_event.combination_type,
+                        "old_status": combination_event.old_status,
+                        "new_status": combination_event.new_status,
+                    },
+                )
+                vnpy_event = Event(type=EVENT_STRATEGY_ALERT, data=alert_data)
+                event_engine.put(vnpy_event)

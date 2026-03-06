@@ -14,6 +14,7 @@ from ..event.event_types import (
     DomainEvent,
     ManualCloseDetectedEvent,
     ManualOpenDetectedEvent,
+    PositionClosedEvent,
     RiskLimitExceededEvent,
 )
 
@@ -143,6 +144,14 @@ class PositionAggregate:
     def get_all_positions(self) -> List[Position]:
         """获取所有持仓 (包括已平仓)"""
         return list(self._positions.values())
+
+    def get_closed_vt_symbols(self) -> Set[str]:
+        """获取所有已平仓持仓对应的 vt_symbol 集合。"""
+        return {
+            position.vt_symbol
+            for position in self._positions.values()
+            if position.is_closed
+        }
     
     # ========== 订单管理接口 ==========
     
@@ -315,7 +324,10 @@ class PositionAggregate:
         
         # 平仓成交
         else:
+            was_closed = position.is_closed
             position.reduce_volume(volume, trade_time)
+            if not was_closed and position.is_closed:
+                self._emit_position_closed_event(position)
     
     def update_from_position(self, position_data: dict) -> None:
         """
@@ -339,6 +351,7 @@ class PositionAggregate:
         
         # 检测手动平仓 (实际持仓 < 策略记录的持仓)
         if actual_volume < position.volume:
+            was_closed = position.is_closed
             manual_volume = position.volume - actual_volume
             position.mark_as_manually_closed(manual_volume)
             
@@ -348,6 +361,8 @@ class PositionAggregate:
                 volume=manual_volume,
                 timestamp=datetime.now()
             ))
+            if not was_closed and position.is_closed:
+                self._emit_position_closed_event(position)
         
         # 检测手动开仓 (实际持仓 > 策略记录的持仓)
         elif actual_volume > position.volume:
@@ -382,6 +397,18 @@ class PositionAggregate:
     def is_managed(self, vt_symbol: str) -> bool:
         """检查合约是否由策略管理"""
         return vt_symbol in self._managed_symbols
+
+    def _emit_position_closed_event(self, position: Position) -> None:
+        """在持仓首次完全平仓时发出 PositionClosedEvent。"""
+        self._domain_events.append(
+            PositionClosedEvent(
+                vt_symbol=position.vt_symbol,
+                signal=position.signal,
+                holding_seconds=position.holding_time or 0.0,
+                pnl=0.0,
+                timestamp=position.close_time or datetime.now(),
+            )
+        )
     
     def clear(self) -> None:
         """清空所有状态"""
