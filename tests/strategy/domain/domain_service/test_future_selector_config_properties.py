@@ -1,8 +1,8 @@
 """
-BaseFutureSelector 配置行为一致性属性测试
+FutureSelectionService 配置行为一致性属性测试
 
-Feature: domain-service-config-enhancement, Property 4: BaseFutureSelector 主力合约选择一致性
-Feature: domain-service-config-enhancement, Property 5: BaseFutureSelector 移仓检查一致性
+Feature: domain-service-config-enhancement, Property 4: FutureSelectionService 主力合约选择一致性
+Feature: domain-service-config-enhancement, Property 5: FutureSelectionService 移仓检查一致性
 
 **Validates: Requirements 5.3**
 """
@@ -67,7 +67,7 @@ from hypothesis import given, settings, assume  # noqa: E402
 from hypothesis import strategies as st  # noqa: E402
 
 from src.strategy.domain.domain_service.selection.future_selection_service import (  # noqa: E402
-    BaseFutureSelector,
+    FutureSelectionService,
 )
 from src.strategy.domain.value_object.config.future_selector_config import FutureSelectorConfig  # noqa: E402
 from src.strategy.domain.value_object.selection.selection import MarketData  # noqa: E402
@@ -114,15 +114,15 @@ def _make_contract(symbol: str) -> _ContractData:
 
 
 # ===========================================================================
-# Feature: domain-service-config-enhancement, Property 4: BaseFutureSelector 主力合约选择一致性
+# Feature: domain-service-config-enhancement, Property 4: FutureSelectionService 主力合约选择一致性
 # ===========================================================================
 
 
 class TestProperty4DominantSelectionConsistency:
     """
-    Property 4: BaseFutureSelector 主力合约选择一致性
+    Property 4: FutureSelectionService 主力合约选择一致性
 
-    对于任意合约列表和行情数据组合，使用默认配置实例化的 BaseFutureSelector
+    对于任意合约列表和行情数据组合，使用默认配置实例化的 FutureSelectionService
     调用 select_dominant_contract 方法，应该选择与使用显式默认参数
     (volume_weight=0.6, oi_weight=0.4) 实例化时相同的合约。
 
@@ -153,18 +153,18 @@ class TestProperty4DominantSelectionConsistency:
         self, symbols, volumes, ois, current_dt
     ):
         """
-        Feature: domain-service-config-enhancement, Property 4: BaseFutureSelector 主力合约选择一致性
+        Feature: domain-service-config-enhancement, Property 4: FutureSelectionService 主力合约选择一致性
 
-        BaseFutureSelector(config=FutureSelectorConfig()) 与
-        BaseFutureSelector(config=FutureSelectorConfig(volume_weight=0.6, oi_weight=0.4))
+        FutureSelectionService(config=FutureSelectorConfig()) 与
+        FutureSelectionService(config=FutureSelectorConfig(volume_weight=0.6, oi_weight=0.4))
         对同一输入应选择完全相同的合约。
 
         **Validates: Requirements 5.3**
         """
         # 服务 A：不传配置（内部回退到默认配置）
-        selector_implicit = BaseFutureSelector()
+        selector_implicit = FutureSelectionService()
         # 服务 B：显式传入默认值配置
-        selector_explicit = BaseFutureSelector(
+        selector_explicit = FutureSelectionService(
             config=FutureSelectorConfig(volume_weight=0.6, oi_weight=0.4)
         )
 
@@ -201,46 +201,46 @@ class TestProperty4DominantSelectionConsistency:
         self, symbols, current_dt
     ):
         """
-        Feature: domain-service-config-enhancement, Property 4: BaseFutureSelector 主力合约选择一致性
+        Feature: domain-service-config-enhancement, Property 4: FutureSelectionService 主力合约选择一致性
 
-        无行情数据时，两种实例化方式也应返回相同合约。
+        无行情数据时，两种实例化方式都应抛出相同错误。
 
         **Validates: Requirements 5.3**
         """
-        selector_implicit = BaseFutureSelector()
-        selector_explicit = BaseFutureSelector(
+        selector_implicit = FutureSelectionService()
+        selector_explicit = FutureSelectionService(
             config=FutureSelectorConfig(volume_weight=0.6, oi_weight=0.4)
         )
 
         contracts = [_make_contract(s) for s in symbols]
 
-        result_implicit = selector_implicit.select_dominant_contract(
-            contracts, current_dt,
-        )
-        result_explicit = selector_explicit.select_dominant_contract(
-            contracts, current_dt,
-        )
+        try:
+            selector_implicit.select_dominant_contract(contracts, current_dt)
+            implicit_failed = False
+        except ValueError:
+            implicit_failed = True
 
-        assert result_implicit is not None
-        assert result_explicit is not None
-        assert result_implicit.symbol == result_explicit.symbol, (
-            f"无行情数据时主力合约选择不一致: implicit={result_implicit.symbol}, "
-            f"explicit={result_explicit.symbol}"
-        )
+        try:
+            selector_explicit.select_dominant_contract(contracts, current_dt)
+            explicit_failed = False
+        except ValueError:
+            explicit_failed = True
+
+        assert implicit_failed and explicit_failed
 
 
 # ===========================================================================
-# Feature: domain-service-config-enhancement, Property 5: BaseFutureSelector 移仓检查一致性
+# Feature: domain-service-config-enhancement, Property 5: FutureSelectionService 移仓检查一致性
 # ===========================================================================
 
 
 class TestProperty5RolloverCheckConsistency:
     """
-    Property 5: BaseFutureSelector 移仓检查一致性
+    Property 5: FutureSelectionService 移仓检查一致性
 
     对于任意当前合约、合约列表和当前日期组合，使用默认配置实例化的
-    BaseFutureSelector 调用 check_rollover 方法，应该产生与使用显式默认参数
-    (rollover_days=5) 实例化时相同的 RolloverRecommendation。
+    FutureSelectionService 调用 check_rollover 方法，应该产生与使用显式默认参数
+    (rollover_days=5) 实例化时相同的布尔结果。
 
     **Validates: Requirements 5.3**
     """
@@ -252,19 +252,19 @@ class TestProperty5RolloverCheckConsistency:
     @settings(max_examples=100)
     def test_rollover_check_consistency(self, symbol, current_dt):
         """
-        Feature: domain-service-config-enhancement, Property 5: BaseFutureSelector 移仓检查一致性
+        Feature: domain-service-config-enhancement, Property 5: FutureSelectionService 移仓检查一致性
 
-        BaseFutureSelector() 与
-        BaseFutureSelector(config=FutureSelectorConfig(rollover_days=5))
-        对同一输入应产生完全相同的 RolloverRecommendation。
+        FutureSelectionService() 与
+        FutureSelectionService(config=FutureSelectorConfig(rollover_days=5))
+        对同一输入应产生完全相同的布尔结果。
 
         **Validates: Requirements 5.3**
         """
         expiry = ContractHelper.get_expiry_from_symbol(symbol)
         assume(expiry is not None)
 
-        selector_implicit = BaseFutureSelector()
-        selector_explicit = BaseFutureSelector(
+        selector_implicit = FutureSelectionService()
+        selector_explicit = FutureSelectionService(
             config=FutureSelectorConfig(rollover_days=5)
         )
 
@@ -272,29 +272,14 @@ class TestProperty5RolloverCheckConsistency:
 
         result_implicit = selector_implicit.check_rollover(
             current_contract=contract,
-            all_contracts=[contract],
             current_date=current_dt,
         )
         result_explicit = selector_explicit.check_rollover(
             current_contract=contract,
-            all_contracts=[contract],
             current_date=current_dt,
         )
 
-        # 两者应产生完全相同的结果
-        if result_implicit is None:
-            assert result_explicit is None, (
-                f"移仓检查不一致: implicit=None, explicit={result_explicit}"
-            )
-        else:
-            assert result_explicit is not None, (
-                f"移仓检查不一致: implicit={result_implicit}, explicit=None"
-            )
-            assert result_implicit.current_contract_symbol == result_explicit.current_contract_symbol
-            assert result_implicit.target_contract_symbol == result_explicit.target_contract_symbol
-            assert result_implicit.remaining_days == result_explicit.remaining_days
-            assert result_implicit.has_target == result_explicit.has_target
-            assert result_implicit.reason == result_explicit.reason
+        assert result_implicit == result_explicit
 
     @given(
         symbol=_contract_symbol,
@@ -308,17 +293,17 @@ class TestProperty5RolloverCheckConsistency:
         self, symbol, current_dt, extra_symbols, volumes, ois
     ):
         """
-        Feature: domain-service-config-enhancement, Property 5: BaseFutureSelector 移仓检查一致性
+        Feature: domain-service-config-enhancement, Property 5: FutureSelectionService 移仓检查一致性
 
-        有行情数据和多个合约时，两种实例化方式也应产生相同的移仓建议。
+        有行情数据和多个合约时，两种实例化方式也应产生相同的布尔结果。
 
         **Validates: Requirements 5.3**
         """
         expiry = ContractHelper.get_expiry_from_symbol(symbol)
         assume(expiry is not None)
 
-        selector_implicit = BaseFutureSelector()
-        selector_explicit = BaseFutureSelector(
+        selector_implicit = FutureSelectionService()
+        selector_explicit = FutureSelectionService(
             config=FutureSelectorConfig(rollover_days=5)
         )
 
@@ -336,27 +321,11 @@ class TestProperty5RolloverCheckConsistency:
 
         result_implicit = selector_implicit.check_rollover(
             current_contract=current_contract,
-            all_contracts=all_contracts,
             current_date=current_dt,
-            market_data=market_data,
         )
         result_explicit = selector_explicit.check_rollover(
             current_contract=current_contract,
-            all_contracts=all_contracts,
             current_date=current_dt,
-            market_data=market_data,
         )
 
-        if result_implicit is None:
-            assert result_explicit is None, (
-                f"移仓检查不一致: implicit=None, explicit={result_explicit}"
-            )
-        else:
-            assert result_explicit is not None, (
-                f"移仓检查不一致: implicit={result_implicit}, explicit=None"
-            )
-            assert result_implicit.current_contract_symbol == result_explicit.current_contract_symbol
-            assert result_implicit.target_contract_symbol == result_explicit.target_contract_symbol
-            assert result_implicit.remaining_days == result_explicit.remaining_days
-            assert result_implicit.has_target == result_explicit.has_target
-            assert result_implicit.reason == result_explicit.reason
+        assert result_implicit == result_explicit

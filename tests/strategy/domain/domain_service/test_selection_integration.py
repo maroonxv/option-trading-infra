@@ -69,7 +69,7 @@ from datetime import date  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from src.strategy.domain.domain_service.selection.future_selection_service import (  # noqa: E402
-    BaseFutureSelector,
+    FutureSelectionService,
 )
 from src.strategy.domain.domain_service.selection.option_selector_service import (  # noqa: E402
     OptionSelectorService,
@@ -77,7 +77,6 @@ from src.strategy.domain.domain_service.selection.option_selector_service import
 from src.strategy.domain.value_object.selection.option_selector_config import OptionSelectorConfig  # noqa: E402
 from src.strategy.domain.value_object.selection.selection import (  # noqa: E402
     MarketData,
-    RolloverRecommendation,
     CombinationSelectionResult,
     SelectionScore,
 )
@@ -150,13 +149,13 @@ def _build_option_chain(
 class TestFutureSelectorIntegration:
     """期货选择器完整流程集成测试
 
-    流程：创建合约和行情 → select_dominant_contract → check_rollover → filter_by_maturity
+    流程：创建合约和行情 → select_dominant_contract → check_rollover → select_by_expiration
     Validates: Requirements 1, 2, 3
     """
 
     @pytest.fixture
     def selector(self):
-        return BaseFutureSelector()
+        return FutureSelectionService()
 
     @pytest.fixture
     def contracts(self):
@@ -192,7 +191,7 @@ class TestFutureSelectorIntegration:
         """完整流程：选择主力合约 → 检查移仓 → 过滤到期日
 
         场景：当前日期 2025-01-12，rb2501 是主力但临近到期，
-        应触发移仓建议到 rb2502，同时过滤出当月和次月合约。
+        check_rollover 应返回 False，同时过滤出当月和次月合约。
         """
         current_date = date(2025, 1, 12)
         logs = []
@@ -208,33 +207,26 @@ class TestFutureSelectorIntegration:
 
         # Step 2: 检查移仓 — rb2501 到期日 2025-01-15，剩余 3 天 <= 阈值 5 天
         rollover = selector.check_rollover(
-            dominant, contracts, current_date,
-            market_data=market_data, log_func=logs.append
+            dominant, current_date, log_func=logs.append
         )
-        assert rollover is not None
-        assert isinstance(rollover, RolloverRecommendation)
-        assert rollover.current_contract_symbol == "rb2501"
-        assert rollover.has_target is True
-        # 目标应为 rb2502（下月中成交量最大的合约）
-        assert rollover.target_contract_symbol == "rb2502"
-        assert rollover.remaining_days <= 5
+        assert rollover is False
 
         # Step 3: 过滤当月合约 — 仅 rb2501 在 2025-01 范围内
-        current_month = selector.filter_by_maturity(
+        current_month = selector.select_by_expiration(
             contracts, current_date, mode="current_month", log_func=logs.append
         )
         assert len(current_month) == 1
         assert current_month[0].symbol == "rb2501"
 
         # Step 4: 过滤次月合约 — 仅 rb2502 在 2025-02 范围内
-        next_month = selector.filter_by_maturity(
+        next_month = selector.select_by_expiration(
             contracts, current_date, mode="next_month", log_func=logs.append
         )
         assert len(next_month) == 1
         assert next_month[0].symbol == "rb2502"
 
-        # 验证整个流程有日志输出
-        assert len(logs) >= 3
+        # 验证核心流程有日志输出（主力选择 + rollover 检查）
+        assert len(logs) >= 2
 
     def test_pipeline_no_rollover_needed(self, selector, contracts, market_data):
         """流程：主力合约远离到期日时不触发移仓
@@ -250,14 +242,14 @@ class TestFutureSelectorIntegration:
         assert dominant is not None
         assert dominant.symbol == "rb2501"
 
-        # Step 2: 检查移仓 — 不应触发
+        # Step 2: 检查移仓 — 剩余天数大于阈值，返回 True
         rollover = selector.check_rollover(
-            dominant, contracts, current_date, market_data=market_data
+            dominant, current_date
         )
-        assert rollover is None
+        assert rollover is True
 
         # Step 3: 过滤当月合约 — 2024-12 无合约到期
-        current_month = selector.filter_by_maturity(
+        current_month = selector.select_by_expiration(
             contracts, current_date, mode="current_month"
         )
         assert len(current_month) == 0
@@ -276,7 +268,7 @@ class TestFutureSelectorIntegration:
         assert dominant is not None
 
         # Step 2: 自定义范围过滤
-        filtered = selector.filter_by_maturity(
+        filtered = selector.select_by_expiration(
             contracts, current_date, mode="custom",
             date_range=(date(2025, 1, 1), date(2025, 3, 31))
         )
@@ -285,10 +277,10 @@ class TestFutureSelectorIntegration:
         symbols = {c.symbol for c in filtered}
         assert symbols == {"rb2501", "rb2502", "rb2503"}
 
-    def test_pipeline_rollover_no_target(self, selector):
-        """流程：移仓时无目标合约
+    def test_pipeline_rollover_returns_false_near_expiry(self, selector):
+        """流程：临近到期时 check_rollover 返回 False
 
-        场景：只有一个合约 rb2501，临近到期但无下月合约可切换。
+        场景：只有一个合约 rb2501，当前日期临近到期。
         """
         current_date = date(2025, 1, 13)
         contracts = [_make_contract("rb2501")]
@@ -304,33 +296,21 @@ class TestFutureSelectorIntegration:
         )
         assert dominant.symbol == "rb2501"
 
-        # Step 2: 检查移仓 — 触发但无目标
+        # Step 2: 检查移仓 — 剩余天数 <= 阈值，返回 False
         rollover = selector.check_rollover(
-            dominant, contracts, current_date, market_data=market_data
+            dominant, current_date
         )
-        assert rollover is not None
-        assert rollover.has_target is False
-        assert rollover.target_contract_symbol == ""
+        assert rollover is False
 
-    def test_pipeline_fallback_no_market_data(self, selector, contracts):
-        """流程：无行情数据时的完整回退路径
+    def test_pipeline_no_market_data_raises(self, selector, contracts):
+        """流程：无行情数据时抛出错误
 
-        场景：无行情数据，按到期日排序选择最近月合约。
+        场景：无行情数据，主力选择不再回退而是直接报错。
         """
         current_date = date(2025, 1, 12)
 
-        # Step 1: 无行情数据回退
-        dominant = selector.select_dominant_contract(contracts, current_date)
-        assert dominant is not None
-        assert dominant.symbol == "rb2501"  # 到期日最近
-
-        # Step 2: 检查移仓（无行情数据，目标按到期日选择）
-        rollover = selector.check_rollover(
-            dominant, contracts, current_date
-        )
-        assert rollover is not None
-        assert rollover.has_target is True
-        assert rollover.target_contract_symbol == "rb2502"
+        with pytest.raises(ValueError, match="market_data 不能为空"):
+            selector.select_dominant_contract(contracts, current_date)
 
 
 

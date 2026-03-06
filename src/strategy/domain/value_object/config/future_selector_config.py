@@ -1,7 +1,7 @@
 """
 FutureSelectorConfig - 期货选择器配置值对象
 
-将 BaseFutureSelector 方法签名中的硬编码参数提取为统一的不可变配置对象，
+将 FutureSelectionService 方法签名中的硬编码参数提取为统一的不可变配置对象，
 提升可配置性和可测试性。
 """
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ class FutureSelectorConfig:
     """
     期货选择器配置
 
-    所有字段均有合理默认值，与 BaseFutureSelector 原默认参数一致。
+    所有字段均有合理默认值，与 FutureSelectionService 原默认参数一致。
     """
 
     # ── 主力合约选择参数 ──

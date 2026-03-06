@@ -1,5 +1,5 @@
 """
-BaseFutureSelector.select_dominant_contract 属性测试
+FutureSelectionService.select_dominant_contract 属性测试
 
 # Feature: selection-service-enhancement, Property 1: 主力合约得分最高
 
@@ -8,7 +8,7 @@ BaseFutureSelector.select_dominant_contract 属性测试
 Property 1: 主力合约得分最高
 For any 非空期货合约列表和对应的行情数据，select_dominant_contract 返回的合约的
 加权得分（volume × volume_weight + open_interest × oi_weight）应大于等于列表中
-所有其他合约的加权得分。当得分相同时，返回的合约到期日应最近。
+所有其他合约的加权得分。当得分相同时，返回输入顺序中的第一个最高分合约。
 """
 
 import sys
@@ -72,10 +72,10 @@ from hypothesis import given, settings, assume  # noqa: E402
 from hypothesis import strategies as st  # noqa: E402
 
 from src.strategy.domain.domain_service.selection.future_selection_service import (  # noqa: E402
-    BaseFutureSelector,
+    FutureSelectionService,
 )
 from src.strategy.domain.value_object.config.future_selector_config import FutureSelectorConfig  # noqa: E402
-from src.strategy.domain.value_object.selection.selection import MarketData, RolloverRecommendation  # noqa: E402
+from src.strategy.domain.value_object.selection.selection import MarketData  # noqa: E402
 from src.strategy.infrastructure.parsing.contract_helper import ContractHelper  # noqa: E402
 
 
@@ -145,9 +145,9 @@ def test_dominant_contract_has_highest_score(
 
     For any non-empty contract list with market data, the contract returned by
     select_dominant_contract should have a weighted score >= all other contracts.
-    When scores are tied, the returned contract should have the earliest expiry.
+    When scores are tied, the returned contract should be the first max-score contract.
     """
-    selector = BaseFutureSelector(
+    selector = FutureSelectionService(
         config=FutureSelectorConfig(volume_weight=volume_weight, oi_weight=oi_weight)
     )
 
@@ -169,10 +169,6 @@ def test_dominant_contract_has_highest_score(
         return md.volume * volume_weight + md.open_interest * oi_weight
 
     scores = [(c, calc_score(c)) for c in contracts]
-    all_zero = all(s == 0.0 for _, s in scores)
-
-    # If all scores are zero, the method falls back to expiry sorting —
-    # that's a different path, still valid for Property 1 since all scores equal
     result = selector.select_dominant_contract(
         contracts,
         date.today(),
@@ -192,23 +188,16 @@ def test_dominant_contract_has_highest_score(
         )
 
     # Verify tie-breaking: among contracts with the same max score,
-    # the returned contract should have the earliest expiry date
+    # the returned contract should be the first one in input order
     max_score = result_score
-    tied_contracts = [c for c, s in scores if s == max_score]
-
-    if len(tied_contracts) > 1:
-        def get_expiry(contract):
-            expiry = ContractHelper.get_expiry_from_symbol(contract.symbol)
-            return expiry if expiry is not None else date.max
-
-        result_expiry = get_expiry(result)
-        for c in tied_contracts:
-            c_expiry = get_expiry(c)
-            assert result_expiry <= c_expiry, (
-                f"Tie-break failed: selected {result.symbol} "
-                f"(expiry={result_expiry}) should have earliest expiry, "
-                f"but {c.symbol} (expiry={c_expiry}) is earlier"
-            )
+    tied_indices = [i for i, (_, s) in enumerate(scores) if s == max_score]
+    if len(tied_indices) > 1:
+        expected_index = min(tied_indices)
+        actual_index = next(i for i, c in enumerate(contracts) if c.symbol == result.symbol)
+        assert actual_index == expected_index, (
+            f"Tie-break failed: selected index={actual_index}, "
+            f"expected first max-score index={expected_index}"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +205,7 @@ def test_dominant_contract_has_highest_score(
 # Feature: selection-service-enhancement, Property 2: 到期日过滤正确性
 # ---------------------------------------------------------------------------
 
-# Strategy: generate a current_date for filter_by_maturity
+# Strategy: generate a current_date for select_by_expiration
 _current_date = st.dates(min_value=date(2025, 1, 1), max_value=date(2035, 12, 28))
 
 # Strategy: filter mode
@@ -273,7 +262,7 @@ def _compute_target_range(current_date: date, mode: str, date_range=None):
     custom_offset_start=st.integers(min_value=0, max_value=180),
     custom_offset_end=st.integers(min_value=0, max_value=180),
 )
-def test_filter_by_maturity_correctness(
+def test_select_by_expiration_correctness(
     symbols, current_dt, mode, custom_offset_start, custom_offset_end
 ):
     """
@@ -282,10 +271,10 @@ def test_filter_by_maturity_correctness(
     **Validates: Requirements 2.1, 2.2, 2.3**
 
     For any contract list, current date, and filter mode (current_month / next_month / custom),
-    filter_by_maturity should return contracts whose parsed expiry falls within the target
+    select_by_expiration should return contracts whose parsed expiry falls within the target
     date range, and all parseable contracts with expiry in range should be included.
     """
-    selector = BaseFutureSelector()
+    selector = FutureSelectionService()
     contracts = [_make_contract(s) for s in symbols]
 
     # Build date_range for custom mode
@@ -298,8 +287,8 @@ def test_filter_by_maturity_correctness(
             start, end = end, start
         date_range = (start, end)
 
-    # Call filter_by_maturity
-    result = selector.filter_by_maturity(
+    # Call select_by_expiration
+    result = selector.select_by_expiration(
         contracts, current_dt, mode=mode, date_range=date_range
     )
 
@@ -353,10 +342,10 @@ def test_check_rollover_trigger_correctness(symbol, current_dt, rollover_days):
 
     **Validates: Requirements 3.1, 3.3**
 
-    For any contract and rollover threshold, check_rollover returns non-None
-    if and only if the contract's remaining calendar days <= threshold.
+    For any contract and rollover threshold, check_rollover returns True
+    if and only if the contract's remaining calendar days > threshold.
     """
-    selector = BaseFutureSelector(
+    selector = FutureSelectionService(
         config=FutureSelectorConfig(rollover_days=rollover_days)
     )
     contract = _make_contract(symbol)
@@ -368,119 +357,48 @@ def test_check_rollover_trigger_correctness(symbol, current_dt, rollover_days):
 
     result = selector.check_rollover(
         current_contract=contract,
-        all_contracts=[contract],
         current_date=current_dt,
     )
 
-    if remaining_days <= rollover_days:
-        assert result is not None, (
+    if remaining_days > rollover_days:
+        assert result is True, (
             f"Contract {symbol} has {remaining_days} remaining days with "
-            f"threshold {rollover_days}, should trigger rollover but got None"
+            f"threshold {rollover_days}, should return True but got {result}"
         )
-        assert result.remaining_days == remaining_days
-        assert result.current_contract_symbol == symbol
     else:
-        assert result is None, (
+        assert result is False, (
             f"Contract {symbol} has {remaining_days} remaining days with "
-            f"threshold {rollover_days}, should NOT trigger rollover but got "
-            f"a recommendation"
+            f"threshold {rollover_days}, should return False but got {result}"
         )
 
 
 # ---------------------------------------------------------------------------
-# Property 4: 移仓目标为最大成交量合约
-# Feature: selection-service-enhancement, Property 4: 移仓目标为最大成交量合约
+# Property 4: 阈值边界一致性
+# Feature: selection-service-enhancement, Property 4: 阈值边界一致性
 # ---------------------------------------------------------------------------
 
-# Strategy: generate next-month contract symbols relative to a given YYMM
-def _next_month_yymm(yy: int, mm: int):
-    """Return (year, month) for the next month."""
-    if mm == 12:
-        return yy + 1, 1
-    return yy, mm + 1
-
-
-# Strategy: volumes for next-month contracts
-_next_month_volumes = st.lists(
-    st.integers(min_value=0, max_value=1_000_000),
-    min_size=1,
-    max_size=5,
-)
-
-
-# Feature: selection-service-enhancement, Property 4: 移仓目标为最大成交量合约
 @settings(max_examples=100)
 @given(
-    yy=st.integers(min_value=25, max_value=34),
-    mm=st.integers(min_value=1, max_value=12),
-    next_volumes=_next_month_volumes,
+    symbol=_contract_symbol,
+    rollover_days=_rollover_days,
+    offset=st.integers(min_value=-60, max_value=60),
 )
-def test_check_rollover_target_is_max_volume(yy, mm, next_volumes):
+def test_check_rollover_boundary_consistency(symbol, rollover_days, offset):
     """
-    Property 4: 移仓目标为最大成交量合约
+    Property 4: 阈值边界一致性
 
-    **Validates: Requirements 3.2**
+    **Validates: Requirements 3.1, 3.3**
 
-    For any rollover scenario where next-month contracts exist with market data,
-    check_rollover should return the next-month contract with the highest volume.
+    check_rollover 的返回值应严格等价于:
+    (expiry - current_date).days > rollover_days。
     """
-    selector = BaseFutureSelector(
-        config=FutureSelectorConfig(rollover_days=5)
+    expiry = ContractHelper.get_expiry_from_symbol(symbol)
+    assume(expiry is not None)
+
+    current_dt = expiry - timedelta(days=offset)
+    selector = FutureSelectionService(
+        config=FutureSelectorConfig(rollover_days=rollover_days)
     )
-
-    # Current contract symbol
-    current_symbol = f"rb{yy:02d}{mm:02d}"
-    current_contract = _make_contract(current_symbol)
-
-    current_expiry = ContractHelper.get_expiry_from_symbol(current_symbol)
-    assume(current_expiry is not None)
-
-    # Use a current_date that guarantees rollover triggers (same as expiry)
-    current_dt = current_expiry
-
-    # Build next-month contracts with unique suffixes
-    next_yy, next_mm = _next_month_yymm(yy, mm)
-    # We use different product prefixes to create unique next-month contracts
-    prefixes = ["rb", "hc", "cu", "al", "zn"]
-    next_contracts = []
-    for i, vol in enumerate(next_volumes):
-        prefix = prefixes[i % len(prefixes)]
-        sym = f"{prefix}{next_yy:02d}{next_mm:02d}"
-        next_contracts.append(_make_contract(sym))
-
-    # Ensure all next-month contracts have unique vt_symbols
-    vt_symbols = [c.vt_symbol for c in next_contracts]
-    assume(len(vt_symbols) == len(set(vt_symbols)))
-
-    all_contracts = [current_contract] + next_contracts
-
-    # Build market data with specified volumes
-    market_data = {}
-    for i, c in enumerate(next_contracts):
-        market_data[c.vt_symbol] = MarketData(
-            vt_symbol=c.vt_symbol,
-            volume=next_volumes[i],
-            open_interest=0.0,
-        )
-
-    result = selector.check_rollover(
-        current_contract=current_contract,
-        all_contracts=all_contracts,
-        current_date=current_dt,
-        market_data=market_data,
-    )
-
-    assert result is not None, "Rollover should trigger when current_date == expiry"
-    assert result.has_target, "Should find target among next-month contracts"
-
-    # The target should be the contract with max volume among next-month contracts
-    max_volume = max(next_volumes)
-    target_md = market_data.get(
-        f"{result.target_contract_symbol}.{_Exchange.SHFE.value}"
-    )
-    assert target_md is not None, (
-        f"Target {result.target_contract_symbol} not found in market data"
-    )
-    assert target_md.volume == max_volume, (
-        f"Target contract volume {target_md.volume} != max volume {max_volume}"
-    )
+    contract = _make_contract(symbol)
+    result = selector.check_rollover(current_contract=contract, current_date=current_dt)
+    assert result == ((expiry - current_dt).days > rollover_days)

@@ -1,20 +1,27 @@
 import calendar
+import math
 from datetime import date
-from typing import Dict, List, Optional, Callable, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
+
 from vnpy.trader.object import ContractData
+
+from src.strategy.domain.value_object.selection.selection import MarketData
 from src.strategy.infrastructure.parsing.contract_helper import ContractHelper
-from src.strategy.domain.value_object.selection.selection import MarketData, RolloverRecommendation
 
 
-
-class BaseFutureSelector:
+class FutureSelectionService:
     """
-    Base class for future selection strategies.
-    Provides common utilities for contract filtering and selection.
+    期货合约选择服务。
+
+    职责:
+    - select_dominant_contract: 基于成交量/持仓量加权得分选择主力合约（无行情则报错）
+    - select_by_expiration: 基于到期日范围筛选合约
+    - check_rollover: 检查当前合约剩余天数是否大于阈值（返回 bool）
     """
 
     def __init__(self, config: Optional["FutureSelectorConfig"] = None):
         from src.strategy.domain.value_object.config.future_selector_config import FutureSelectorConfig
+
         self._config = config or FutureSelectorConfig()
 
     def select_dominant_contract(
@@ -22,83 +29,65 @@ class BaseFutureSelector:
         contracts: List[ContractData],
         current_date: date,
         market_data: Optional[Dict[str, MarketData]] = None,
-        log_func: Optional[Callable[[str], None]] = None
+        log_func: Optional[Callable[[str], None]] = None,
     ) -> Optional[ContractData]:
         """
         基于成交量/持仓量加权得分选择主力合约。
-        若无行情数据则回退到按到期日排序。
 
-        Args:
-            contracts: 可用合约列表
-            current_date: 当前日期
-            market_data: 行情数据字典，key 为 vt_symbol
-            log_func: 日志回调函数
-
-        Returns:
-            选中的主力合约，空列表返回 None
+        规则:
+        - 空合约列表返回 None
+        - 必须提供完整的 market_data（每个候选合约都要有 volume/open_interest）
+        - 若缺少数据，抛出 ValueError
         """
+        _ = current_date  # 保留参数以保持调用兼容
+
         if not contracts:
             return None
+
+        if not market_data:
+            raise ValueError("缺少成交量/持仓量数据: market_data 不能为空")
 
         volume_weight = self._config.volume_weight
         oi_weight = self._config.oi_weight
 
-        # 辅助函数：解析合约到期日，用于排序
-        def _get_expiry(contract: ContractData) -> date:
-            expiry = ContractHelper.get_expiry_from_symbol(contract.symbol)
-            if expiry is None:
-                # 无法解析时使用最大日期，排到最后
-                return date.max
-            return expiry
-
-        # 无行情数据时回退到按到期日排序
-        if not market_data:
-            if log_func:
-                log_func("无行情数据，回退到按到期日排序选择最近月合约")
-            sorted_contracts = sorted(contracts, key=_get_expiry)
-            return sorted_contracts[0]
-
-        # 计算每个合约的加权得分
-        def _calc_score(contract: ContractData) -> float:
+        scores: List[Tuple[ContractData, float]] = []
+        for contract in contracts:
             md = market_data.get(contract.vt_symbol)
             if md is None:
-                return 0.0
-            return md.volume * volume_weight + md.open_interest * oi_weight
+                raise ValueError(f"缺少合约 {contract.vt_symbol} 的成交量/持仓量数据")
 
-        # 检查是否所有合约得分均为零
-        scores = [(c, _calc_score(c)) for c in contracts]
-        all_zero = all(score == 0.0 for _, score in scores)
+            try:
+                volume = float(md.volume)
+                open_interest = float(md.open_interest)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"合约 {contract.vt_symbol} 的成交量/持仓量数据无效"
+                ) from exc
 
-        if all_zero:
-            if log_func:
-                log_func("所有合约成交量和持仓量均为零，回退到按到期日排序")
-            sorted_contracts = sorted(contracts, key=_get_expiry)
-            return sorted_contracts[0]
+            if not math.isfinite(volume) or not math.isfinite(open_interest):
+                raise ValueError(f"合约 {contract.vt_symbol} 的成交量/持仓量数据无效")
 
-        # 按得分降序排列，得分相同时按到期日升序
-        sorted_scores = sorted(
-            scores,
-            key=lambda x: (-x[1], _get_expiry(x[0]))
-        )
+            score = volume * volume_weight + open_interest * oi_weight
+            scores.append((contract, score))
 
-        selected = sorted_scores[0][0]
+        selected, selected_score = max(scores, key=lambda x: x[1])
         if log_func:
             log_func(
                 f"选择主力合约: {selected.vt_symbol}, "
-                f"得分: {sorted_scores[0][1]:.2f}"
+                f"得分: {selected_score:.2f}"
             )
         return selected
 
-    def filter_by_maturity(
+    def select_by_expiration(
         self,
         contracts: List[ContractData],
         current_date: date,
         mode: str = "current_month",
         date_range: Optional[Tuple[date, date]] = None,
-        log_func: Optional[Callable[[str], None]] = None
+        log_func: Optional[Callable[[str], None]] = None,
     ) -> List[ContractData]:
         """
-        基于真实到期日解析过滤合约。
+        基于到期日解析过滤合约。
 
         Args:
             contracts: 可用合约列表
@@ -152,112 +141,34 @@ class BaseFutureSelector:
 
         return result
 
-
     def check_rollover(
         self,
         current_contract: ContractData,
-        all_contracts: List[ContractData],
-        current_date: date,
-        market_data: Optional[Dict[str, MarketData]] = None,
-        log_func: Optional[Callable[[str], None]] = None
-    ) -> Optional[RolloverRecommendation]:
+        current_date: Optional[date] = None,
+        log_func: Optional[Callable[[str], None]] = None,
+    ) -> bool:
         """
-        检查是否需要移仓换月，返回移仓建议或 None。
+        检查剩余天数是否大于移仓阈值，返回 bool。
 
-        Args:
-            current_contract: 当前持有合约
-            all_contracts: 所有可用合约列表
-            current_date: 当前日期
-            market_data: 行情数据字典，key 为 vt_symbol
-            log_func: 日志回调函数
-
-        Returns:
-            移仓建议，不需要移仓时返回 None
+        返回:
+        - True: remaining_days > rollover_days
+        - False: remaining_days <= rollover_days
         """
-        rollover_days = self._config.rollover_days
+        if current_date is None:
+            raise ValueError("current_date 不能为空")
 
-        # 解析当前合约到期日
         expiry = ContractHelper.get_expiry_from_symbol(current_contract.symbol)
         if expiry is None:
-            if log_func:
-                log_func(f"无法解析合约 {current_contract.symbol} 的到期日")
-            return None
+            raise ValueError(f"无法解析合约 {current_contract.symbol} 的到期日")
 
-        # 计算剩余天数
         remaining_days = (expiry - current_date).days
-
-        # 剩余天数大于阈值，不需要移仓 (Req 3.3)
-        if remaining_days > rollover_days:
-            return None
+        result = remaining_days > self._config.rollover_days
 
         if log_func:
             log_func(
-                f"合约 {current_contract.symbol} 剩余 {remaining_days} 天，"
-                f"触发移仓阈值 {rollover_days} 天"
+                f"合约 {current_contract.symbol} 剩余 {remaining_days} 天, "
+                f"阈值 {self._config.rollover_days} 天, "
+                f"检查结果: {result}"
             )
 
-        # 确定下一个到期月份
-        if expiry.month == 12:
-            next_month = 1
-            next_year = expiry.year + 1
-        else:
-            next_month = expiry.month + 1
-            next_year = expiry.year
-
-        # 筛选下月到期的合约（排除当前合约）
-        next_month_contracts = []
-        for contract in all_contracts:
-            if contract.vt_symbol == current_contract.vt_symbol:
-                continue
-            c_expiry = ContractHelper.get_expiry_from_symbol(contract.symbol)
-            if c_expiry is None:
-                continue
-            if c_expiry.year == next_year and c_expiry.month == next_month:
-                next_month_contracts.append(contract)
-
-        # 无目标合约时返回 has_target=False 的建议 (Req 3.4)
-        if not next_month_contracts:
-            if log_func:
-                log_func(
-                    f"未找到下月({next_year}-{next_month:02d})的目标合约"
-                )
-            return RolloverRecommendation(
-                current_contract_symbol=current_contract.symbol,
-                target_contract_symbol="",
-                remaining_days=remaining_days,
-                reason=f"当前合约 {current_contract.symbol} 剩余 {remaining_days} 天，"
-                       f"但未找到下月合适的目标合约",
-                has_target=False,
-            )
-
-        # 选择下月中成交量最大的合约 (Req 3.2)
-        if market_data:
-            best_contract = max(
-                next_month_contracts,
-                key=lambda c: market_data.get(c.vt_symbol, MarketData(vt_symbol="", volume=0, open_interest=0.0)).volume,
-            )
-        else:
-            # 无行情数据时选择到期日最近的
-            best_contract = min(
-                next_month_contracts,
-                key=lambda c: ContractHelper.get_expiry_from_symbol(c.symbol) or date.max,
-            )
-
-        if log_func:
-            log_func(
-                f"建议移仓: {current_contract.symbol} -> {best_contract.symbol}"
-            )
-
-        return RolloverRecommendation(
-            current_contract_symbol=current_contract.symbol,
-            target_contract_symbol=best_contract.symbol,
-            remaining_days=remaining_days,
-            reason=f"当前合约 {current_contract.symbol} 剩余 {remaining_days} 天，"
-                   f"建议切换到 {best_contract.symbol}",
-            has_target=True,
-        )
-
-
-
-
-
+        return result
