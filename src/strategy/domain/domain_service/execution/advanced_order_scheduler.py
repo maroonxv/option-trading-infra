@@ -4,7 +4,6 @@ AdvancedOrderScheduler - 高级订单调度器
 统一管理冰山单、TWAP、VWAP 的拆单逻辑和子单生命周期。
 
 职责变更说明:
-- 序列化/反序列化职责已移至 AdvancedOrderSchedulerSerializer (基础设施层)
 - 配置加载职责已移至 DomainServiceConfigLoader (应用层)
 - 本服务专注于纯业务逻辑：拆单策略、子单管理、订单生命周期
 """
@@ -39,7 +38,7 @@ class AdvancedOrderScheduler:
     4. 订单状态跟踪
     
     注意:
-    - 序列化使用 AdvancedOrderSchedulerSerializer (infrastructure/persistence)
+    - 不承担序列化/反序列化职责
     - 配置加载使用 DomainServiceConfigLoader (main/config)
     """
 

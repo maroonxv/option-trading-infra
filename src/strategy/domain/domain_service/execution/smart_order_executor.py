@@ -5,7 +5,6 @@ SmartOrderExecutor 领域服务
 不直接调用网关，返回执行指令。
 
 职责变更说明:
-- 序列化/反序列化职责已移至 SmartOrderExecutorSerializer (基础设施层)
 - 配置加载职责已移至 DomainServiceConfigLoader (应用层)
 - 本服务专注于纯业务逻辑：价格计算、超时管理、重试策略
 """
@@ -28,7 +27,7 @@ class SmartOrderExecutor:
     4. 订单重试逻辑
     
     注意:
-    - 序列化使用 SmartOrderExecutorSerializer (infrastructure/persistence)
+    - 不承担序列化/反序列化职责
     - 配置加载使用 DomainServiceConfigLoader (main/config)
     """
 
