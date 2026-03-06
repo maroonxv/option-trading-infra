@@ -1,4 +1,6 @@
+# 是否启用订阅模式引擎（false 时保持当前订阅不做自动收敛）
 enabled = true
+# 启用的模式列表（可组合，按优先级合并）
 enabled_modes = [
   "products_dominant_with_options",
   "positions_only",
@@ -6,72 +8,118 @@ enabled_modes = [
   "include_exclude_overlay"
 ]
 
+# 定时重算周期（秒）
 refresh_sec = 15
+# 触发重算的事件类型
 trigger_events = ["on_init", "on_position", "on_trade", "on_order", "on_rollover", "timer"]
+# 不再命中目标集后，延迟退订时间（秒）
 stale_ttl_sec = 300
+# 换月时旧合约保留宽限（秒，预留）
 rollover_grace_sec = 180
+# 目标订阅总上限（软上限）
 max_symbols = 500
+# 当 must_keep 超限时是否允许突破 max_symbols
 allow_overflow_for_must_keep = true
+# 强制保护持仓相关合约（不被误退订）
 keep_position_protection = true
+# 强制保护活动委托相关合约（不被误退订）
 keep_active_order_protection = true
+# 是否执行自动退订
 auto_unsubscribe = true
+# 仅计算不执行订阅/退订
 dry_run = false
+# 是否记录模式决策细节日志
 log_decision_detail = true
 
+# 模式1：仅订阅显式配置的合约
 [configured_contracts_only]
+# 直接写 vt_symbol 列表；为空时可由策略上下文兜底
 vt_symbols = []
 
+# 模式2：按品种自动订阅主力期货及其期权
 [products_dominant_with_options]
+# 品种列表（如 IF/IM），为空则使用 trading_target
 products = []
+# 期权范围：none=不扩期权；atm_band=ATM上下N档；same_expiry_chain=同到期月全链
 option_scope = "atm_band"                # none | atm_band | same_expiry_chain
+# 当 option_scope=atm_band 时的档位宽度
 band_n = 6
+# 到期策略：same_as_dominant=同主力月份；any=不过滤月份
 expiry_policy = "same_as_dominant"      # same_as_dominant | any
 
+# 模式3：仅订阅账户持仓相关合约
 [positions_only]
+# 是否同时订阅持仓期权对应的标的期货
 include_underlying = true
+# 是否把活动委托合约也纳入
 include_pending_orders = true
 
+# 模式4：在持仓基础上扩展虚/实 N 档
 [positions_with_wings]
+# 扩展档位 N
 wing_n = 2
+# 扩展方向：both=两侧；otm=仅虚值侧；itm=仅实值侧
 wing_side = "both"                       # both | otm | itm
+# 是否同时包含 call/put；false 则只保留与持仓同方向
 include_call_put = true
 
+# 模式5：仅订阅主力期货（不扩期权）
 [dominant_only]
 products = []
 
+# 模式6：主力 + 近月 K 档期货
 [dominant_nearby_k]
 products = []
 nearby_k = 1
 
+# 模式7：按标的订阅 ATM 附近 N 档期权
 [atm_band]
+# 标的来源：dominant=主力；positions=持仓推导；config=配置合约
 underlyings_from = "dominant"            # dominant | positions | config
 band_n = 4
 include_call_put = true
 
+# 模式8：持仓对应到期月整条期权链
 [position_same_expiry_chain]
+# true=仅同到期月；false=可跨月
 same_expiry_only = true
 include_call_put = true
 
+# 模式9：按流动性保留 Top K 期权（过滤模式）
 [liquidity_top_k_options]
+# 过滤开关（建议与其他模式组合使用）
 enabled = false
+# 仅保留前 K 个期权
 k = 80
+# 排序指标：volume=成交量；oi=持仓量；score=综合分
 metric = "score"                         # volume | oi | score
+# 流动性下限过滤
 min_volume = 0
 min_oi = 0
 
+# 模式10：信号触发临时扩订阅（TTL 到期回收）
 [signal_driven_temporary]
+# 临时订阅存活时长（秒）
 ttl_sec = 180
+# 临时订阅最大数量，防止爆量
 max_temp_symbols = 50
+# 临时标的是否包含对应期货
 include_underlying = true
+# 若信号在期货上，额外扩的期权 ATM 档位
 option_band_n = 2
 
+# 模式11：分时段切换模式组合
 [session_profile]
+# 未命中任何时段时的默认模式集合
 default_modes = []
 
 [[session_profile.profiles]]
+# 时段名称（仅用于日志识别）
 name = "day_open"
+# 生效起止时间（HH:MM）
 start = "08:40"
 end = "09:10"
+# 该时段附加启用的模式
 modes = ["dominant_nearby_k", "atm_band"]
 
 [[session_profile.profiles]]
@@ -80,7 +128,11 @@ start = "09:10"
 end = "15:00"
 modes = ["products_dominant_with_options", "positions_only", "positions_with_wings"]
 
+# 模式12：强制包含/排除覆盖层（最高优先级之一）
 [include_exclude_overlay]
+# 强制加入的合约（即使其他模式没选中）
 force_include = []
+# 强制排除的合约（默认不能排除 must_keep）
 force_exclude = []
+# true 时允许排除 must_keep（高风险，不建议）
 allow_exclude_must_keep = false
