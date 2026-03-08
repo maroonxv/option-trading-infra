@@ -10,6 +10,8 @@ from .catalog import (
     CAPABILITY_ORDER,
     DEFAULT_PRESET_KEY,
     DEFAULT_PROJECT_NAME,
+    apply_auto_fix_preview,
+    build_enabled_options_auto_fix_preview,
     capability_label,
     capability_option_label,
     derive_capabilities,
@@ -56,6 +58,59 @@ def _format_capability_summary(capabilities: tuple[CapabilityKey, ...]) -> str:
     if not capabilities:
         return "最小骨架（暂不启用附加能力）"
     return "、".join(capability_label(item) for item in capabilities)
+
+
+def _format_option_summary(options: tuple[CapabilityOptionKey, ...]) -> str:
+    if not options:
+        return "无"
+    return "、".join(capability_option_label(item) for item in options)
+
+
+def _collect_capability_selection(
+    default_capabilities: set[CapabilityKey],
+    default_option_set: set[CapabilityOptionKey],
+) -> tuple[tuple[CapabilityKey, ...], tuple[CapabilityOptionKey, ...]]:
+    click.echo("默认开关已按预设带出；你可以按项目需要逐项微调。")
+    selected: list[CapabilityKey] = []
+    selected_options: list[CapabilityOptionKey] = []
+    for capability in CAPABILITY_ORDER:
+        default_enabled = capability in default_capabilities
+        default_text = "默认开启" if default_enabled else "默认关闭"
+        click.echo(
+            f"- {capability_label(capability)}：{CAPABILITY_PROMPT_DESCRIPTIONS[capability]}（{default_text}）"
+        )
+        click.echo(f"  包含：{_format_capability_options(capability)}")
+        enabled = click.confirm(
+            f"是否启用「{capability_label(capability)}」模块",
+            default=default_enabled,
+            show_default=True,
+        )
+        if not enabled:
+            continue
+
+        selected.append(capability)
+        click.echo("  继续确认这个能力组下要落地的子能力：")
+        for option in get_capability_options(capability):
+            option_enabled = click.confirm(
+                f"是否启用子项「{capability_option_label(option)}」",
+                default=option in default_option_set,
+                show_default=True,
+            )
+            if option_enabled:
+                selected_options.append(option)
+
+    return tuple(selected), tuple(selected_options)
+
+
+def _echo_auto_fix_preview(selected_options: tuple[CapabilityOptionKey, ...], fixed_options: tuple[CapabilityOptionKey, ...], preview) -> None:
+    _echo_section("自动修复预览")
+    click.echo(f"- 问题：{preview.error}")
+    if preview.add_options:
+        click.echo(f"- 将自动启用：{_format_option_summary(preview.add_options)}")
+    if preview.remove_options:
+        click.echo(f"- 将自动关闭：{_format_option_summary(preview.remove_options)}")
+    click.echo(f"- 修复后子选项：{_format_option_summary(fixed_options)}")
+    click.echo(f"- 修复建议：{preview.suggestion}")
 
 
 def supports_interactive_prompt() -> bool:
@@ -124,37 +179,35 @@ def prompt_for_create_options(options: CreateOptions) -> CreateOptions:
     default_option_set = set(enabled_options)
     default_capabilities = set(derive_capabilities(enabled_options))
 
-    _echo_section("第 3 步 · 选择能力模块")
-    click.echo("默认开关已按预设带出；你可以按项目需要逐项微调。")
-    selected: list[CapabilityKey] = []
-    selected_options: list[CapabilityOptionKey] = []
-    for capability in CAPABILITY_ORDER:
-        default_enabled = capability in default_capabilities
-        default_text = "默认开启" if default_enabled else "默认关闭"
-        click.echo(
-            f"- {capability_label(capability)}：{CAPABILITY_PROMPT_DESCRIPTIONS[capability]}（{default_text}）"
+    while True:
+        _echo_section("第 3 步 · 选择能力模块")
+        selected_tuple, selected_option_tuple = _collect_capability_selection(
+            default_capabilities,
+            default_option_set,
         )
-        click.echo(f"  包含：{_format_capability_options(capability)}")
-        enabled = click.confirm(
-            f"是否启用「{capability_label(capability)}」模块",
-            default=default_enabled,
-            show_default=True,
+
+        preview = build_enabled_options_auto_fix_preview(
+            selected_option_tuple,
+            preset_key=preset_key,
         )
-        if not enabled:
+        if preview is None:
+            break
+
+        fixed_options = apply_auto_fix_preview(selected_option_tuple, preview)
+        _echo_auto_fix_preview(selected_option_tuple, fixed_options, preview)
+        if click.confirm("是否应用上述自动修复建议", default=True, show_default=True):
+            selected_option_tuple = fixed_options
+            selected_tuple = derive_capabilities(selected_option_tuple)
+            click.echo("已应用自动修复，将使用修复后的能力组合继续生成。")
+            break
+
+        retry = click.confirm("是否返回重新选择能力与子选项", default=True, show_default=True)
+        if retry:
+            default_option_set = set(selected_option_tuple)
+            default_capabilities = set(selected_tuple)
             continue
 
-        selected.append(capability)
-        click.echo("  继续确认这个能力组下要落地的子能力：")
-        for option in get_capability_options(capability):
-            option_enabled = click.confirm(
-                f"是否启用子项「{capability_option_label(option)}」",
-                default=option in default_option_set,
-                show_default=True,
-            )
-            if option_enabled:
-                selected_options.append(option)
-
-    selected_tuple = tuple(selected)
+        raise ValueError(f"{preview.error} 建议：{preview.suggestion}")
 
     clear = options.clear
     overwrite = options.overwrite
@@ -195,8 +248,8 @@ def prompt_for_create_options(options: CreateOptions) -> CreateOptions:
         if not confirmed:
             raise FileExistsError(f"已取消生成: {target_root}")
 
-    selected_set = set(selected)
-    selected_option_set = set(selected_options)
+    selected_set = set(selected_tuple)
+    selected_option_set = set(selected_option_tuple)
     unselected_tuple = tuple(item for item in CAPABILITY_ORDER if item not in selected_set)
     return CreateOptions(
         name=name,
@@ -204,7 +257,7 @@ def prompt_for_create_options(options: CreateOptions) -> CreateOptions:
         preset=preset_key,
         include_capabilities=selected_tuple,
         exclude_capabilities=unselected_tuple,
-        include_options=tuple(selected_options),
+        include_options=tuple(selected_option_tuple),
         exclude_options=tuple(item for item in CapabilityOptionKey if item not in selected_option_set),
         use_default=False,
         no_interactive=True,

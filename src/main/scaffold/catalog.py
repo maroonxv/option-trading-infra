@@ -7,6 +7,7 @@ import re
 import tomllib
 
 from .models import (
+    AutoFixPreview,
     CapabilityKey,
     CapabilityOptionKey,
     CreateOptions,
@@ -123,20 +124,23 @@ CAPABILITY_OPTION_DEPENDENCIES: dict[CapabilityOptionKey, tuple[CapabilityOption
 }
 
 CAPABILITY_OPTION_MUTEX_RULES: tuple[
-    tuple[tuple[CapabilityOptionKey, CapabilityOptionKey], str],
+    tuple[tuple[CapabilityOptionKey, CapabilityOptionKey], str, CapabilityOptionKey],
     ...,
 ] = (
     (
         (CapabilityOptionKey.DELTA_HEDGING, CapabilityOptionKey.VEGA_HEDGING),
         "当前脚手架未提供 Delta/Vega 双对冲的优先级与协同编排，同时启用会造成语义冲突。",
+        CapabilityOptionKey.DELTA_HEDGING,
     ),
     (
         (CapabilityOptionKey.ADVANCED_ORDER_SCHEDULER, CapabilityOptionKey.DELTA_HEDGING),
         "当前脚手架未提供调度单与 Delta 对冲单的仲裁逻辑，不能同时启用。",
+        CapabilityOptionKey.DELTA_HEDGING,
     ),
     (
         (CapabilityOptionKey.ADVANCED_ORDER_SCHEDULER, CapabilityOptionKey.VEGA_HEDGING),
         "当前脚手架未提供调度单与 Vega 对冲单的仲裁逻辑，不能同时启用。",
+        CapabilityOptionKey.VEGA_HEDGING,
     ),
 )
 
@@ -319,12 +323,16 @@ def _raise_validation_error(error: str, suggestion: str) -> None:
     raise ValueError(f"{error} 建议：{suggestion}")
 
 
-def validate_enabled_options(
+def _preview_to_error(preview: AutoFixPreview) -> None:
+    _raise_validation_error(preview.error, preview.suggestion)
+
+
+def build_enabled_options_auto_fix_preview(
     enabled_options: tuple[CapabilityOptionKey, ...],
     *,
     preset_key: str | None = None,
-) -> tuple[CapabilityOptionKey, ...]:
-    """校验二级子选项之间的依赖与互斥关系。"""
+) -> AutoFixPreview | None:
+    """为当前子选项组合生成自动修复预览。"""
     enabled_set = set(enabled_options)
 
     for option, dependencies in CAPABILITY_OPTION_DEPENDENCIES.items():
@@ -334,16 +342,19 @@ def validate_enabled_options(
         if missing:
             dependency_names = "、".join(capability_option_label(item) for item in missing)
             dependency_flags = " ".join(_option_flag(item) for item in missing)
-            _raise_validation_error(
-                f"子选项 `{option.value}` 依赖 {dependency_names}。",
-                f"补上 {dependency_flags}，或删除 {_option_flag(option)}。",
+            return AutoFixPreview(
+                error=f"子选项 `{option.value}` 依赖 {dependency_names}。",
+                suggestion=f"补上 {dependency_flags}，或删除 {_option_flag(option)}。",
+                add_options=missing,
             )
 
-    for (left, right), reason in CAPABILITY_OPTION_MUTEX_RULES:
+    for (left, right), reason, keep_option in CAPABILITY_OPTION_MUTEX_RULES:
         if left in enabled_set and right in enabled_set:
-            _raise_validation_error(
-                f"子选项 `{left.value}` 与 `{right.value}` 不能同时启用：{reason}",
-                f"保留其中一个，删除 {_option_flag(left)} 或 {_option_flag(right)}。",
+            remove_option = right if keep_option == left else left
+            return AutoFixPreview(
+                error=f"子选项 `{left.value}` 与 `{right.value}` 不能同时启用：{reason}",
+                suggestion=f"保留 {_option_flag(keep_option)}，移除 {_option_flag(remove_option)}。",
+                remove_options=(remove_option,),
             )
 
     preset_rules = PRESET_OPTION_BLOCKLISTS.get(preset_key or "", {})
@@ -351,10 +362,35 @@ def validate_enabled_options(
         if option in enabled_set:
             alternative_presets = [key for key in build_preset_catalog().keys() if key != (preset_key or "")]
             suggested_preset = alternative_presets[0] if alternative_presets else DEFAULT_PRESET_KEY
-            _raise_validation_error(
-                f"子选项 `{option.value}` 与预设 `{preset_key}` 不兼容：{reason}",
-                f"删除 {_option_flag(option)}，或改用 `--preset {suggested_preset}`。",
+            return AutoFixPreview(
+                error=f"子选项 `{option.value}` 与预设 `{preset_key}` 不兼容：{reason}",
+                suggestion=f"删除 {_option_flag(option)}，或改用 `--preset {suggested_preset}`。",
+                remove_options=(option,),
             )
+
+    return None
+
+
+def apply_auto_fix_preview(
+    enabled_options: tuple[CapabilityOptionKey, ...],
+    preview: AutoFixPreview,
+) -> tuple[CapabilityOptionKey, ...]:
+    """应用自动修复预览中的加减选项。"""
+    resolved = set(enabled_options)
+    resolved.update(preview.add_options)
+    resolved.difference_update(preview.remove_options)
+    return tuple(item for item in CAPABILITY_OPTION_ORDER if item in resolved)
+
+
+def validate_enabled_options(
+    enabled_options: tuple[CapabilityOptionKey, ...],
+    *,
+    preset_key: str | None = None,
+) -> tuple[CapabilityOptionKey, ...]:
+    """校验二级子选项之间的依赖与互斥关系。"""
+    preview = build_enabled_options_auto_fix_preview(enabled_options, preset_key=preset_key)
+    if preview is not None:
+        _preview_to_error(preview)
 
     return enabled_options
 

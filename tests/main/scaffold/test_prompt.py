@@ -112,3 +112,41 @@ def test_should_prompt_for_create_considers_option_level_overrides(monkeypatch, 
 
     assert should_prompt is True
     assert should_not_prompt is False
+
+
+def test_prompt_for_create_options_supports_auto_fix_preview(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    prompt_answers = {
+        "项目名称": "auto_fix_lab",
+        "预设编号": "custom",
+    }
+
+    def fake_prompt(text: str, **_: object) -> str:
+        return prompt_answers[text]
+
+    def fake_confirm(text: str, default: bool, **_: object) -> bool:
+        if text == "是否启用「对冲能力」模块":
+            return True
+        if text == "是否启用子项「Delta 对冲」":
+            return True
+        if text == "是否启用子项「Vega 对冲」":
+            return False
+        if text == "是否应用上述自动修复建议":
+            return True
+        return default
+
+    monkeypatch.setattr(click, "prompt", fake_prompt)
+    monkeypatch.setattr(click, "confirm", fake_confirm)
+
+    result = prompt_for_create_options(CreateOptions(name=None, destination=tmp_path))
+
+    captured = capsys.readouterr().out
+
+    assert "自动修复预览" in captured
+    assert "将自动启用" in captured
+    assert CapabilityKey.GREEKS_RISK in result.include_capabilities
+    assert CapabilityOptionKey.GREEKS_CALCULATOR in result.include_options
+    assert CapabilityOptionKey.DELTA_HEDGING in result.include_options

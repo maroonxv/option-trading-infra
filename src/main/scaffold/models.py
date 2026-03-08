@@ -107,3 +107,13 @@ class ScaffoldPlan:
     @property
     def signal_import_path(self) -> str:
         return f"src.strategies.{self.strategy_slug}.signal_service:{self.signal_class_name}"
+
+
+@dataclass(frozen=True)
+class AutoFixPreview:
+    """交互模式下的自动修复预览。"""
+
+    error: str
+    suggestion: str
+    add_options: tuple[CapabilityOptionKey, ...] = ()
+    remove_options: tuple[CapabilityOptionKey, ...] = ()

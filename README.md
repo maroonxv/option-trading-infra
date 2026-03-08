@@ -238,6 +238,7 @@ option-scaffold create alpha_lab --preset custom --with greeks-risk --with hedgi
 ```
 
 `create` 会在生成前自动校验二级子选项之间的依赖与禁配关系，并直接拒绝语义冲突的组合。
+在交互模式下，如果只是缺少依赖或命中可自动处理的禁配组合，向导会先展示“自动修复预览”，再让你决定是否直接应用修复。
 
 ### 浏览内置示例
 

@@ -175,7 +175,7 @@ def test_create_project_scaffold_rejects_semantic_mutex_options(tmp_path: Path) 
                 no_interactive=True,
             )
         )
-    assert "删除 --with-option delta-hedging 或 --with-option vega-hedging" in str(exc_info.value)
+    assert "保留 --with-option delta-hedging，移除 --with-option vega-hedging" in str(exc_info.value)
 
 
 def test_create_project_scaffold_rejects_preset_specific_blocked_options(tmp_path: Path) -> None:
