@@ -54,7 +54,7 @@
 - 运行时：默认 Docker 镜像基于 `Python 3.12`
 - Web 监控：`Flask + Socket.IO`，默认端口 `5007`
 - 默认部署：`runner + monitor + PostgreSQL`
-- 回测入口：`src/backtesting/cli.py`
+- 统一 CLI：`option-scaffold`（已接入 `init` / `run` / `backtest` / `validate` / `doctor` / `examples`）
 - 文档资产：`doc/` 下包含架构、开发说明与用户手册
 <!-- readme-gen:end:highlights -->
 
@@ -120,12 +120,13 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.yml down
 
 > 适合改代码、调试策略或跑局部流程；如果想快速得到完整的数据库 + 监控 + runner 联调环境，还是更推荐 Docker。
 
-1. 创建虚拟环境并安装依赖：
+1. 创建虚拟环境、安装依赖并注册本地 CLI：
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+pip install -e .
 ```
 
 2. 复制环境变量模板并填写交易、数据库与通知相关配置：
@@ -134,13 +135,27 @@ pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-3. 启动策略主入口（这里示例使用更安全的模拟交易模式）：
+3. 查看统一 CLI 帮助与版本：
 
 ```powershell
-python src/main/main.py --mode standalone --config config/strategy_config.toml --paper
+option-scaffold --help
+option-scaffold --version
 ```
 
-4. 如需单独启动监控页面：
+4. 先做一次环境诊断与配置校验：
+
+```powershell
+option-scaffold doctor
+option-scaffold validate --config config/strategy_config.toml
+```
+
+5. 启动策略主入口（这里示例使用更安全的模拟交易模式）：
+
+```powershell
+option-scaffold run --mode standalone --config config/strategy_config.toml --paper
+```
+
+6. 如需单独启动监控页面：
 
 ```powershell
 python src/web/app.py
@@ -179,13 +194,54 @@ pytest -c config/pytest.ini
 ### 运行回测
 
 ```powershell
-python src/backtesting/cli.py --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart
+option-scaffold backtest --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart
+```
+
+### 校验策略配置
+
+```powershell
+option-scaffold validate --config config/strategy_config.toml --override-config config/timeframe/5m.toml
+```
+
+### 诊断本地环境
+
+```powershell
+option-scaffold doctor --strict
 ```
 
 ### 启动守护进程模式
 
 ```powershell
-python src/main/main.py --mode daemon --config config/strategy_config.toml
+option-scaffold run --mode daemon --config config/strategy_config.toml
+```
+
+### 初始化新策略骨架
+
+```powershell
+option-scaffold init ema_breakout --destination example
+```
+
+### 创建按需装配的整仓库脚手架
+
+```powershell
+option-scaffold create alpha_lab -y
+```
+
+```powershell
+option-scaffold create alpha_lab
+```
+
+如果想在顶层能力组之下继续细化二级子选项，也可以这样写：
+
+```powershell
+option-scaffold create alpha_lab --preset custom --with hedging --with-option vega-hedging --without-option delta-hedging --no-interactive
+```
+
+### 浏览内置示例
+
+```powershell
+option-scaffold examples
+option-scaffold examples ema_cross_example
 ```
 <!-- readme-gen:end:commands -->
 
@@ -194,6 +250,7 @@ python src/main/main.py --mode daemon --config config/strategy_config.toml
 
 ```text
 📦 option-strategy-scaffold
+├─ pyproject.toml               Python 打包元数据与 CLI 暴露入口
 ├─ config/                      策略、领域服务、订阅、日志与时间周期配置
 │  ├─ domain_service/           领域服务参数
 │  ├─ general/                  通用运行配置
@@ -203,6 +260,7 @@ python src/main/main.py --mode daemon --config config/strategy_config.toml
 ├─ deploy/                      Dockerfile、Compose 与初始化脚本
 ├─ doc/                         架构文档、开发设计文档、用户手册
 ├─ src/
+│  ├─ cli/                      统一 CLI 入口与子命令包装层
 │  ├─ backtesting/              回测 CLI 与执行器
 │  ├─ main/                     主入口、启动流程、进程管理
 │  ├─ strategy/                 策略核心代码（应用层 / 领域层 / 基础设施层）

@@ -1,0 +1,11 @@
+[strategy_contracts]
+indicator_service = "template.ema-cross.indicator_service:EmaCrossIndicatorService"
+signal_service = "template.ema-cross.signal_service:EmaCrossSignalService"
+
+[strategy_contracts.indicator_kwargs]
+fast_period = 8
+slow_period = 21
+
+[strategy_contracts.signal_kwargs]
+option_type = "call"
+strike_level = 1

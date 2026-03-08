@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "option-strategy-scaffold"
+dynamic = ["version", "dependencies"]
+description = "面向期权策略研发的统一 CLI 脚手架"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+keywords = ["options", "trading", "backtesting", "cli", "vnpy"]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/maroonxv/option-strategy-scaffold"
+Repository = "https://github.com/maroonxv/option-strategy-scaffold"
+
+[project.scripts]
+option-scaffold = "src.cli.app:app"
+
+[tool.setuptools.dynamic]
+version = { attr = "src.__version__" }
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+exclude = ["tests*", "deploy*", "doc*", "example*", "temp*"]

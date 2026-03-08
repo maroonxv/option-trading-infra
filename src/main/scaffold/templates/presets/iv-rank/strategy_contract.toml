@@ -1,0 +1,10 @@
+[strategy_contracts]
+indicator_service = "template.iv-rank.indicator_service:IvRankIndicatorService"
+signal_service = "template.iv-rank.signal_service:IvRankSignalService"
+
+[strategy_contracts.indicator_kwargs]
+lookback = 20
+
+[strategy_contracts.signal_kwargs]
+entry_rank = 0.7
+exit_rank = 0.4

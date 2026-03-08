@@ -1,0 +1,10 @@
+[strategy_contracts]
+indicator_service = "template.delta-neutral.indicator_service:DeltaNeutralIndicatorService"
+signal_service = "template.delta-neutral.signal_service:DeltaNeutralSignalService"
+
+[strategy_contracts.indicator_kwargs]
+rv_window = 20
+
+[strategy_contracts.signal_kwargs]
+open_spread_threshold = 0.05
+close_spread_threshold = 0.01
