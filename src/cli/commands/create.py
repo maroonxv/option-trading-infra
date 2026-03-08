@@ -15,10 +15,14 @@ from src.main.scaffold.project import create_project_scaffold
 CREATE_COMMAND_HELP = "创建整仓库级期权策略项目脚手架；支持交互式向导，也支持通过 flags 一次性生成。"
 CREATE_COMMAND_EXAMPLES = (
     "常用示例：\n"
-    "  option-scaffold create alpha_lab\n"
-    "  option-scaffold create alpha_lab -y\n"
-    "  option-scaffold create alpha_lab --preset ema-cross -d .\\projects\n"
-    "  option-scaffold create alpha_lab --preset custom --with hedging --with-option vega-hedging --no-interactive"
+    "  交互创建\n"
+    "    option-scaffold create alpha_lab\n"
+    "  默认快速创建\n"
+    "    option-scaffold create alpha_lab -y\n"
+    "  预设模板\n"
+    "    option-scaffold create alpha_lab --preset ema-cross -d .\\projects\n"
+    "  精细能力控制\n"
+    "    option-scaffold create alpha_lab --preset custom --with hedging --with-option vega-hedging --no-interactive"
 )
 CREATE_NAME_HELP = "项目名称；省略时会进入交互式向导询问。"
 CREATE_DESTINATION_HELP = "项目输出父目录；最终会生成到 <destination>/<name>/。"

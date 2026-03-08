@@ -37,6 +37,10 @@ def test_create_help_uses_refined_copy() -> None:
     assert result.exit_code == 0
     assert "支持交互式向导，也支持通过 flags 一次性生成" in result.stdout
     assert "常用示例：" in result.stdout
+    assert "交互创建" in result.stdout
+    assert "默认快速创建" in result.stdout
+    assert "预设模板" in result.stdout
+    assert "精细能力控制" in result.stdout
     assert "option-scaffold create alpha_lab" in result.stdout
     assert "option-scaffold create alpha_lab -y" in result.stdout
     assert "option-scaffold create alpha_lab --preset ema-cross -d .\\projects" in result.stdout
