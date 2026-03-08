@@ -27,6 +27,8 @@ SignalService - 信号判断领域服务（模板）
 from abc import ABC, abstractmethod
 from typing import Optional, TYPE_CHECKING
 
+from ...value_object.signal.strategy_contract import SignalContext, SignalDecision
+
 if TYPE_CHECKING:
     from ...entity.target_instrument import TargetInstrument
     from ...entity.position import Position
@@ -36,14 +38,23 @@ class ISignalService(ABC):
     """信号生成服务接口"""
 
     @abstractmethod
-    def check_open_signal(self, instrument: "TargetInstrument") -> Optional[str]:
+    def check_open_signal(
+        self,
+        instrument: "TargetInstrument",
+        context: Optional[SignalContext] = None,
+    ) -> Optional[SignalDecision]:
         """检查开仓信号"""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def check_close_signal(self, instrument: "TargetInstrument", position: "Position") -> Optional[str]:
+    def check_close_signal(
+        self,
+        instrument: "TargetInstrument",
+        position: "Position",
+        context: Optional[SignalContext] = None,
+    ) -> Optional[SignalDecision]:
         """检查平仓信号"""
-        pass
+        raise NotImplementedError
 
 
 class SignalService(ISignalService):
@@ -59,7 +70,8 @@ class SignalService(ISignalService):
     def check_open_signal(
         self,
         instrument: "TargetInstrument",
-    ) -> Optional[str]:
+        context: Optional[SignalContext] = None,
+    ) -> Optional[SignalDecision]:
         """
         检查开仓信号
 
@@ -85,7 +97,8 @@ class SignalService(ISignalService):
         self,
         instrument: "TargetInstrument",
         position: "Position",
-    ) -> Optional[str]:
+        context: Optional[SignalContext] = None,
+    ) -> Optional[SignalDecision]:
         """
         检查平仓信号
 

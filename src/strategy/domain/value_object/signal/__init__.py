@@ -1,10 +1,23 @@
-"""
-Signal 子模块 - 信号相关值对象
+"""Signal 子模块 - 信号相关值对象。"""
 
-包含信号类型枚举。
-"""
 from .signal_type import SignalType
+from .strategy_contract import (
+    DecisionTrace,
+    IndicatorComputationResult,
+    IndicatorContext,
+    OptionSelectionPreference,
+    PipelineStageRecord,
+    SignalContext,
+    SignalDecision,
+)
 
 __all__ = [
     "SignalType",
+    "IndicatorContext",
+    "IndicatorComputationResult",
+    "SignalContext",
+    "SignalDecision",
+    "OptionSelectionPreference",
+    "PipelineStageRecord",
+    "DecisionTrace",
 ]

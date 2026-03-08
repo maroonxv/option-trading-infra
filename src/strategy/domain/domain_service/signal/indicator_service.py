@@ -27,7 +27,12 @@ IndicatorService - 指标计算领域服务（模板）
 5. 直接在本文件中实现你的指标计算逻辑即可
 """
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
+
+from ...value_object.signal.strategy_contract import (
+    IndicatorComputationResult,
+    IndicatorContext,
+)
 
 if TYPE_CHECKING:
     from ...entity.target_instrument import TargetInstrument
@@ -37,9 +42,14 @@ class IIndicatorService(ABC):
     """指标计算服务接口"""
 
     @abstractmethod
-    def calculate_bar(self, instrument: "TargetInstrument", bar: dict) -> None:
+    def calculate_bar(
+        self,
+        instrument: "TargetInstrument",
+        bar: dict,
+        context: Optional[IndicatorContext] = None,
+    ) -> IndicatorComputationResult:
         """K 线更新时的指标计算逻辑"""
-        pass
+        raise NotImplementedError
 
 
 class IndicatorService(IIndicatorService):
@@ -61,9 +71,14 @@ class IndicatorService(IIndicatorService):
                 self.fast_period = fast_period
                 self.slow_period = slow_period
         """
-        pass
+        self.config = dict(kwargs)
 
-    def calculate_bar(self, instrument: "TargetInstrument", bar: dict) -> None:
+    def calculate_bar(
+        self,
+        instrument: "TargetInstrument",
+        bar: dict,
+        context: Optional[IndicatorContext] = None,
+    ) -> IndicatorComputationResult:
         """
         K 线更新时的指标计算逻辑
 
@@ -85,4 +100,15 @@ class IndicatorService(IIndicatorService):
             instrument: 标的实体，包含历史 K 线数据 (instrument.bars)
             bar: 新 K 线数据字典 (datetime, open, high, low, close, volume)
         """
-        pass
+        summary = "未配置具体指标逻辑，返回空指标结果"
+        instrument.indicators.setdefault("_contract", {})["indicator_service"] = {
+            "service": type(self).__name__,
+            "summary": summary,
+            "last_bar_dt": bar.get("datetime"),
+        }
+        if context is not None:
+            instrument.indicators["_contract"]["indicator_context"] = {
+                "vt_symbol": context.vt_symbol,
+                "underlying_price": context.underlying_price,
+            }
+        return IndicatorComputationResult.noop(summary=summary)
