@@ -9,9 +9,9 @@ VegaHedgingService - Vega 对冲服务
 import math
 from typing import List, Tuple
 
-from ...value_object.risk.hedging import VegaHedgingConfig, VegaHedgeResult
+from ...value_object.risk import VegaHedgingConfig, VegaHedgeResult
 from ...value_object.trading.order_instruction import OrderInstruction, Direction, Offset
-from ...value_object.risk.risk import PortfolioGreeks
+from ...value_object.risk import PortfolioGreeks
 from ...event.event_types import DomainEvent, VegaHedgeExecutedEvent
 
 

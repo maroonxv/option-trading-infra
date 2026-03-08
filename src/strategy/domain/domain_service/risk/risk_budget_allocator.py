@@ -8,7 +8,7 @@ from typing import Dict, List
 
 from ...entity.position import Position
 from ...value_object.pricing.greeks import GreeksResult
-from ...value_object.risk.risk import (
+from ...value_object.risk import (
     RiskBudgetConfig,
     RiskThresholds,
     GreeksBudget,

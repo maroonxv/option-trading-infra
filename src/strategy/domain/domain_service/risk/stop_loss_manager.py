@@ -7,7 +7,7 @@ StopLossManager - 止损管理服务
 from typing import Dict, List, Optional
 
 from ...entity.position import Position
-from ...value_object.risk.risk import (
+from ...value_object.risk import (
     StopLossConfig,
     StopLossTrigger,
     PortfolioStopLossTrigger,

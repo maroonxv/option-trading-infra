@@ -12,7 +12,7 @@ from collections import defaultdict
 from typing import Dict, List
 
 from src.strategy.domain.entity.position import Position
-from src.strategy.domain.value_object.risk.risk import (
+from src.strategy.domain.value_object.risk import (
     ConcentrationConfig,
     ConcentrationMetrics,
     ConcentrationWarning,

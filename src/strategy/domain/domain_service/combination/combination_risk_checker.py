@@ -8,7 +8,7 @@ from src.strategy.domain.value_object.combination.combination import (
     CombinationGreeks,
     CombinationRiskConfig,
 )
-from src.strategy.domain.value_object.risk.risk import RiskCheckResult
+from src.strategy.domain.value_object.risk import RiskCheckResult
 
 
 class CombinationRiskChecker:

@@ -1,9 +1,29 @@
-"""
-Risk 子模块 - 风控相关值对象
+"""Risk 子模块 - 风控相关值对象。"""
 
-包含风控阈值、风控检查结果、对冲配置、仓位计算等。
-"""
-from .risk import RiskThresholds, RiskCheckResult, PortfolioGreeks, PositionGreeksEntry
+from .risk import (
+    BudgetCheckResult,
+    ConcentrationConfig,
+    ConcentrationMetrics,
+    ConcentrationWarning,
+    ExpiringPosition,
+    ExpiryGroup,
+    GreeksBudget,
+    GreeksUsage,
+    LiquidityMonitorConfig,
+    LiquidityScore,
+    LiquidityWarning,
+    MarketData,
+    PortfolioGreeks,
+    PortfolioStopLossTrigger,
+    PositionGreeksEntry,
+    RiskBudgetConfig,
+    RiskCheckResult,
+    RiskThresholds,
+    StopLossConfig,
+    StopLossTrigger,
+    ThetaMetrics,
+    TimeDecayConfig,
+)
 from .hedging import (
     HedgingConfig, HedgeResult,
     GammaScalpConfig, ScalpResult,
@@ -16,6 +36,24 @@ __all__ = [
     "RiskCheckResult",
     "PortfolioGreeks",
     "PositionGreeksEntry",
+    "StopLossConfig",
+    "StopLossTrigger",
+    "PortfolioStopLossTrigger",
+    "RiskBudgetConfig",
+    "GreeksBudget",
+    "GreeksUsage",
+    "BudgetCheckResult",
+    "LiquidityMonitorConfig",
+    "MarketData",
+    "LiquidityScore",
+    "LiquidityWarning",
+    "ConcentrationConfig",
+    "ConcentrationMetrics",
+    "ConcentrationWarning",
+    "TimeDecayConfig",
+    "ThetaMetrics",
+    "ExpiringPosition",
+    "ExpiryGroup",
     "HedgingConfig",
     "HedgeResult",
     "GammaScalpConfig",

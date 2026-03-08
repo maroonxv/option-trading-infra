@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, Tuple
 
 from ...value_object.pricing.greeks import GreeksResult
-from ...value_object.risk.risk import (
+from ...value_object.risk import (
     RiskThresholds,
     RiskCheckResult,
     PortfolioGreeks,

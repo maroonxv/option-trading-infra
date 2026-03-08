@@ -13,9 +13,9 @@ from ...value_object.trading.order_instruction import OrderInstruction, Directio
 
 from ...value_object.pricing.greeks import GreeksResult
 
-from ...value_object.risk.risk import PortfolioGreeks, RiskThresholds
+from ...value_object.risk import PortfolioGreeks, RiskThresholds
 
-from ...value_object.risk.sizing import SizingResult
+from ...value_object.risk import SizingResult
 
 from ...entity.position import Position
 

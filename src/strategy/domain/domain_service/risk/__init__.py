@@ -15,8 +15,8 @@ from .liquidity_risk_monitor import LiquidityRiskMonitor
 from .concentration_monitor import ConcentrationMonitor
 from .time_decay_monitor import TimeDecayMonitor
 
-# 值对象和配置类（从 value_object.risk.risk 导入）
-from ...value_object.risk.risk import (
+# 值对象和配置类
+from ...value_object.risk import (
     # 现有值对象
     RiskThresholds,
     RiskCheckResult,

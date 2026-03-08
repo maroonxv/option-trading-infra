@@ -17,7 +17,7 @@ from enum import Enum
 from typing import List
 
 from src.strategy.domain.value_object.market.option_contract import OptionType
-from src.strategy.domain.value_object.risk.risk import RiskCheckResult
+from src.strategy.domain.value_object.risk import RiskCheckResult
 
 
 class CombinationType(Enum):
