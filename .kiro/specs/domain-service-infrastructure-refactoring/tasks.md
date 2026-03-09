@@ -58,7 +58,7 @@
     - 配置至少 100 次迭代
     - _需求: 2.5_
 
-- [-] 3. 扩展 ContractHelper 合约解析功能
+- [x] 3. 扩展 ContractHelper 合约解析功能
   - [x] 3.1 实现 ContractHelper 新增方法
     - 修改 `src/strategy/infrastructure/parsing/contract_helper.py`
     - 实现 `extract_expiry_from_symbol` 静态方法
@@ -91,7 +91,7 @@
     - 配置至少 100 次迭代
     - _需求: 3.2, 3.3, 3.6_
 
-- [ ] 4. 创建 DateCalculator 日期计算工具
+- [x] 4. 创建 DateCalculator 日期计算工具
   - [x] 4.1 实现 DateCalculator 类
     - 创建 `src/strategy/infrastructure/utils/date_calculator.py`
     - 实现 `parse_expiry_date` 静态方法，解析 YYMM 格式到期日
@@ -121,7 +121,7 @@
   - 运行所有新增的单元测试和属性测试
   - 确保所有测试通过，如有问题请询问用户
 
-- [ ] 6. 扩展 DomainServiceConfigLoader 配置加载功能
+- [x] 6. 扩展 DomainServiceConfigLoader 配置加载功能
   - [x] 6.1 实现配置加载器新增方法
     - 修改 `src/main/config/domain_service_config_loader.py`
     - 实现 `create_smart_order_executor` 静态方法
@@ -149,7 +149,7 @@
     - 配置至少 100 次迭代
     - _需求: 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 7. 重构 SmartOrderExecutor 领域服务
+- [x] 7. 重构 SmartOrderExecutor 领域服务
   - [x] 7.1 移除 SmartOrderExecutor 的序列化方法
     - 修改 `src/strategy/domain/domain_service/execution/smart_order_executor.py`
     - 移除 `to_dict` 方法
@@ -158,7 +158,7 @@
     - 更新类文档字符串，说明职责变化
     - _需求: 1.4, 5.1, 8.4_
 
-- [ ] 8. 重构 AdvancedOrderScheduler 领域服务
+- [x] 8. 重构 AdvancedOrderScheduler 领域服务
   - [x] 8.1 移除 AdvancedOrderScheduler 的序列化方法
     - 修改 `src/strategy/domain/domain_service/execution/advanced_order_scheduler.py`
     - 移除 `to_dict` 方法
@@ -167,7 +167,7 @@
     - 更新类文档字符串，说明职责变化
     - _需求: 2.4, 5.2, 8.4_
 
-- [ ] 9. 重构 ConcentrationMonitor 领域服务
+- [x] 9. 重构 ConcentrationMonitor 领域服务
   - [x] 9.1 使用 ContractHelper 替代内部解析方法
     - 修改 `src/strategy/domain/domain_service/risk/concentration_monitor.py`
     - 导入 ContractHelper
@@ -178,7 +178,7 @@
     - 更新类文档字符串
     - _需求: 3.4, 5.3, 8.4_
 
-- [ ] 10. 重构 TimeDecayMonitor 领域服务
+- [x] 10. 重构 TimeDecayMonitor 领域服务
   - [x] 10.1 使用 ContractHelper 和 DateCalculator 替代内部方法
     - 修改 `src/strategy/domain/domain_service/risk/time_decay_monitor.py`
     - 导入 ContractHelper 和 DateCalculator
@@ -194,7 +194,7 @@
   - 确保没有遗留的基础设施职责
   - 如有问题请询问用户
 
-- [-] 12. 运行回归测试
+- [x] 12. 运行回归测试
   - [x] 12.1 运行执行服务相关测试
     - 运行 `tests/strategy/domain/domain_service/test_execution_integration.py`
     - 运行 `tests/strategy/domain/domain_service/test_execution_coordinator_properties.py`
@@ -220,21 +220,21 @@
     - 验证重构前后行为一致
     - _需求: 5.1, 5.2, 5.5, 7.3_
 
-  - [-] 12.4 编写风险服务重构集成测试
+  - [x] 12.4 编写风险服务重构集成测试
     - 创建 `tests/strategy/domain/domain_service/test_risk_refactoring_integration.py`
     - 测试 ConcentrationMonitor 使用 ContractHelper 的行为
     - 测试 TimeDecayMonitor 使用 ContractHelper 和 DateCalculator 的行为
     - 验证重构前后计算结果一致
     - _需求: 5.3, 5.4, 5.5, 7.3_
 
-- [-] 13. 检查点 - 确保所有测试通过
+- [x] 13. 检查点 - 确保所有测试通过
   - 运行完整的测试套件
   - 检查测试覆盖率是否满足要求
   - 如有测试失败，修复问题后重新运行
   - 如有问题请询问用户
 
-- [ ] 14. 更新文档
-  - [ ] 14.1 更新基础设施组件文档
+- [x] 14. 更新文档
+  - [x] 14.1 更新基础设施组件文档
     - 检查 SmartOrderExecutorSerializer 的文档字符串
     - 检查 AdvancedOrderSchedulerSerializer 的文档字符串
     - 检查 ContractHelper 新增方法的文档字符串
@@ -242,7 +242,7 @@
     - 添加使用示例和参数说明
     - _需求: 8.1, 8.2, 8.3_
 
-  - [ ] 14.2 更新领域服务文档
+  - [x] 14.2 更新领域服务文档
     - 更新 SmartOrderExecutor 的文档字符串
     - 更新 AdvancedOrderScheduler 的文档字符串
     - 更新 ConcentrationMonitor 的文档字符串
@@ -250,13 +250,13 @@
     - 说明职责变化和迁移指南
     - _需求: 8.4_
 
-  - [ ] 14.3 添加代码注释
+  - [x] 14.3 添加代码注释
     - 在关键设计决策处添加注释
     - 解释为什么使用基础设施组件
     - 说明简化实现的理由（如日期计算）
     - _需求: 8.5_
 
-- [ ] 15. 最终检查点
+- [x] 15. 最终检查点
   - 确保所有任务完成
   - 确保所有测试通过
   - 确保文档更新完整
