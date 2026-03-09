@@ -6,6 +6,9 @@ from pathlib import Path
 import tomllib
 from unittest.mock import patch
 
+import click
+
+import src.cli.app as app_module
 from typer.testing import CliRunner
 
 from src import __version__
@@ -29,6 +32,48 @@ def test_help_lists_phase_two_commands() -> None:
     assert "validate" in result.stdout
     assert "doctor" in result.stdout
     assert "examples" in result.stdout
+
+
+def test_root_command_without_args_shows_help_in_non_interactive_mode() -> None:
+    result = runner.invoke(app, [])
+
+    assert result.exit_code == 0
+    assert "Usage:" in result.stdout
+    assert "主菜单" not in result.stdout
+
+
+def test_root_command_without_args_opens_main_menu_in_interactive_mode(monkeypatch) -> None:
+    monkeypatch.setattr(app_module, "_supports_main_menu", lambda: True)
+
+    def fake_prompt(text: str, **_: object) -> int:
+        assert text == "请选择操作"
+        return 4
+
+    monkeypatch.setattr(click, "prompt", fake_prompt)
+
+    result = runner.invoke(app, [])
+
+    assert result.exit_code == 0
+    assert "主菜单：" in result.stdout
+    assert "1. 创建策略工作区" in result.stdout
+    assert "4. 退出" in result.stdout
+
+
+def test_root_command_without_args_uses_create_as_default_menu_action(monkeypatch) -> None:
+    called = {"create": False}
+
+    monkeypatch.setattr(app_module, "_supports_main_menu", lambda: True)
+    monkeypatch.setattr(click, "prompt", lambda *_args, **_kwargs: 1)
+
+    def fake_create_click(**_: object) -> None:
+        called["create"] = True
+
+    monkeypatch.setattr(app_module, "create_click", fake_create_click)
+
+    result = runner.invoke(app, [])
+
+    assert result.exit_code == 0
+    assert called["create"] is True
 
 
 def test_create_help_uses_refined_copy() -> None:
@@ -84,7 +129,27 @@ def test_create_command_generates_project_workspace(tmp_path: Path) -> None:
     assert f"- 项目根目录：{created_dir}" in result.stdout
     assert "- 策略包：src/strategies/alpha_lab" in result.stdout
     assert "- 主配置：" in result.stdout
-    assert "- 下一步：进入项目目录后，优先检查主配置并按需调整能力开关。" in result.stdout
+    assert "cd alpha_lab" in result.stdout
+    assert "option-scaffold validate --config config/strategy_config.toml" in result.stdout
+    assert "option-scaffold run --config config/strategy_config.toml" in result.stdout
+
+    readme = (created_dir / "README.md").read_text(encoding="utf-8")
+    assert "cd alpha_lab" in readme
+    assert "option-scaffold validate --config config/strategy_config.toml" in readme
+    assert "option-scaffold run --config config/strategy_config.toml" in readme
+
+
+def test_create_command_uses_alpha_lab_as_default_name_when_omitted(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["create", "--destination", str(tmp_path), "-y"],
+    )
+
+    created_dir = tmp_path / "alpha_lab"
+
+    assert result.exit_code == 0
+    assert created_dir.exists()
+    assert "cd alpha_lab" in result.stdout
 
 
 def test_create_command_supports_nested_option_flags(tmp_path: Path) -> None:

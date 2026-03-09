@@ -42,6 +42,11 @@ def test_create_project_scaffold_generates_custom_workspace(tmp_path: Path) -> N
     assert config["service_activation"]["monitoring"] is True
     assert config["service_activation"]["pricing_engine"] is False
 
+    readme = (project_root / "README.md").read_text(encoding="utf-8")
+    assert "cd alpha_lab" in readme
+    assert "option-scaffold validate --config config/strategy_config.toml" in readme
+    assert "option-scaffold run --config config/strategy_config.toml" in readme
+
 
 def test_create_project_scaffold_uses_alpha_lab_as_default_name(tmp_path: Path) -> None:
     plan = create_project_scaffold(

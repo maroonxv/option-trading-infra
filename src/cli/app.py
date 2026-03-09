@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import click
 import typer.main as typer_main
@@ -42,7 +43,50 @@ def _version_option_callback(ctx: click.Context, param: click.Parameter, value: 
     ctx.exit()
 
 
-@click.group(name="option-scaffold", help="期权策略脚手架统一命令入口。", no_args_is_help=True)
+def _supports_main_menu() -> bool:
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def _should_enter_main_menu(ctx: click.Context) -> bool:
+    return ctx.invoked_subcommand is None and _supports_main_menu()
+
+
+def _prompt_main_menu_choice() -> int:
+    click.echo("欢迎使用 option-scaffold。")
+    click.echo("主菜单：")
+    click.echo("1. 创建策略工作区")
+    click.echo("2. 查看示例")
+    click.echo("3. 环境诊断")
+    click.echo("4. 退出")
+    return click.prompt("请选择操作", type=click.IntRange(1, 4), default=1, show_default=True)
+
+
+def _run_main_menu_action(choice: int) -> None:
+    if choice == 1:
+        create_click(
+            name=None,
+            destination=Path("."),
+            preset=None,
+            with_=(),
+            without=(),
+            with_option=(),
+            without_option=(),
+            force=False,
+            clear=False,
+            overwrite=False,
+            use_default=False,
+            no_interactive=False,
+        )
+        return
+    if choice == 2:
+        examples_click(name=None)
+        return
+    if choice == 3:
+        doctor_click(strict=False, check_db=False)
+        return
+
+
+@click.group(name="option-scaffold", help="期权策略脚手架统一命令入口。", invoke_without_command=True)
 @click.option(
     "--version",
     "-V",
@@ -52,8 +96,18 @@ def _version_option_callback(ctx: click.Context, param: click.Parameter, value: 
     callback=_version_option_callback,
     help="显示版本并退出。",
 )
-def app() -> None:
+@click.pass_context
+def app(ctx: click.Context) -> None:
     """统一暴露初始化、运行、回测、校验与诊断命令。"""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    if _should_enter_main_menu(ctx):
+        _run_main_menu_action(_prompt_main_menu_choice())
+        ctx.exit()
+
+    click.echo(ctx.get_help())
+    ctx.exit()
 
 
 @app.command("create", help=f"{CREATE_COMMAND_HELP}\n\n\b\n{CREATE_COMMAND_EXAMPLES}")

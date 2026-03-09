@@ -9,6 +9,7 @@ from textwrap import dedent
 
 from .catalog import REPO_ROOT, capability_label, capability_option_label, get_capability_options
 from .models import CapabilityKey, CapabilityOptionKey, DirectoryConflictPolicy, ScaffoldPlan
+from .next_steps import build_next_step_commands
 
 COPY_IGNORE = shutil.ignore_patterns(
     "__pycache__",
@@ -294,6 +295,7 @@ def _render_project_pyproject(plan: ScaffoldPlan) -> str:
 
 def _render_root_readme(plan: ScaffoldPlan) -> str:
     capability_lines = _render_grouped_capabilities(plan)
+    next_step_commands = build_next_step_commands(plan.project_root.name)
     return dedent(
         f'''
         # {plan.project_name}
@@ -320,28 +322,23 @@ def _render_root_readme(plan: ScaffoldPlan) -> str:
 
         ## 下一步
 
-        1. 创建虚拟环境并安装依赖：
+        1. 进入项目目录：
 
            ```powershell
-           python -m venv .venv
-           .\\.venv\\Scripts\\Activate.ps1
-           pip install -r requirements.txt
-           pip install -e .
+           {next_step_commands[0]}
            ```
 
         2. 校验配置与合同绑定：
 
            ```powershell
-           option-scaffold validate --config config/strategy_config.toml
+           {next_step_commands[1]}
            ```
 
-        3. 运行最小测试：
+        3. 运行最小策略：
 
            ```powershell
-           pytest -c config/pytest.ini tests/strategies/{plan.strategy_slug}/test_contracts.py
+           {next_step_commands[2]}
            ```
-
-        4. 按需修改交易目标、领域服务配置和策略实现。
         '''
     ).strip() + "\n"
 

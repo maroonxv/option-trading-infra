@@ -9,6 +9,7 @@ import typer
 
 from src.cli.common import EXIT_CODE_VALIDATION, abort, display_path, flag_enabled
 from src.main.scaffold.models import CapabilityKey, CapabilityOptionKey, CreateOptions
+from src.main.scaffold.next_steps import build_next_step_commands
 from src.main.scaffold.project import create_project_scaffold
 
 
@@ -85,4 +86,6 @@ def command(
     typer.echo(f"- 项目根目录：{display_path(plan.project_root)}")
     typer.echo(f"- 策略包：src/strategies/{plan.strategy_slug}")
     typer.echo(f"- 主配置：{display_path(plan.project_root / 'config' / 'strategy_config.toml')}")
-    typer.echo("- 下一步：进入项目目录后，优先检查主配置并按需调整能力开关。")
+    typer.echo("- 可直接执行的 next steps：")
+    for command in build_next_step_commands(plan.project_root.name):
+        typer.echo(f"  - {command}")
