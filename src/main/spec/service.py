@@ -297,7 +297,7 @@ def _default_acceptance(plan: ScaffoldPlan) -> SpecAcceptance:
                 spec_path=plan.project_root / DEFAULT_SPEC_FILENAME,
                 strategy=SpecStrategy(
                     name=plan.project_slug,
-                    summary=f"{plan.project_name} strategy workspace.",
+                    summary=f"Agent-first strategy workspace for {plan.project_name}.",
                     trading_target="option-universe",
                     strategy_type="custom",
                     run_mode="standalone",
@@ -325,7 +325,7 @@ def spec_from_plan(plan: ScaffoldPlan) -> StrategySpec:
         spec_path=plan.project_root / DEFAULT_SPEC_FILENAME,
         strategy=SpecStrategy(
             name=plan.project_slug,
-            summary=f"{plan.project_name} strategy workspace.",
+            summary=f"Agent-first strategy workspace for {plan.project_name}.",
             trading_target="option-universe",
             strategy_type="custom",
             run_mode="standalone",
@@ -499,6 +499,13 @@ def build_test_plan_markdown(
         f"- Preset: `{spec.scaffold.preset}`",
         "- Focus Packs: " + (", ".join(f"`{item}`" for item in spec.acceptance.focus_packs) or "`kernel`"),
         "",
+        "## AGENT Inputs",
+        "",
+        "- `strategy_spec.toml` is the high-level intent spec.",
+        "- `.focus/context.json` is the machine-readable current-context contract.",
+        "- `.focus/*.md` are human-readable navigation companions.",
+        "- `artifacts/*/latest.json` store the latest structured command outputs.",
+        "",
         "### Completion Checks",
         "",
         completion_checks,
@@ -522,6 +529,7 @@ def build_test_plan_markdown(
             "",
             f"- validate: {validate_summary_text}",
             f"- focus test: {focus_test_summary_text}",
+            "- Default verification order: `validate --json` then `focus test --json`.",
             "",
         ]
     )

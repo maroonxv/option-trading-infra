@@ -11,7 +11,7 @@ commands = [
   "docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build",
 ]
 agent_notes = [
-  "启用时机：需要容器化、数据库联调或 runner + monitor 一起启动时。",
-  "先看文件：deploy/docker-compose.yml、deploy/.env.example、deploy/Dockerfile。",
-  "常见误改：本地策略迭代不必先动 deploy，优先确认运行链路和焦点文档。",
+  "Use when: the task changes container setup, database integration, or multi-service startup.",
+  "Read first: deploy/docker-compose.yml, deploy/.env.example, and deploy/Dockerfile.",
+  "Common mistake: do not start with deploy changes for local strategy iteration; confirm the runtime path and focus assets first.",
 ]

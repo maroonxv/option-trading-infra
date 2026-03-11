@@ -3,9 +3,16 @@
 ## Test Plan
 
 - Strategy: `main`
-- Summary: AI-first scaffold workspace for developing and iterating option strategies.
+- Summary: Agent-first strategy workspace for developing and iterating option strategies.
 - Preset: `custom`
 - Focus Packs: `kernel`, `selection`, `pricing`, `risk`, `execution`, `hedging`, `monitoring`, `web`, `deploy`, `backtest`
+
+## AGENT Inputs
+
+- `strategy_spec.toml` is the high-level intent spec.
+- `.focus/context.json` is the machine-readable current-context contract.
+- `.focus/*.md` are human-readable navigation companions.
+- `artifacts/*/latest.json` store the latest structured command outputs.
 
 ### Completion Checks
 
@@ -56,3 +63,4 @@
 
 - validate: passed with 0 errors and 0 warnings
 - focus test: passed with exit code 0
+- Default verification order: `validate --json` then `focus test --json`.

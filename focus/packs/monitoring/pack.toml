@@ -19,7 +19,7 @@ commands = [
   "option-scaffold run --config config/strategy_config.toml --paper",
 ]
 agent_notes = [
-  "启用时机：需要状态落盘、决策日志、快照或监控序列化时。",
-  "先看文件：src/strategy/infrastructure/monitoring、src/strategy/infrastructure/persistence。",
-  "常见误改：不要把监控存储细节混入 domain service，保持在基础设施层。",
+  "Use when: the task changes monitoring, snapshots, persistence, or observability output.",
+  "Read first: src/strategy/infrastructure/monitoring and src/strategy/infrastructure/persistence.",
+  "Common mistake: do not push monitoring or storage details into domain services; keep them in infrastructure.",
 ]

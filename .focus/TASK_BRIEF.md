@@ -1,12 +1,13 @@
 # TASK BRIEF
 
-## 需求摘要
+## Summary
 
-- AI-first scaffold workspace for developing and iterating option strategies.
-- 当前策略聚焦 `option-universe`，按 `standalone` 运行
-- 默认优先在 Editable Surface 内完成改动，只有确有必要时再扩展焦点
+- Agent-first strategy workspace for developing and iterating option strategies.
+- Current trading target: `option-universe`
+- Current run mode: `standalone`
+- Default rule: stay inside the editable surface unless there is a concrete reason to expand scope.
 
-## 首选修改入口
+## Recommended Edit Entrypoints
 
 - `src/strategy/strategy_entry.py`
 - `src/strategy/application`
@@ -15,7 +16,7 @@
 - `config/general/trading_target.toml`
 - `config/domain_service`
 
-## 禁止改动边界
+## Do Not Edit
 
 - `.codex`
 - `.git`
@@ -25,23 +26,23 @@
 - `temp`
 - `LICENSE`
 
-## 验收要求
+## Acceptance
 
-- 概述: AI-first scaffold workspace for developing and iterating option strategies.
-- 最小测试命令: `option-scaffold focus test`
+- Summary: Agent-first strategy workspace for developing and iterating option strategies.
+- Minimal verification command: `option-scaffold focus test`
 - Focus navigation files are refreshed and point to the current manifest.
 - Validation command succeeds for the current strategy configuration.
 - Focus smoke tests pass for the current strategy.
 
-## 关键日志 / 产物
+## Key Logs And Outputs
 
-### 关键日志
+### Key Logs
 
-- `校验通过`
-- `诊断完成`
-- `已刷新策略焦点导航`
+- `Validation passed`
+- `Doctor completed`
+- `Focus assets refreshed`
 
-### 关键产物
+### Key Outputs
 
 - `.focus/SYSTEM_MAP.md`
 - `.focus/ACTIVE_SURFACE.md`

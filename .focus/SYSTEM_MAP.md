@@ -2,14 +2,14 @@
 
 ## Current Focus
 
-- 策略: `main`
-- 交易标的: `option-universe`
-- 策略类型: `custom`
-- 运行模式: `standalone`
+- Strategy: `main`
+- Trading target: `option-universe`
+- Strategy type: `custom`
+- Run mode: `standalone`
 - Focus Manifest: `focus/strategies/main/strategy.manifest.toml`
-- Pack 链路: `kernel` -> `selection` -> `pricing` -> `risk` -> `execution` -> `hedging` -> `monitoring` -> `web` -> `deploy` -> `backtest`
+- Pack chain: `kernel` -> `selection` -> `pricing` -> `risk` -> `execution` -> `hedging` -> `monitoring` -> `web` -> `deploy` -> `backtest`
 
-## 建议阅读顺序
+## Read In This Order
 
 1. `focus/strategies/main/strategy.manifest.toml`
 2. `src/strategy/strategy_entry.py`
@@ -17,21 +17,21 @@
 4. `src/strategy/domain`
 5. `config/strategy_config.toml`
 
-## 运行链路
+## Runtime Chain
 
-1. `option-scaffold` / `option-scaffold focus` 作为统一入口
-2. `src/cli/app.py` 把命令分发到 `run`、`backtest`、`validate` 与 `focus`
-3. `src/main/main.py` 负责主运行链路与启动编排
-4. `src/strategy/strategy_entry.py` 连接 application / domain / infrastructure
-5. 当前启用 pack 在领域服务、监控、回测、Web 与部署侧补齐能力
+1. `option-scaffold` is the unified command entrypoint.
+2. `src/cli/app.py` routes commands to `forge`, `focus`, `run`, `backtest`, `validate`, and supporting commands.
+3. `src/main/main.py` orchestrates runtime startup.
+4. `src/strategy/strategy_entry.py` connects application, domain, and infrastructure layers.
+5. Enabled packs extend the runtime with domain logic, monitoring, backtest, web, and deploy capabilities.
 
-## Pack 说明
+## Pack Notes
 
 ### `kernel`
 
-- 依赖: 无
-- 配置键: `strategies`, `strategy_contracts`, `service_activation`, `observability`, `runtime`
-- 所属路径:
+- Depends on: none
+- Config keys: `strategies`, `strategy_contracts`, `service_activation`, `observability`, `runtime`
+- Owned paths:
 - `src/strategy/strategy_entry.py`
 - `src/strategy/application`
 - `src/strategy/domain/entity`
@@ -58,152 +58,152 @@
 - `tests/strategy/infrastructure/subscription`
 - `tests/strategy/infrastructure/utils`
 - `tests/cli/test_app.py`
-- 常用命令:
+- Common commands:
   - `option-scaffold validate --config config/strategy_config.toml`
   - `option-scaffold run --config config/strategy_config.toml --paper`
-- Agent 提示:
-  - 启用时机：任何策略都会依赖 kernel。
-  - 先看文件：focus manifest、config/strategy_config.toml、src/strategy/strategy_entry.py。
-  - 常见误改：不要把 pack 级逻辑塞回总入口，优先直接修改具体领域服务或基础设施实现。
+- Agent notes:
+  - Use when: every strategy task depends on the kernel pack.
+  - Read first: focus manifest, config/strategy_config.toml, src/strategy/strategy_entry.py.
+  - Common mistake: do not push pack-specific logic back into broad entrypoints; prefer editing the concrete service or infrastructure implementation.
 
 ### `selection`
 
-- 依赖: `kernel`
-- 配置键: `service_activation.future_selection`, `service_activation.option_chain`, `service_activation.option_selector`
-- 所属路径:
+- Depends on: `kernel`
+- Config keys: `service_activation.future_selection`, `service_activation.option_chain`, `service_activation.option_selector`
+- Owned paths:
 - `src/strategy/domain/domain_service/selection`
 - `config/domain_service/selection`
 - `tests/strategy/domain/domain_service/test_selection_integration.py`
-- 常用命令:
+- Common commands:
   - `option-scaffold validate --config config/strategy_config.toml`
-- Agent 提示:
-  - 启用时机：需要决定期货主力、期权链或合约筛选规则时。
-  - 先看文件：src/strategy/domain/domain_service/selection 与 config/domain_service/selection。
-  - 常见误改：不要把选标逻辑硬编码进 strategy_entry，优先收敛在 selection 服务里。
+- Agent notes:
+  - Use when: the task changes underlying selection, option-chain handling, or contract candidate rules.
+  - Read first: src/strategy/domain/domain_service/selection and config/domain_service/selection.
+  - Common mistake: do not hardcode selection logic into strategy_entry; keep it inside the selection service.
 
 ### `pricing`
 
-- 依赖: `kernel`, `selection`
-- 配置键: `service_activation.pricing_engine`, `pricing_engine`
-- 所属路径:
+- Depends on: `kernel`, `selection`
+- Config keys: `service_activation.pricing_engine`, `pricing_engine`
+- Owned paths:
 - `src/strategy/domain/domain_service/pricing`
 - `config/domain_service/pricing`
 - `tests/strategy/domain/domain_service/test_pricing_engine.py`
 - `tests/strategy/domain/domain_service/test_pricing_engine_config_properties.py`
 - `tests/strategy/domain/domain_service/test_pricing_engine_properties.py`
 - `tests/strategy/domain/domain_service/test_pricing_properties.py`
-- 常用命令:
+- Common commands:
   - `option-scaffold validate --config config/strategy_config.toml`
-- Agent 提示:
-  - 启用时机：需要定价、隐波或 Greeks 估值支持时。
-  - 先看文件：src/strategy/domain/domain_service/pricing 与 config/domain_service/pricing。
-  - 常见误改：不要把 pricing 参数散落在多个模块，优先通过 pricing pack 配置集中管理。
+- Agent notes:
+  - Use when: the task changes pricing, implied volatility, or Greeks support.
+  - Read first: src/strategy/domain/domain_service/pricing and config/domain_service/pricing.
+  - Common mistake: do not scatter pricing parameters across modules; keep them centralized in the pricing pack config.
 
 ### `risk`
 
-- 依赖: `kernel`, `selection`
-- 配置键: `service_activation.position_sizing`, `service_activation.greeks_calculator`, `service_activation.portfolio_risk`, `position_sizing`, `greeks_risk`, `combination_risk`
-- 所属路径:
+- Depends on: `kernel`, `selection`
+- Config keys: `service_activation.position_sizing`, `service_activation.greeks_calculator`, `service_activation.portfolio_risk`, `position_sizing`, `greeks_risk`, `combination_risk`
+- Owned paths:
 - `src/strategy/domain/domain_service/risk`
 - `src/strategy/domain/domain_service/combination`
 - `config/domain_service/risk`
 - `tests/strategy/domain/domain_service/risk`
 - `tests/strategy/domain/domain_service/combination`
-- 常用命令:
+- Common commands:
   - `option-scaffold validate --config config/strategy_config.toml`
-- Agent 提示:
-  - 启用时机：需要仓位控制、组合 Greeks、止损或风险预算时。
-  - 先看文件：src/strategy/domain/domain_service/risk、src/strategy/domain/domain_service/combination。
-  - 常见误改：不要把风控判断回塞到 CLI 或 workflow，保持在具体 risk 服务内。
+- Agent notes:
+  - Use when: the task changes position sizing, portfolio Greeks, stop logic, or risk budgets.
+  - Read first: src/strategy/domain/domain_service/risk and src/strategy/domain/domain_service/combination.
+  - Common mistake: do not move risk decisions into CLI code or workflows; keep them inside concrete risk services.
 
 ### `execution`
 
-- 依赖: `kernel`, `risk`
-- 配置键: `service_activation.smart_order_executor`, `service_activation.advanced_order_scheduler`, `order_execution`, `advanced_orders`
-- 所属路径:
+- Depends on: `kernel`, `risk`
+- Config keys: `service_activation.smart_order_executor`, `service_activation.advanced_order_scheduler`, `order_execution`, `advanced_orders`
+- Owned paths:
 - `src/strategy/domain/domain_service/execution`
 - `config/domain_service/execution`
 - `tests/strategy/domain/domain_service/test_execution_config_properties.py`
 - `tests/strategy/domain/domain_service/test_execution_coordinator_properties.py`
 - `tests/strategy/domain/domain_service/test_execution_integration.py`
-- 常用命令:
+- Common commands:
   - `option-scaffold run --config config/strategy_config.toml --paper`
-- Agent 提示:
-  - 启用时机：需要智能下单、排程或更细粒度执行控制时。
-  - 先看文件：src/strategy/domain/domain_service/execution 与 config/domain_service/execution。
-  - 常见误改：不要新增 facade/coordinator 抽象层，直接修改具体执行服务。
+- Agent notes:
+  - Use when: the task changes smart order execution, scheduling, or execution control details.
+  - Read first: src/strategy/domain/domain_service/execution and config/domain_service/execution.
+  - Common mistake: do not add facade or coordinator layers here; edit the concrete execution service directly.
 
 ### `hedging`
 
-- 依赖: `kernel`, `risk`, `execution`
-- 配置键: `service_activation.delta_hedging`, `service_activation.vega_hedging`, `hedging`
-- 所属路径:
+- Depends on: `kernel`, `risk`, `execution`
+- Config keys: `service_activation.delta_hedging`, `service_activation.vega_hedging`, `hedging`
+- Owned paths:
 - `src/strategy/domain/domain_service/hedging`
 - `config/strategy_config.toml`
 - `tests/strategy/domain/domain_service/test_delta_hedging_service.py`
 - `tests/strategy/domain/domain_service/test_vega_hedging_service.py`
-- 常用命令:
+- Common commands:
   - `option-scaffold run --config config/strategy_config.toml --paper`
-- Agent 提示:
-  - 启用时机：需要 Delta / Vega 对冲或 gamma scalping 时。
-  - 先看文件：src/strategy/domain/domain_service/hedging 与 config/strategy_config.toml 下的 hedging 配置。
-  - 常见误改：不要把对冲阈值散落到业务代码里，优先保持在配置驱动的 hedging 服务中。
+- Agent notes:
+  - Use when: the task changes Delta hedging, Vega hedging, or hedging thresholds.
+  - Read first: src/strategy/domain/domain_service/hedging and the hedging section in config/strategy_config.toml.
+  - Common mistake: do not scatter hedging thresholds through business code; keep them in config-driven hedging services.
 
 ### `monitoring`
 
-- 依赖: `kernel`
-- 配置键: `service_activation.monitoring`, `service_activation.decision_observability`, `observability`
-- 所属路径:
+- Depends on: `kernel`
+- Config keys: `service_activation.monitoring`, `service_activation.decision_observability`, `observability`
+- Owned paths:
 - `src/strategy/infrastructure/monitoring`
 - `src/strategy/infrastructure/persistence`
 - `tests/strategy/infrastructure/monitoring`
 - `tests/strategy/infrastructure/persistence`
-- 常用命令:
+- Common commands:
   - `option-scaffold run --config config/strategy_config.toml --paper`
-- Agent 提示:
-  - 启用时机：需要状态落盘、决策日志、快照或监控序列化时。
-  - 先看文件：src/strategy/infrastructure/monitoring、src/strategy/infrastructure/persistence。
-  - 常见误改：不要把监控存储细节混入 domain service，保持在基础设施层。
+- Agent notes:
+  - Use when: the task changes monitoring, snapshots, persistence, or observability output.
+  - Read first: src/strategy/infrastructure/monitoring and src/strategy/infrastructure/persistence.
+  - Common mistake: do not push monitoring or storage details into domain services; keep them in infrastructure.
 
 ### `web`
 
-- 依赖: `kernel`, `monitoring`
-- 配置键: `runtime.log_dir`
-- 所属路径:
+- Depends on: `kernel`, `monitoring`
+- Config keys: `runtime.log_dir`
+- Owned paths:
 - `src/web`
 - `tests/web`
-- 常用命令:
+- Common commands:
   - `python src/web/app.py`
-- Agent 提示:
-  - 启用时机：需要可视化监控页面、快照读取或前端展示时。
-  - 先看文件：src/web 与 tests/web。
-  - 常见误改：不要把策略判断逻辑挪到 Web 层，Web 只负责读状态和展示。
+- Agent notes:
+  - Use when: the task changes the monitoring UI, state readers, or frontend presentation.
+  - Read first: src/web and tests/web.
+  - Common mistake: do not move strategy decision logic into the web layer; web should stay read-only and presentational.
 
 ### `deploy`
 
-- 依赖: `kernel`, `monitoring`, `web`
-- 配置键: 无
-- 所属路径:
+- Depends on: `kernel`, `monitoring`, `web`
+- Config keys: none
+- Owned paths:
 - `.dockerignore`
 - `.env.example`
 - `deploy`
-- 常用命令:
+- Common commands:
   - `docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --build`
-- Agent 提示:
-  - 启用时机：需要容器化、数据库联调或 runner + monitor 一起启动时。
-  - 先看文件：deploy/docker-compose.yml、deploy/.env.example、deploy/Dockerfile。
-  - 常见误改：本地策略迭代不必先动 deploy，优先确认运行链路和焦点文档。
+- Agent notes:
+  - Use when: the task changes container setup, database integration, or multi-service startup.
+  - Read first: deploy/docker-compose.yml, deploy/.env.example, and deploy/Dockerfile.
+  - Common mistake: do not start with deploy changes for local strategy iteration; confirm the runtime path and focus assets first.
 
 ### `backtest`
 
-- 依赖: `kernel`, `selection`
-- 配置键: `strategies`, `service_activation`
-- 所属路径:
+- Depends on: `kernel`, `selection`
+- Config keys: `strategies`, `service_activation`
+- Owned paths:
 - `src/backtesting`
 - `tests/backtesting`
-- 常用命令:
+- Common commands:
   - `option-scaffold backtest --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart`
-- Agent 提示:
-  - 启用时机：需要快速验证策略逻辑、合约发现和参数效果时。
-  - 先看文件：src/backtesting、tests/backtesting。
-  - 常见误改：不要为回测单独复制一套策略逻辑，优先复用主策略契约与配置。
+- Agent notes:
+  - Use when: the task needs execution evidence for strategy logic, contract discovery, or parameter effects.
+  - Read first: src/backtesting and tests/backtesting.
+  - Common mistake: do not duplicate strategy logic just for backtest; reuse the main strategy contract and config.

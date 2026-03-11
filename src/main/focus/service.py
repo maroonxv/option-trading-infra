@@ -352,11 +352,12 @@ def _default_acceptance(
     completion_checks: tuple[str, ...] | None = None,
 ) -> AcceptanceSpec:
     return AcceptanceSpec(
-        summary="焦点导航文件与主配置保持同步，Agent 能在最小上下文里完成策略修改与验收。",
-        completion_checks=(
-            "焦点导航文件已刷新且指向当前 manifest",
-            "主配置校验命令可以直接执行",
-            "当前焦点相关测试集合通过",
+        summary=summary or "Focus navigation, current context, and validation outputs stay aligned for AGENT-driven edits.",
+        completion_checks=completion_checks
+        or (
+            "Focus navigation files are refreshed and point to the current manifest.",
+            "Validation succeeds for the current strategy configuration.",
+            "Focus verification succeeds for the current strategy.",
         ),
         minimal_test_command="option-scaffold focus test",
         test_selectors=(
@@ -364,9 +365,9 @@ def _default_acceptance(
             "tests/cli/test_app.py",
         ),
         key_logs=(
-            "校验通过",
-            "诊断完成",
-            "已刷新策略焦点导航",
+            "Validation passed",
+            "Doctor completed",
+            "Focus assets refreshed",
         ),
         key_outputs=(
             ".focus/SYSTEM_MAP.md",
@@ -375,6 +376,7 @@ def _default_acceptance(
             ".focus/COMMANDS.md",
             ".focus/TASK_ROUTER.md",
             ".focus/TEST_MATRIX.md",
+            ".focus/context.json",
         ),
     )
 
@@ -436,7 +438,7 @@ def _build_default_manifest(
             trading_target=trading_target,
             strategy_type=strategy_type,
             run_mode=run_mode,
-            summary="默认全家桶策略焦点，用于在当前大仓内以最小上下文驱动 vibe coding。",
+            summary="Default full-pack focus for AGENT-driven strategy development in the current repository.",
         ),
         packs=pack_keys,
         entrypoints=_default_entrypoints(),
@@ -453,12 +455,12 @@ def _default_acceptance_v2(
     completion_checks: tuple[str, ...] | None = None,
 ) -> AcceptanceSpec:
     return AcceptanceSpec(
-        summary=summary or "焦点导航文件与主配置保持同步，Agent 能在最小上下文里完成策略修改与验收。",
+        summary=summary or "Focus navigation, current context, and validation outputs stay aligned for AGENT-driven edits.",
         completion_checks=completion_checks
         or (
-            "焦点导航文件已刷新并指向当前 manifest",
-            "主配置校验命令可以直接执行",
-            "当前焦点相关测试集合通过",
+            "Focus navigation files are refreshed and point to the current manifest.",
+            "Validation succeeds for the current strategy configuration.",
+            "Focus verification succeeds for the current strategy.",
         ),
         minimal_test_command="option-scaffold focus test",
         test_selectors=(
@@ -466,9 +468,9 @@ def _default_acceptance_v2(
             "tests/cli/test_app.py",
         ),
         key_logs=(
-            "校验通过",
-            "诊断完成",
-            "已刷新策略焦点导航",
+            "Validation passed",
+            "Doctor completed",
+            "Focus assets refreshed",
         ),
         key_outputs=(
             ".focus/SYSTEM_MAP.md",
@@ -503,7 +505,7 @@ def _build_default_manifest_v2(
             trading_target=trading_target,
             strategy_type=strategy_type,
             run_mode=run_mode,
-            summary=summary or "默认全家桶策略焦点，用于在当前大仓内以最小上下文驱动 vibe coding。",
+            summary=summary or "Default full-pack focus for AGENT-driven strategy development in the current repository.",
         ),
         packs=pack_keys,
         entrypoints=_default_entrypoints(),
@@ -535,7 +537,7 @@ def _smoke_keyword_expression() -> str:
 
 def _smoke_filter_descriptions() -> tuple[str, ...]:
     return tuple(
-        f"排除名称包含 `{keyword}` 的测试节点。"
+        f"Exclude test nodes whose names contain `{keyword}`."
         for keyword in SMOKE_TEST_EXCLUDE_KEYWORDS
     )
 
@@ -660,16 +662,16 @@ def _module_available(module_name: str) -> bool:
 def describe_focus_health(context: FocusContext) -> tuple[str, ...]:
     pack_count = len(context.resolved_packs)
     editable_path_count = len(context.manifest.editable_paths)
-    summary = f"焦点宽度：{pack_count} 个 pack，{editable_path_count} 个 Editable Surface 条目。"
+    summary = f"Focus width: {pack_count} packs and {editable_path_count} editable-surface entries."
 
     if pack_count >= WIDE_FOCUS_PACK_THRESHOLD or editable_path_count >= WIDE_FOCUS_EDITABLE_THRESHOLD:
         return (
             summary,
-            "当前焦点偏宽，优先按 TASK_ROUTER 的首选入口开始。",
+            "This focus is wide. Start from the TASK_ROUTER first-pass entry instead of scanning everything.",
         )
     return (
         summary,
-        "当前焦点宽度适中，可直接从 Recommended First Pass 开始。",
+        "This focus is narrow enough to start directly from the recommended first pass.",
     )
 
 

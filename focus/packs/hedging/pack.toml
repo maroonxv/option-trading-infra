@@ -19,7 +19,7 @@ commands = [
   "option-scaffold run --config config/strategy_config.toml --paper",
 ]
 agent_notes = [
-  "启用时机：需要 Delta / Vega 对冲或 gamma scalping 时。",
-  "先看文件：src/strategy/domain/domain_service/hedging 与 config/strategy_config.toml 下的 hedging 配置。",
-  "常见误改：不要把对冲阈值散落到业务代码里，优先保持在配置驱动的 hedging 服务中。",
+  "Use when: the task changes Delta hedging, Vega hedging, or hedging thresholds.",
+  "Read first: src/strategy/domain/domain_service/hedging and the hedging section in config/strategy_config.toml.",
+  "Common mistake: do not scatter hedging thresholds through business code; keep them in config-driven hedging services.",
 ]

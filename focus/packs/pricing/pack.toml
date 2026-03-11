@@ -19,7 +19,7 @@ commands = [
   "option-scaffold validate --config config/strategy_config.toml",
 ]
 agent_notes = [
-  "启用时机：需要定价、隐波或 Greeks 估值支持时。",
-  "先看文件：src/strategy/domain/domain_service/pricing 与 config/domain_service/pricing。",
-  "常见误改：不要把 pricing 参数散落在多个模块，优先通过 pricing pack 配置集中管理。",
+  "Use when: the task changes pricing, implied volatility, or Greeks support.",
+  "Read first: src/strategy/domain/domain_service/pricing and config/domain_service/pricing.",
+  "Common mistake: do not scatter pricing parameters across modules; keep them centralized in the pricing pack config.",
 ]

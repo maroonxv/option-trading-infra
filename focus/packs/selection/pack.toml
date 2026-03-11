@@ -17,7 +17,7 @@ commands = [
   "option-scaffold validate --config config/strategy_config.toml",
 ]
 agent_notes = [
-  "启用时机：需要决定期货主力、期权链或合约筛选规则时。",
-  "先看文件：src/strategy/domain/domain_service/selection 与 config/domain_service/selection。",
-  "常见误改：不要把选标逻辑硬编码进 strategy_entry，优先收敛在 selection 服务里。",
+  "Use when: the task changes underlying selection, option-chain handling, or contract candidate rules.",
+  "Read first: src/strategy/domain/domain_service/selection and config/domain_service/selection.",
+  "Common mistake: do not hardcode selection logic into strategy_entry; keep it inside the selection service.",
 ]

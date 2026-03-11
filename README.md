@@ -39,6 +39,28 @@
 
 你可以在现有骨架上聚焦改造领域服务，例如选合约、信号计算、对冲、组合管理、风控与执行逻辑，而不必从零重复搭建工程基础设施。
 
+## Agent-First Workflow
+
+The recommended AGENT workflow is now built around `forge`, `strategy_spec.toml`, and structured command output.
+
+1. Start with `option-scaffold forge --json` when you need to create or refresh AGENT assets.
+2. Read `strategy_spec.toml` for high-level intent.
+3. Read `.focus/context.json` for the current machine-readable context contract.
+4. Use `.focus/*.md` only as human-readable navigation companions.
+5. Edit only files inside the current editable surface.
+6. Verify with `option-scaffold validate --json` and `option-scaffold focus test --json`.
+7. Use `option-scaffold backtest --json` or `option-scaffold run --json` only when the task requires execution evidence or runtime behavior.
+
+Machine-readable AGENT assets:
+
+- `AGENTS_FOCUS.md`: canonical AGENT operating manual
+- `strategy_spec.toml`: AGENT-facing intent spec
+- `.focus/context.json`: current machine-readable context contract
+- `focus/strategies/*/strategy.manifest.toml`: generated focus manifest
+- `focus/packs/*/pack.toml`: pack ownership, tests, and AGENT notes
+- `tests/TEST.md`: test plan plus latest acceptance summary
+- `artifacts/validate/latest.json` / `artifacts/backtest/latest.json`: latest structured command outputs
+
 <!-- readme-gen:start:highlights -->
 ## 工程亮点
 
@@ -46,6 +68,7 @@
 | --- | --- | --- |
 | 分层架构 | `application / domain / infrastructure` | 把策略编排、交易规则、外部依赖隔离开，便于持续演进 |
 | 领域能力 | `selection / risk / execution / pricing / signal / hedging / combination` | 可以直接替换或扩展具体策略服务 |
+| AGENT workflow | `strategy_spec + forge + .focus/context.json + artifacts` | Give AGENTs a stable protocol for context, editing boundaries, and verification |
 | 工程配套 | `config/*.toml`、Docker Compose、Web 监控页 | 让参数管理、部署与观测有统一入口 |
 | 质量保障 | `pytest` 测试骨架，当前仓库中已有 `113` 个 `test_*.py` 测试文件 | 做重构和新增策略时更有安全感 |
 
@@ -54,7 +77,7 @@
 - 运行时：默认 Docker 镜像基于 `Python 3.12`
 - Web 监控：`Flask + Socket.IO`，默认端口 `5007`
 - 默认部署：`runner + monitor + PostgreSQL`
-- 统一 CLI：`option-scaffold`（已接入 `init` / `run` / `backtest` / `validate` / `doctor` / `examples`）
+- Unified CLI: `option-scaffold` (recommended AGENT entrypoint: `forge`; structured output: `--json`)
 - 文档资产：`doc/` 下包含架构、开发说明与用户手册
 <!-- readme-gen:end:highlights -->
 
@@ -135,18 +158,21 @@ pip install -e .
 Copy-Item .env.example .env
 ```
 
-3. 查看统一 CLI 帮助与版本：
+3. Inspect the CLI and refresh AGENT assets:
 
 ```powershell
 option-scaffold --help
 option-scaffold --version
+option-scaffold forge --json
+option-scaffold focus show --json
 ```
 
-4. 先做一次环境诊断与配置校验：
+4. Validate the current workspace through structured output:
 
 ```powershell
-option-scaffold doctor
-option-scaffold validate --config config/strategy_config.toml
+option-scaffold doctor --json
+option-scaffold validate --config config/strategy_config.toml --json
+option-scaffold focus test --json
 ```
 
 5. 启动策略主入口（这里示例使用更安全的模拟交易模式）：
@@ -155,7 +181,7 @@ option-scaffold validate --config config/strategy_config.toml
 option-scaffold run --mode standalone --config config/strategy_config.toml --paper
 ```
 
-6. 如需单独启动监控页面：
+7. 如需单独启动监控页面：
 
 ```powershell
 python src/web/app.py
@@ -191,28 +217,40 @@ python src/web/app.py
 pytest -c config/pytest.ini
 ```
 
+### Refresh AGENT assets
+
+```powershell
+option-scaffold forge --json
+```
+
+### Inspect current AGENT context
+
+```powershell
+option-scaffold focus show --json
+```
+
+### Validate current strategy config
+
+```powershell
+option-scaffold validate --config config/strategy_config.toml --json
+```
+
+### Run focus verification
+
+```powershell
+option-scaffold focus test --json
+```
+
 ### 运行回测
 
 ```powershell
-option-scaffold backtest --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart
+option-scaffold backtest --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart --json
 ```
 
-### 校验策略配置
+### Start runtime workflow
 
 ```powershell
-option-scaffold validate --config config/strategy_config.toml --override-config config/timeframe/5m.toml
-```
-
-### 诊断本地环境
-
-```powershell
-option-scaffold doctor --strict
-```
-
-### 启动守护进程模式
-
-```powershell
-option-scaffold run --mode daemon --config config/strategy_config.toml
+option-scaffold run --mode daemon --config config/strategy_config.toml --json
 ```
 
 ### 初始化新策略骨架
@@ -249,26 +287,28 @@ option-scaffold examples ema_cross_example
 <!-- readme-gen:end:commands -->
 
 <!-- readme-gen:start:tree -->
-## 目录结构
+## Repository Layout
 
 ```text
 📦 option-strategy-scaffold
-├─ pyproject.toml               Python 打包元数据与 CLI 暴露入口
-├─ config/                      策略、领域服务、订阅、日志与时间周期配置
-│  ├─ domain_service/           领域服务参数
-│  ├─ general/                  通用运行配置
-│  ├─ logging/                  日志配置
-│  ├─ subscription/             订阅配置
-│  └─ timeframe/                多周期覆盖配置
-├─ deploy/                      Dockerfile、Compose 与初始化脚本
-├─ doc/                         架构文档、开发设计文档、用户手册
+├─ pyproject.toml               Python package metadata and CLI entrypoint
+├─ .focus/                      Current focus pointer plus generated navigation assets
+├─ config/                      Strategy, domain-service, subscription, logging, and timeframe config
+│  ├─ domain_service/           Domain-service parameters
+│  ├─ general/                  Shared runtime config
+│  ├─ logging/                  Logging config
+│  ├─ subscription/             Subscription config
+│  └─ timeframe/                Timeframe override config
+├─ deploy/                      Dockerfile, Compose, and initialization scripts
+├─ doc/                         Architecture docs, development plans, and user manuals
+├─ focus/                       Focus manifests and pack metadata
 ├─ src/
-│  ├─ cli/                      统一 CLI 入口与子命令包装层
-│  ├─ backtesting/              回测 CLI 与执行器
-│  ├─ main/                     主入口、启动流程、进程管理
-│  ├─ strategy/                 策略核心代码（应用层 / 领域层 / 基础设施层）
-│  └─ web/                      监控页面与数据读取接口
-└─ tests/                       backtesting、main、strategy、web 的自动化测试
+│  ├─ cli/                      Unified CLI entrypoint and command wrappers
+│  ├─ backtesting/              Backtest CLI and runner
+│  ├─ main/                     Main entrypoint, startup flow, and process control
+│  ├─ strategy/                 Strategy core code (application / domain / infrastructure)
+│  └─ web/                      Monitoring UI and read-only state readers
+└─ tests/                       Automated tests for backtesting, main, strategy, and web
 ```
 <!-- readme-gen:end:tree -->
 

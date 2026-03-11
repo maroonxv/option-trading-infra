@@ -11,7 +11,7 @@
 - `tests/strategy`
 - `tests/web`
 
-## Support Surface
+## Reference Surface
 
 - `src/main`
 - `src/backtesting`

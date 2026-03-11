@@ -450,8 +450,8 @@ def test_focus_refresh_reports_health_hint(monkeypatch, tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert "TASK_ROUTER:" in result.stdout
     assert "TEST_MATRIX:" in result.stdout
-    assert "焦点宽度：" in result.stdout
-    assert "当前焦点偏宽" in result.stdout
+    assert "Focus width:" in result.stdout
+    assert "This focus is wide." in result.stdout
 
 
 def test_focus_test_defaults_to_smoke_mode(monkeypatch, tmp_path: Path) -> None:
@@ -476,8 +476,8 @@ def test_focus_test_defaults_to_smoke_mode(monkeypatch, tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert "测试模式: smoke" in result.stdout
-    assert "排除名称包含 `property` 的测试节点" in result.stdout
-    assert "排除名称包含 `pbt` 的测试节点" in result.stdout
+    assert "Exclude test nodes whose names contain `property`." in result.stdout
+    assert "Exclude test nodes whose names contain `pbt`." in result.stdout
 
 
 def test_focus_test_full_flag_uses_full_mode(monkeypatch, tmp_path: Path) -> None:

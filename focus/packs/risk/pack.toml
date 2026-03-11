@@ -23,7 +23,7 @@ commands = [
   "option-scaffold validate --config config/strategy_config.toml",
 ]
 agent_notes = [
-  "启用时机：需要仓位控制、组合 Greeks、止损或风险预算时。",
-  "先看文件：src/strategy/domain/domain_service/risk、src/strategy/domain/domain_service/combination。",
-  "常见误改：不要把风控判断回塞到 CLI 或 workflow，保持在具体 risk 服务内。",
+  "Use when: the task changes position sizing, portfolio Greeks, stop logic, or risk budgets.",
+  "Read first: src/strategy/domain/domain_service/risk and src/strategy/domain/domain_service/combination.",
+  "Common mistake: do not move risk decisions into CLI code or workflows; keep them inside concrete risk services.",
 ]

@@ -47,7 +47,7 @@ commands = [
   "option-scaffold run --config config/strategy_config.toml --paper",
 ]
 agent_notes = [
-  "启用时机：任何策略都会依赖 kernel。",
-  "先看文件：focus manifest、config/strategy_config.toml、src/strategy/strategy_entry.py。",
-  "常见误改：不要把 pack 级逻辑塞回总入口，优先直接修改具体领域服务或基础设施实现。",
+  "Use when: every strategy task depends on the kernel pack.",
+  "Read first: focus manifest, config/strategy_config.toml, src/strategy/strategy_entry.py.",
+  "Common mistake: do not push pack-specific logic back into broad entrypoints; prefer editing the concrete service or infrastructure implementation.",
 ]

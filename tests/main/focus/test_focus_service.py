@@ -324,6 +324,6 @@ def test_refresh_focus_regenerates_router_and_matrix(tmp_path: Path, monkeypatch
     task_router = (repo_root / ".focus" / "TASK_ROUTER.md").read_text(encoding="utf-8")
     test_matrix = (repo_root / ".focus" / "TEST_MATRIX.md").read_text(encoding="utf-8")
 
-    assert "任务类型" in task_router
+    assert "Task type" in task_router
     assert "Smoke" in test_matrix
     assert "Skipped Packs" in test_matrix

@@ -1,6 +1,6 @@
 [strategy]
 name = "main"
-summary = "AI-first scaffold workspace for developing and iterating option strategies."
+summary = "Agent-first strategy workspace for developing and iterating option strategies."
 trading_target = "option-universe"
 strategy_type = "custom"
 run_mode = "standalone"

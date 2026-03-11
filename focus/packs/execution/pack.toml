@@ -20,7 +20,7 @@ commands = [
   "option-scaffold run --config config/strategy_config.toml --paper",
 ]
 agent_notes = [
-  "启用时机：需要智能下单、排程或更细粒度执行控制时。",
-  "先看文件：src/strategy/domain/domain_service/execution 与 config/domain_service/execution。",
-  "常见误改：不要新增 facade/coordinator 抽象层，直接修改具体执行服务。",
+  "Use when: the task changes smart order execution, scheduling, or execution control details.",
+  "Read first: src/strategy/domain/domain_service/execution and config/domain_service/execution.",
+  "Common mistake: do not add facade or coordinator layers here; edit the concrete execution service directly.",
 ]

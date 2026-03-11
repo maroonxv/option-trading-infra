@@ -2,15 +2,16 @@
 
 ## Focus Commands
 
+- `option-scaffold forge`
 - `option-scaffold focus show`
 - `option-scaffold focus refresh`
 - `option-scaffold focus test`
 - `option-scaffold focus test --full`
 
-## Test Modes
+## Verification Modes
 
-- `smoke`：默认排除名称包含 `property` / `pbt` 的测试节点。
-- `full`：运行当前焦点的完整 runnable selectors。
+- `smoke`: excludes test nodes with `property` or `pbt` in the name.
+- `full`: runs the complete runnable selector set for the current focus.
 
 ## Current Strategy Commands
 

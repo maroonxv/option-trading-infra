@@ -3,16 +3,16 @@ from __future__ import annotations
 from .models import FocusContext, FocusTestMatrix, PackDefinition
 
 PACK_TASK_LABELS: dict[str, str] = {
-    "kernel": "主运行链路与焦点入口",
-    "selection": "选标与合约筛选",
-    "pricing": "定价与 Greeks 计算",
-    "risk": "组合风控与限额控制",
-    "execution": "下单执行与排程",
-    "hedging": "Delta / Vega 对冲",
-    "monitoring": "监控、日志与状态落盘",
-    "web": "可视化展示与快照读取",
-    "deploy": "容器化与环境装配",
-    "backtest": "回测链路与参数验证",
+    "kernel": "Core runtime flow and focus entrypoint",
+    "selection": "Underlying and contract selection",
+    "pricing": "Pricing and Greeks computation",
+    "risk": "Portfolio risk and limits",
+    "execution": "Order execution and scheduling",
+    "hedging": "Delta and Vega hedging",
+    "monitoring": "Monitoring, persistence, and observability",
+    "web": "Read-only visual monitoring",
+    "deploy": "Container and environment setup",
+    "backtest": "Backtest flow and parameter verification",
 }
 FIRST_PASS_PACK_PRIORITY: tuple[str, ...] = (
     "selection",
@@ -26,17 +26,18 @@ FIRST_PASS_PACK_PRIORITY: tuple[str, ...] = (
     "deploy",
     "kernel",
 )
+COMMON_MISTAKE_PREFIX = "Common mistake: "
 
 
 def _render_paths(paths: tuple[str, ...], *, indent: str = "") -> list[str]:
     if not paths:
-        return [f"{indent}- 无"]
+        return [f"{indent}- none"]
     return [f"{indent}- `{path}`" for path in paths]
 
 
 def _render_text_items(items: tuple[str, ...], *, indent: str = "") -> list[str]:
     if not items:
-        return [f"{indent}- 无"]
+        return [f"{indent}- none"]
     return [f"{indent}- {item}" for item in items]
 
 
@@ -82,9 +83,9 @@ def _pack_config_paths(pack: PackDefinition) -> tuple[str, ...]:
 
 def _pack_common_mistakes(pack: PackDefinition) -> tuple[str, ...]:
     explicit = tuple(
-        note.split("常见误改：", 1)[1].strip()
+        note.split(COMMON_MISTAKE_PREFIX, 1)[1].strip()
         for note in pack.agent_notes
-        if note.startswith("常见误改：")
+        if note.startswith(COMMON_MISTAKE_PREFIX)
     )
     if explicit:
         return explicit
@@ -94,7 +95,7 @@ def _pack_common_mistakes(pack: PackDefinition) -> tuple[str, ...]:
 
 
 def _pack_agent_notes(pack: PackDefinition) -> tuple[str, ...]:
-    return tuple(note for note in pack.agent_notes if not note.startswith("常见误改："))
+    return tuple(note for note in pack.agent_notes if not note.startswith(COMMON_MISTAKE_PREFIX))
 
 
 def build_recommended_first_pass(context: FocusContext) -> tuple[str, str]:
@@ -115,26 +116,26 @@ def build_recommended_first_pass(context: FocusContext) -> tuple[str, str]:
 
 
 def _render_pack(pack: PackDefinition) -> list[str]:
-    dependencies = ", ".join(f"`{item}`" for item in pack.depends_on) if pack.depends_on else "无"
-    config_keys = ", ".join(f"`{item}`" for item in pack.config_keys) if pack.config_keys else "无"
+    dependencies = ", ".join(f"`{item}`" for item in pack.depends_on) if pack.depends_on else "none"
+    config_keys = ", ".join(f"`{item}`" for item in pack.config_keys) if pack.config_keys else "none"
     lines = [
         f"### `{pack.key}`",
         "",
-        f"- 依赖: {dependencies}",
-        f"- 配置键: {config_keys}",
-        "- 所属路径:",
+        f"- Depends on: {dependencies}",
+        f"- Config keys: {config_keys}",
+        "- Owned paths:",
         *_render_paths(pack.owned_paths),
-        "- 常用命令:",
+        "- Common commands:",
     ]
     if pack.commands:
         lines.extend(f"  - `{item}`" for item in pack.commands)
     else:
-        lines.append("  - 无")
-    lines.append("- Agent 提示:")
+        lines.append("  - none")
+    lines.append("- Agent notes:")
     if pack.agent_notes:
         lines.extend(f"  - {item}" for item in pack.agent_notes)
     else:
-        lines.append("  - 无")
+        lines.append("  - none")
     return lines
 
 
@@ -146,14 +147,14 @@ def render_system_map(context: FocusContext) -> str:
         "",
         "## Current Focus",
         "",
-        f"- 策略: `{context.manifest.strategy.name}`",
-        f"- 交易标的: `{context.manifest.strategy.trading_target}`",
-        f"- 策略类型: `{context.manifest.strategy.strategy_type}`",
-        f"- 运行模式: `{context.manifest.strategy.run_mode}`",
+        f"- Strategy: `{context.manifest.strategy.name}`",
+        f"- Trading target: `{context.manifest.strategy.trading_target}`",
+        f"- Strategy type: `{context.manifest.strategy.strategy_type}`",
+        f"- Run mode: `{context.manifest.strategy.run_mode}`",
         f"- Focus Manifest: `{manifest_path}`",
-        f"- Pack 链路: {pack_chain}",
+        f"- Pack chain: {pack_chain}",
         "",
-        "## 建议阅读顺序",
+        "## Read In This Order",
         "",
         f"1. `{manifest_path}`",
         f"2. `{context.manifest.editable_paths[0]}`",
@@ -161,15 +162,15 @@ def render_system_map(context: FocusContext) -> str:
         f"4. `{context.manifest.editable_paths[2]}`",
         f"5. `{context.manifest.editable_paths[3]}`",
         "",
-        "## 运行链路",
+        "## Runtime Chain",
         "",
-        "1. `option-scaffold` / `option-scaffold focus` 作为统一入口",
-        "2. `src/cli/app.py` 把命令分发到 `run`、`backtest`、`validate` 与 `focus`",
-        "3. `src/main/main.py` 负责主运行链路与启动编排",
-        "4. `src/strategy/strategy_entry.py` 连接 application / domain / infrastructure",
-        "5. 当前启用 pack 在领域服务、监控、回测、Web 与部署侧补齐能力",
+        "1. `option-scaffold` is the unified command entrypoint.",
+        "2. `src/cli/app.py` routes commands to `forge`, `focus`, `run`, `backtest`, `validate`, and supporting commands.",
+        "3. `src/main/main.py` orchestrates runtime startup.",
+        "4. `src/strategy/strategy_entry.py` connects application, domain, and infrastructure layers.",
+        "5. Enabled packs extend the runtime with domain logic, monitoring, backtest, web, and deploy capabilities.",
         "",
-        "## Pack 说明",
+        "## Pack Notes",
         "",
     ]
     for index, pack in enumerate(context.resolved_packs):
@@ -187,7 +188,7 @@ def render_active_surface(context: FocusContext) -> str:
         "",
         *_render_paths(context.manifest.editable_paths),
         "",
-        "## Support Surface",
+        "## Reference Surface",
         "",
         *_render_paths(context.manifest.reference_paths),
         "",
@@ -202,36 +203,34 @@ def render_task_brief(context: FocusContext) -> str:
     lines = [
         "# TASK BRIEF",
         "",
-        "## 需求摘要",
+        "## Summary",
         "",
         f"- {context.manifest.strategy.summary}",
-        (
-            f"- 当前策略聚焦 `{context.manifest.strategy.trading_target}`，"
-            f"按 `{context.manifest.strategy.run_mode}` 运行"
-        ),
-        "- 默认优先在 Editable Surface 内完成改动，只有确有必要时再扩展焦点",
+        f"- Current trading target: `{context.manifest.strategy.trading_target}`",
+        f"- Current run mode: `{context.manifest.strategy.run_mode}`",
+        "- Default rule: stay inside the editable surface unless there is a concrete reason to expand scope.",
         "",
-        "## 首选修改入口",
+        "## Recommended Edit Entrypoints",
         "",
         *_render_paths(context.manifest.editable_paths[:6]),
         "",
-        "## 禁止改动边界",
+        "## Do Not Edit",
         "",
         *_render_paths(context.manifest.frozen_paths),
         "",
-        "## 验收要求",
+        "## Acceptance",
         "",
-        f"- 概述: {context.manifest.acceptance.summary}",
-        f"- 最小测试命令: `{context.manifest.acceptance.minimal_test_command}`",
+        f"- Summary: {context.manifest.acceptance.summary}",
+        f"- Minimal verification command: `{context.manifest.acceptance.minimal_test_command}`",
         *[f"- {item}" for item in context.manifest.acceptance.completion_checks],
         "",
-        "## 关键日志 / 产物",
+        "## Key Logs And Outputs",
         "",
-        "### 关键日志",
+        "### Key Logs",
         "",
         *_render_paths(context.manifest.acceptance.key_logs),
         "",
-        "### 关键产物",
+        "### Key Outputs",
         "",
         *_render_paths(context.manifest.acceptance.key_outputs),
     ]
@@ -249,11 +248,11 @@ def render_task_router(
     lines = [
         "# TASK ROUTER",
         "",
-        "## 使用方式",
+        "## How To Use This File",
         "",
-        "- 先匹配最接近的任务类型，再按首看入口进入代码。",
-        f"- 默认先跑 `{smoke_test_command}`，通过后再补跑 `{full_test_command}`。",
-        "- 如果当前焦点偏宽，先从单个 pack 开始，不要一上来横扫整个 Editable Surface。",
+        "- Match the task to the closest pack first, then start from the recommended entrypoint.",
+        f"- Default verification order: `{smoke_test_command}` first, then `{full_test_command}` only when needed.",
+        "- If the current focus is wide, start from one pack instead of scanning the full editable surface.",
         "",
     ]
 
@@ -262,28 +261,28 @@ def render_task_router(
         config_paths = _pack_config_paths(pack)
         common_mistakes = _pack_common_mistakes(pack)
         extra_notes = _pack_agent_notes(pack)
-        config_keys = ", ".join(f"`{item}`" for item in pack.config_keys) if pack.config_keys else "无"
+        config_keys = ", ".join(f"`{item}`" for item in pack.config_keys) if pack.config_keys else "none"
 
         lines.extend(
             [
                 f"### `{pack.key}`",
                 "",
-                f"- 任务类型: {_task_label(pack)}",
-                "- 首看入口:",
+                f"- Task type: {_task_label(pack)}",
+                "- Read first:",
                 *_render_paths(code_paths, indent="  "),
-                "- 相关配置:",
+                "- Related config:",
                 *_render_paths(config_paths, indent="  "),
-                f"  - 配置键: {config_keys}",
-                "- 推荐测试:",
+                f"  - Config keys: {config_keys}",
+                "- Recommended verification:",
                 f"  - Smoke: `{smoke_test_command}`",
-                "  - 相关选择器:",
+                "  - Relevant selectors:",
                 *_render_paths(pack.test_selectors, indent="    "),
                 f"  - Full: `{full_test_command}`",
-                "- 常用命令:",
+                "- Common commands:",
                 *_render_paths(pack.commands, indent="  "),
-                "- 常见误改:",
+                "- Common mistakes:",
                 *_render_text_items(common_mistakes, indent="  "),
-                "- Agent 提示:",
+                "- Agent notes:",
                 *_render_text_items(extra_notes, indent="  "),
             ]
         )
@@ -306,17 +305,17 @@ def render_test_matrix(
         "",
         "## Smoke",
         "",
-        f"- 命令: `{smoke_test_command}`",
-        "- 说明: 与 Full 使用同一组 selectors，但额外应用节点级过滤。",
-        "- 选择器:",
+        f"- Command: `{smoke_test_command}`",
+        "- Notes: smoke uses the same selectors as full mode, plus keyword filters.",
+        "- Selectors:",
         *_render_paths(test_matrix.smoke_selectors, indent="  "),
-        "- 节点过滤:",
+        "- Keyword filters:",
         *_render_text_items(test_matrix.smoke_filter_descriptions, indent="  "),
         "",
         "## Full",
         "",
-        f"- 命令: `{full_test_command}`",
-        "- 选择器:",
+        f"- Command: `{full_test_command}`",
+        "- Selectors:",
         *_render_paths(test_matrix.full_selectors, indent="  "),
         "",
         "## Skipped Packs",
@@ -326,9 +325,9 @@ def render_test_matrix(
     if test_matrix.skipped_packs:
         for skipped_pack in test_matrix.skipped_packs:
             missing_modules = ", ".join(f"`{item}`" for item in skipped_pack.missing_modules)
-            lines.append(f"- `{skipped_pack.pack_key}`: 缺少依赖 {missing_modules}")
+            lines.append(f"- `{skipped_pack.pack_key}`: missing dependency {missing_modules}")
     else:
-        lines.append("- 无")
+        lines.append("- none")
 
     return "\n".join(lines) + "\n"
 
@@ -340,20 +339,22 @@ def render_commands(
     smoke_test_command: str,
     full_test_command: str,
 ) -> str:
+    del context
     lines = [
         "# COMMANDS",
         "",
         "## Focus Commands",
         "",
+        "- `option-scaffold forge`",
         "- `option-scaffold focus show`",
         "- `option-scaffold focus refresh`",
         f"- `{smoke_test_command}`",
         f"- `{full_test_command}`",
         "",
-        "## Test Modes",
+        "## Verification Modes",
         "",
-        "- `smoke`：默认排除名称包含 `property` / `pbt` 的测试节点。",
-        "- `full`：运行当前焦点的完整 runnable selectors。",
+        "- `smoke`: excludes test nodes with `property` or `pbt` in the name.",
+        "- `full`: runs the complete runnable selector set for the current focus.",
         "",
         "## Current Strategy Commands",
         "",

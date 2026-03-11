@@ -1,188 +1,181 @@
 # AGENTS_FOCUS.md
 
-> 这是一个开发期上下文文件，写法按 `AGENTS.md` 的风格组织，但不替代根目录 `AGENTS.md`。
-> 目标是给人类开发者与 coding agent 提供一份更聚焦、可执行、低噪音的工作指引。
+This is the canonical operating manual for coding agents working in this repository.
 
-## 目标
+It does not replace `AGENTS.md`. `AGENTS.md` remains the repository policy file for commit behavior, refactoring constraints, and other project-wide rules. This file defines how an AGENT should inspect context, choose commands, edit safely, and verify work.
 
-本仓库当前优先优化的是：
+## Purpose And Audience
 
-1. **基于当前大仓进行 vibe coding**
-2. **缩短 agent 的阅读 → 修改 → 验证闭环**
-3. **尽量让修改先落在最小必要上下文里**
+Use this document when you are:
 
-如果没有额外说明，默认按“先聚焦、再改动、先 smoke、后 full”的方式工作。
+- a coding agent editing code in this repository
+- a developer supervising or reviewing AGENT-driven changes
+- a maintainer updating the AGENT workflow, generated navigation assets, or verification flow
 
-## 推荐起手式
+The goal is to keep all AGENT-facing guidance aligned around one workflow and one source-of-truth hierarchy.
 
-每次开始开发前，优先执行以下顺序：
+## Canonical Workflow
 
-1. 运行 `option-scaffold focus refresh`
-2. 运行 `option-scaffold focus show`
-3. 阅读以下文件：
-   - `.focus/SYSTEM_MAP.md`
-   - `.focus/ACTIVE_SURFACE.md`
-   - `.focus/TASK_BRIEF.md`
-   - `.focus/TASK_ROUTER.md`
-   - `.focus/TEST_MATRIX.md`
-4. 先根据 `TASK_ROUTER` 找到本次任务最相关的 pack 和“首看入口”
-5. 默认先跑 `option-scaffold focus test`
-6. 只有在 smoke 通过、且确实需要完整回归时，才跑 `option-scaffold focus test --full`
+The default AGENT workflow is:
 
-## 工作边界
+1. Run `option-scaffold forge` when you need to create or refresh AGENT assets.
+2. Inspect `strategy_spec.toml` and `.focus/context.json`.
+3. Edit only files inside the current editable surface.
+4. Run `option-scaffold validate --json`.
+5. Run `option-scaffold focus test --json`.
+6. Run `option-scaffold backtest --json` only when strategy behavior needs execution evidence.
+7. Run `option-scaffold run --json` only for runtime workflows, not as the default edit-validation loop.
 
-### 代码阅读优先级
-
-优先阅读顺序如下：
-
-1. 当前 `focus/strategies/*/strategy.manifest.toml`
-2. `.focus/TASK_BRIEF.md`
-3. `.focus/TASK_ROUTER.md`
-4. 当前任务对应 pack 的 owned paths
-5. 当前任务对应测试文件
-
-除非必要，不要先通读整个 `src/strategy/domain`。
-
-### 修改边界
-
-- 默认只改 `.focus/ACTIVE_SURFACE.md` 里的 `Editable Surface`
-- `Support Surface` 用于阅读、参考、理解调用关系
-- `Frozen Surface` 不应修改，除非任务明确要求
-
-如果发现必须超出 Editable Surface 才能完成任务：
-
-1. 先确认是否只是理解问题，而不是确实需要改动
-2. 尽量只扩一层，不要大面积扩散修改面
-3. 在交付说明里明确写出“为什么需要越界修改”
-
-## 当前 focus 工作流约定
-
-### 导航文件含义
-
-- `SYSTEM_MAP.md`：当前焦点的系统地图与 pack 链路
-- `ACTIVE_SURFACE.md`：可改、可参考、禁止改的边界
-- `TASK_BRIEF.md`：任务摘要、验收要求、关键产物
-- `TASK_ROUTER.md`：任务类型 → 首看入口 → 配置 → 推荐测试
-- `TEST_MATRIX.md`：smoke / full / skipped 的测试分层
-- `COMMANDS.md`：当前焦点下最常用命令
-
-### 测试约定
-
-- `option-scaffold focus test`
-  - 这是默认入口
-  - 表示 **smoke 模式**
-  - 会默认排除名称中包含 `property` / `pbt` 的测试节点
-- `option-scaffold focus test --full`
-  - 表示 **full 模式**
-  - 用于完整焦点回归
-- 如果 pack 因依赖缺失被跳过，以 `TEST_MATRIX.md` 和命令行输出为准
-
-## 开发原则
-
-### 总体原则
-
-- 优先做**最小必要改动**
-- 优先修根因，不做表面补丁
-- 优先复用现有 focus / pack / scaffold 机制
-- 不为了“看起来更整洁”而主动扩大重构范围
-
-### 分层原则
-
-- 领域逻辑留在 `domain` / `application`
-- 基础设施细节留在 `infrastructure`
-- Web 层只做读取、转换、展示，不承载策略判断
-- 回测优先复用主策略契约，不单独复制一套业务逻辑
-
-### 结构原则
-
-- 不要新增 `facade`、`coordinator` 一类中间层
-- 上层直接调用具体服务/基础设施即可
-- 优先配置驱动，不把阈值和策略参数散落到代码常量里
-- 非必要不要引入新的抽象层、全局状态或“万能 helper”
-
-## Pack 维度的默认心智模型
-
-### `selection`
-
-- 负责选标、期权筛选、合约候选集合
-- 改这里时，优先看选择逻辑与相关集成测试
-
-### `pricing`
-
-- 负责定价、隐波、Greeks 相关计算
-- 改这里时，注意不要把定价逻辑泄漏到 Web 或 execution
-
-### `risk`
-
-- 负责组合风控、限额、暴露控制
-- 优先直接修改具体风险服务，不要包一层新的总控对象
-
-### `execution`
-
-- 负责下单、排程、执行细节
-- 不要新增 facade/coordinator 风格抽象
-
-### `hedging`
-
-- 负责 Delta / Vega 等对冲逻辑
-- 对冲参数优先保持配置化
-
-### `monitoring`
-
-- 负责日志、快照、状态落盘
-- 不要把监控持久化细节混入 domain service
-
-### `web`
-
-- 负责读取状态并展示
-- 不要把策略判断、信号生成迁移到 Web 层
-
-### `backtest`
-
-- 负责回测入口、参数联动与验证
-- 优先共享主策略契约与配置
-
-## 验证策略
-
-默认按下面顺序验证：
-
-1. 先跑与任务最相关的单个测试文件或 `option-scaffold focus test`
-2. 如改了配置或契约绑定，再跑 `option-scaffold validate --config config/strategy_config.toml`
-3. 如改动影响范围较大，再跑 `option-scaffold focus test --full`
-
-不要一上来整仓全量测试，除非任务明确要求。
-
-## 文档与焦点同步
-
-如果修改影响到 focus 导航的生成逻辑、测试模式、推荐入口或命令文案，需要同步检查：
-
-- `focus/strategies/main/strategy.manifest.toml`
-- `.focus/*`
-- `README.md`
-
-如果你改了 `src/main/focus/*`，通常应重新执行一次：
+If a task is local and small, the shortest safe loop is:
 
 ```powershell
-option-scaffold focus refresh
+option-scaffold validate --json
+option-scaffold focus test --json
 ```
 
-## 建议交付格式
+If the task changes workflow intent, focus scope, or AGENT assets, start with:
 
-每次交付时，尽量包含以下信息：
+```powershell
+option-scaffold forge --json
+```
 
-1. 改动属于哪个 pack / 子系统
-2. 主要修改了哪些入口
-3. 跑了哪些验证
-4. 是 smoke 通过，还是 full 也通过
-5. 是否存在剩余风险或后续建议
+## Source Of Truth Hierarchy
 
-## 非目标
+Read these assets in this order:
 
-本文件不要求：
+1. `strategy_spec.toml`
+   - high-level strategy intent
+   - scaffold preset, enabled capabilities, and acceptance expectations
+2. `.focus/context.json`
+   - the machine-readable current-context contract
+   - preferred input for AGENT navigation and automation
+3. `.focus/*.md`
+   - human-readable navigation companions
+   - use when you need explanation or a reading path, not as the primary machine interface
+4. `tests/TEST.md`
+   - test plan plus the latest acceptance summary
+5. `artifacts/validate/latest.json` and `artifacts/backtest/latest.json`
+   - latest structured command results
 
-- 现在就把 `.kiro/specs` 正式接入主工作流
-- 重写 `create/init` 主链路
-- 大规模重构现有目录结构
-- 为了抽象整洁而引入新的中间层
+If these sources disagree:
 
-当前优先级仍然是：**让现有 focus 工作流更适合高频、低摩擦的 vibe coding。**
+- treat `AGENTS_FOCUS.md` as the canonical human policy
+- treat `strategy_spec.toml` as the canonical intent spec
+- treat `.focus/context.json` as the canonical current-context contract
+- update the generators and regenerate assets instead of hand-maintaining drift
+
+## Editing Boundaries
+
+Always classify paths before editing:
+
+- `editable`
+  - default edit surface
+  - AGENT should stay here unless there is a concrete reason to expand scope
+- `reference`
+  - read for context, dependency tracing, and interface understanding
+  - avoid editing unless the task truly requires it
+- `frozen`
+  - do not edit unless the task explicitly targets generator or repository-policy behavior
+
+Default rule:
+
+- consume `.focus/context.json` first
+- do not start with ad hoc repo traversal
+- do not scan large directories “just in case” before checking the current focus contract
+
+If you must go beyond the editable surface:
+
+1. confirm the change cannot be completed inside the current editable surface
+2. expand scope by the smallest possible step
+3. explain the boundary expansion in the delivery summary
+
+## Command Protocol
+
+Prefer structured output by default.
+
+### Single-response commands
+
+Use `--json` and consume the standard JSON envelope:
+
+- `option-scaffold forge --json`
+- `option-scaffold focus show --json`
+- `option-scaffold validate --json`
+- `option-scaffold doctor --json`
+- `option-scaffold examples --json`
+
+### Long-running commands
+
+Use `--json` and consume NDJSON event streams:
+
+- `option-scaffold run --json`
+- `option-scaffold backtest --json`
+
+The AGENT default should be:
+
+- prefer `--json` whenever it is available
+- use plain-text output only for human-only workflows or local debugging
+
+## Verification Rules
+
+Use this default verification order:
+
+1. `option-scaffold validate --json`
+2. `option-scaffold focus test --json`
+3. `option-scaffold backtest --json` only when behavior or parameter effects need execution evidence
+4. `option-scaffold run --json` only when the task is about runtime lifecycle, monitoring, or long-lived execution
+
+Interpret the outputs from:
+
+- the command JSON itself
+- `tests/TEST.md`
+- `artifacts/validate/latest.json`
+- `artifacts/backtest/latest.json`
+
+Do not treat a code edit as complete just because the repo builds. Complete the structured verification loop.
+
+## Pack-Aware Editing
+
+Current focus packs define ownership, entrypoints, and tests.
+
+When working on a pack:
+
+- read the pack entry in `.focus/TASK_ROUTER.md`
+- follow `Read first` paths from the pack metadata
+- use the pack-owned test selectors before wider regression
+
+Do not re-centralize pack logic back into broad top-level entrypoints when the concrete domain service or infrastructure module already owns it.
+
+## Anti-Patterns
+
+Do not:
+
+- bypass `strategy_spec.toml` when changing workflow intent or AGENT-facing assumptions
+- hand-edit generated `.focus/*` files unless the task is specifically about the generators
+- rely on plain-text CLI output when `--json` exists
+- widen scope beyond the editable surface without a concrete reason
+- duplicate strategy logic just for backtest or AGENT convenience when the main contract can be reused
+- introduce facade/coordinator layers for domain or infrastructure work unless the task explicitly requires them
+
+## Delivery Checklist
+
+Every AGENT delivery should state:
+
+1. which workflow entrypoint was used
+   - `forge`, `validate`, `focus test`, `backtest`, or `run`
+2. which source-of-truth assets were consulted
+   - at minimum `strategy_spec.toml` and `.focus/context.json` when relevant
+3. which surface was edited
+   - editable only, or why scope expanded
+4. which structured verification steps ran
+5. whether `tests/TEST.md` or `artifacts/*/latest.json` changed
+6. any remaining risks, skipped checks, or follow-up steps
+
+## Maintenance Rule
+
+If you change AGENT workflow wording or runtime navigation semantics, update the generator/source layer and then regenerate:
+
+```powershell
+option-scaffold forge
+```
+
+Only commit generated AGENT assets after the generator/source changes that produce them are also included.
