@@ -3,8 +3,8 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F172A,45:2563EB,100:16A34A&height=240&section=header&text=option-strategy-scaffold&fontSize=36&fontColor=ffffff&animation=fadeIn&desc=%E5%9F%BA%E4%BA%8E%20vn.py%20%E7%9A%84%E6%9C%9F%E6%9D%83%E7%AD%96%E7%95%A5%E8%84%9A%E6%89%8B%E6%9E%B6&descAlignY=68&descSize=18" alt="option-strategy-scaffold" />
 
-<p><strong>先把策略工程骨架搭稳，再把精力留给信号、选股、风控与执行。</strong></p>
-<p>一个面向期权策略研发的 Python 模板仓库，内置分层架构、配置体系、回测入口、监控页面与 Docker 部署能力。</p>
+<p><strong>面向 Coding Agent 的期权交易策略研发脚手架。</strong></p>
+<p>基于 <code>vn.py</code>、<code>PostgreSQL</code>、<code>Flask</code> 与 <code>Docker</code> 预置领域建模、运行支撑与部署底座，并内建面向 Agent 的上下文协议、编辑边界与验证回路，让你更顺手地通过 agentic coding 持续迭代期权交易策略。</p>
 
 </div>
 <!-- readme-gen:end:hero -->
@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Architecture](https://img.shields.io/badge/Architecture-DDD-0F766E?style=flat-square)
-[![CI](https://github.com/maroonxv/option-strategy-scaffold/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/maroonxv/option-strategy-scaffold/actions/workflows/ci.yml)
+![Workflow](https://img.shields.io/badge/Workflow-Agent--First-1D4ED8?style=flat-square)
 [![Docker Smoke](https://github.com/maroonxv/option-strategy-scaffold/actions/workflows/docker-smoke.yml/badge.svg?branch=main)](https://github.com/maroonxv/option-strategy-scaffold/actions/workflows/docker-smoke.yml)
 ![License](https://img.shields.io/badge/License-AGPL--3.0-A42E2B?style=flat-square)
 ![GitHub stars](https://img.shields.io/github/stars/maroonxv/option-strategy-scaffold?style=flat-square)
@@ -35,34 +35,38 @@
 
 ## 项目简介
 
-`option-strategy-scaffold` 是一个基于 `vn.py` 的期权策略脚手架，目标不是直接提供“现成盈利策略”，而是提供一套已经拆好层、配好配置、接好运行与监控入口的工程底座。
+`option-strategy-scaffold` 是一个基于 `vn.py` 的期权策略脚手架，目标不是直接提供“现成盈利策略”，而是提供一套已经拆好层、配好配置、接好运行与监控入口，并对 Coding Agent 协作友好的工程底座。
 
 你可以在现有骨架上聚焦改造领域服务，例如选合约、信号计算、对冲、组合管理、风控与执行逻辑，而不必从零重复搭建工程基础设施。
 
-## Agent-First Workflow
+仓库把策略意图、机器可读上下文、可编辑范围和验证产物显式化，方便 Agent 更稳定地理解任务、生成改动并回传可核对的结果。
 
-The recommended AGENT workflow is now built around `forge`, `strategy_spec.toml`, and structured command output.
+## Agent-First 工作流
 
-From a source checkout, run commands from the repository root with `python -m src.cli.app ...`.
-If the package is installed into the active environment, the equivalent short alias is `option-scaffold ...`.
+这个仓库把 Coding Agent 视为一等公民：`forge` 用来生成或刷新协作资产，`strategy_spec.toml` 用来描述策略意图，结构化命令输出则负责把验证与运行结果稳定地交给 Agent 消费。
 
-1. Start with `python -m src.cli.app forge --json` when you need to create or refresh AGENT assets.
-2. Read `strategy_spec.toml` for high-level intent.
-3. Read `.focus/context.json` for the current machine-readable context contract.
-4. Use `.focus/*.md` only as human-readable navigation companions.
-5. Edit only files inside the current editable surface.
-6. Verify with `python -m src.cli.app validate --json` and `python -m src.cli.app focus test --json`.
-7. Use `python -m src.cli.app backtest --json` or `python -m src.cli.app run --json` only when the task requires execution evidence or runtime behavior.
+从源码目录运行时，统一使用 `python -m src.cli.app ...`；如果已经安装到当前环境，也可以使用等价简写 `option-scaffold ...`。
 
-Machine-readable AGENT assets:
+> [!TIP]
+> 如果你计划让 Agent 持续参与需求拆解、编码、验证和回测，这套工作流已经把“读什么、改哪里、如何验收”预先约定好。
 
-- `AGENTS_FOCUS.md`: canonical AGENT operating manual
-- `strategy_spec.toml`: AGENT-facing intent spec
-- `.focus/context.json`: current machine-readable context contract
-- `focus/strategies/*/strategy.manifest.toml`: generated focus manifest
-- `focus/packs/*/pack.toml`: pack ownership, tests, and AGENT notes
-- `tests/TEST.md`: test plan plus latest acceptance summary
-- `artifacts/validate/latest.json` / `artifacts/backtest/latest.json`: latest structured command outputs
+1. 需要创建或刷新 AGENT 协作资产时，先运行 `python -m src.cli.app forge --json`。
+2. 阅读 `strategy_spec.toml`，理解当前策略目标与高层意图。
+3. 阅读 `.focus/context.json`，获取当前机器可读上下文契约。
+4. 将 `.focus/*.md` 视为面向人的导航补充，而不是唯一事实来源。
+5. 仅在当前 editable surface 允许的范围内修改文件。
+6. 使用 `python -m src.cli.app validate --json` 和 `python -m src.cli.app focus test --json` 完成验证。
+7. 只有在任务确实需要运行证据或运行时行为时，再使用 `python -m src.cli.app backtest --json` 或 `python -m src.cli.app run --json`。
+
+机器可读的 AGENT 资产：
+
+- `AGENTS_FOCUS.md`：AGENT 操作手册
+- `strategy_spec.toml`：面向 AGENT 的策略意图说明
+- `.focus/context.json`：当前机器可读上下文契约
+- `focus/strategies/*/strategy.manifest.toml`：生成出的 focus manifest
+- `focus/packs/*/pack.toml`：pack 归属、测试与 AGENT 备注
+- `tests/TEST.md`：测试计划与最近一次验收摘要
+- `artifacts/validate/latest.json` / `artifacts/backtest/latest.json`：最近一次结构化命令输出
 
 <!-- readme-gen:start:highlights -->
 ## 工程亮点
@@ -71,7 +75,7 @@ Machine-readable AGENT assets:
 | --- | --- | --- |
 | 分层架构 | `application / domain / infrastructure` | 把策略编排、交易规则、外部依赖隔离开，便于持续演进 |
 | 领域能力 | `selection / risk / execution / pricing / signal / hedging / combination` | 可以直接替换或扩展具体策略服务 |
-| AGENT workflow | `strategy_spec + forge + .focus/context.json + artifacts` | Give AGENTs a stable protocol for context, editing boundaries, and verification |
+| Agent 友好工作流 | `strategy_spec + forge + .focus/context.json + artifacts + --json` | 为 Coding Agent 提供稳定的上下文协议、编辑边界与验证闭环，人机协作更顺畅 |
 | 工程配套 | `config/*.toml`、Docker Compose、Web 监控页 | 让参数管理、部署与观测有统一入口 |
 | 质量保障 | `pytest` 测试骨架，当前仓库中已有 `113` 个 `test_*.py` 测试文件 | 做重构和新增策略时更有安全感 |
 
@@ -80,7 +84,7 @@ Machine-readable AGENT assets:
 - 运行时：默认 Docker 镜像基于 `Python 3.12`
 - Web 监控：`Flask + Socket.IO`，默认端口 `5007`
 - 默认部署：`runner + monitor + PostgreSQL`
-- Source-checkout CLI: `python -m src.cli.app` (installed alias: `option-scaffold`; recommended AGENT entrypoint: `forge`; structured output: `--json`)
+- Agent 协作：推荐从 `python -m src.cli.app forge --json` 进入，再结合 `.focus/context.json` 与 `artifacts/*.json` 进行结构化协作
 - 文档资产：`doc/` 下包含架构、开发说明与用户手册
 <!-- readme-gen:end:highlights -->
 
