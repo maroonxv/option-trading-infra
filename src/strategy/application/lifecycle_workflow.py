@@ -35,10 +35,15 @@ from ..infrastructure.persistence.exceptions import CorruptionError
 from ..infrastructure.persistence.json_serializer import JsonSerializer
 from ..infrastructure.persistence.state_repository import ArchiveNotFound, StateRepository
 from ..infrastructure.reporting.feishu_handler import FeishuEventHandler
+from ..runtime import StrategyRuntimeBuilder
 from src.main.bootstrap.database_factory import DatabaseFactory
 
 if TYPE_CHECKING:
     from src.strategy.strategy_entry import StrategyEntry
+
+
+def build_runtime(entry: "StrategyEntry", full_config: dict[str, object]):
+    return StrategyRuntimeBuilder().build(entry, full_config)
 
 
 class LifecycleWorkflow:
@@ -71,6 +76,10 @@ class LifecycleWorkflow:
                 full_config = ConfigLoader.load_toml(strategy_config_path)
             except Exception:
                 full_config = {}
+
+        self.entry.runtime = build_runtime(self.entry, full_config)
+        for hook in self.entry.runtime.lifecycle.init_hooks:
+            hook()
 
         self.entry.strategy_contracts = dict(full_config.get("strategy_contracts") or {})
         self.entry.service_activation = ConfigLoader.resolve_service_activation(full_config)

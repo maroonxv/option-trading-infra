@@ -24,6 +24,7 @@ from .application import (
     StateWorkflow,
     SubscriptionWorkflow,
 )
+from .runtime import StrategyRuntime
 from .domain.aggregate.combination_aggregate import CombinationAggregate
 from .domain.aggregate.position_aggregate import PositionAggregate
 from .domain.aggregate.target_instrument_aggregate import InstrumentManager
@@ -134,6 +135,7 @@ class StrategyEntry(StrategyTemplate):
         self.risk_thresholds: RiskThresholds = RiskThresholds()
         self.risk_free_rate: float = 0.02
         self.strategy_contracts: Dict[str, Any] = {}
+        self.runtime: Optional[StrategyRuntime] = None
         self.service_activation: Dict[str, bool] = {}
         self.observability_config: Dict[str, Any] = {}
         self.decision_journal: List[Dict[str, Any]] = []
