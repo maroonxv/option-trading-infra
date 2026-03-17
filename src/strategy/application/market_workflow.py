@@ -46,11 +46,14 @@ class MarketWorkflow:
             first_bar = next(iter(bars.values()))
             current_dt = first_bar.datetime
             rollover_changed = False
+            runtime = getattr(self.entry, "runtime", None)
+            universe = getattr(runtime, "universe", None)
+            rollover_checker = getattr(universe, "rollover_checker", None)
 
             if (
                 current_dt.hour == 14
                 and current_dt.minute == 50
-                and self.entry.future_selection_service is not None
+                and rollover_checker is not None
             ):
                 if not self.entry.rollover_check_done:
                     self.entry.logger.info(f"触发每日换月检查: {current_dt}")
@@ -129,7 +132,7 @@ class MarketWorkflow:
 
             try:
                 instrument = self.entry.target_aggregate.update_bar(vt_symbol, bar_data)
-                option_chain = self._build_option_chain_snapshot(vt_symbol, instrument.latest_close, bar_data["datetime"])
+                option_chain = self._build_option_chain_snapshot(vt_symbol, instrument, bar_data)
                 indicator_context = self._build_indicator_context(vt_symbol, instrument, bar_data, option_chain)
                 indicator_result = self._run_indicator_stage(instrument, bar_data, indicator_context)
 
@@ -374,11 +377,29 @@ class MarketWorkflow:
     def _build_option_chain_snapshot(
         self,
         underlying_vt_symbol: str,
+        instrument: Any,
+        bar_data: Dict[str, Any],
+    ) -> Optional[OptionChainSnapshot]:
+        runtime = getattr(self.entry, "runtime", None)
+        open_pipeline = getattr(runtime, "open_pipeline", None)
+        option_chain_loader = getattr(open_pipeline, "option_chain_loader", None)
+        if option_chain_loader is not None:
+            return option_chain_loader(underlying_vt_symbol, instrument, bar_data)
+
+        if not self.entry.service_activation.get("option_chain", True):
+            return None
+        return self._build_option_chain_snapshot_from_gateway(
+            underlying_vt_symbol,
+            instrument.latest_close,
+            bar_data["datetime"],
+        )
+
+    def _build_option_chain_snapshot_from_gateway(
+        self,
+        underlying_vt_symbol: str,
         underlying_price: float,
         as_of: Any,
     ) -> Optional[OptionChainSnapshot]:
-        if not self.entry.service_activation.get("option_chain", True):
-            return None
         if not self.entry.market_gateway:
             return None
         contracts = self.entry.market_gateway.get_all_contracts()

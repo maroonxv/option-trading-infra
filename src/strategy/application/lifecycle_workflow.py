@@ -77,10 +77,6 @@ class LifecycleWorkflow:
             except Exception:
                 full_config = {}
 
-        self.entry.runtime = build_runtime(self.entry, full_config)
-        for hook in self.entry.runtime.lifecycle.init_hooks:
-            hook()
-
         self.entry.strategy_contracts = dict(full_config.get("strategy_contracts") or {})
         self.entry.service_activation = ConfigLoader.resolve_service_activation(full_config)
         self.entry.observability_config = dict(full_config.get("observability") or {})
@@ -251,6 +247,10 @@ class LifecycleWorkflow:
             )
 
         # 初始快照
+        self.entry.runtime = build_runtime(self.entry, full_config)
+        for hook in self.entry.runtime.lifecycle.init_hooks:
+            hook()
+
         self.entry._record_snapshot()
 
         # ______________________________  5. 初始化K线合成管道  ______________________________

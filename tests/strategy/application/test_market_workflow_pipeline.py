@@ -82,6 +82,7 @@ class _MarketGateway:
 
 def test_market_workflow_emits_decision_trace_for_open_pipeline() -> None:
     captured_traces: list[dict] = []
+    option_chain_loader = MagicMock()
 
     entry = SimpleNamespace()
     entry.bar_pipeline = None
@@ -110,9 +111,10 @@ def test_market_workflow_emits_decision_trace_for_open_pipeline() -> None:
     entry.runtime = SimpleNamespace(
         observability=SimpleNamespace(trace_sinks=[captured_traces.append]),
         state=SimpleNamespace(snapshot_sinks=[]),
+        open_pipeline=SimpleNamespace(option_chain_loader=option_chain_loader),
     )
     entry.observability_config = {"emit_noop_decisions": False}
-    entry.service_activation = {"option_chain": True, "decision_observability": True}
+    entry.service_activation = {"option_chain": False, "decision_observability": True}
     entry.decision_journal = []
     entry.decision_journal_limit = 20
     entry.logger = MagicMock()
@@ -121,6 +123,12 @@ def test_market_workflow_emits_decision_trace_for_open_pipeline() -> None:
     entry._register_signal_temporary_symbol = lambda vt_symbol: None
     entry.last_decision_trace = None
     entry.risk_thresholds = MagicMock()
+
+    option_chain_loader.side_effect = lambda vt_symbol, instrument, bar_data: workflow._build_option_chain_snapshot_from_gateway(
+        vt_symbol,
+        instrument.latest_close,
+        bar_data["datetime"],
+    )
 
     workflow = MarketWorkflow(entry)
     bar = SimpleNamespace(
@@ -137,3 +145,4 @@ def test_market_workflow_emits_decision_trace_for_open_pipeline() -> None:
     assert entry.last_decision_trace is not None
     assert captured_traces
     assert any(stage["stage"] == "selection" for stage in captured_traces[-1]["stages"])
+    option_chain_loader.assert_called_once()
