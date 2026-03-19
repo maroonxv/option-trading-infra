@@ -9,6 +9,8 @@ description: Use when Codex needs to design normalized database schemas, Chen-no
 
 用这个 skill 为基于当前脚手架实现的期权策略设计数据库范式、Schema 文档、Chen notation 的 E-R 图，以及在文档批准后的 Peewee Model 映射。
 
+硬性要求：所有生成的设计摘要、Markdown 文档、章节标题、图注、审阅说明，以及图中面向业务阅读者的说明文字都必须使用中文；只有模型、表、字段、类名、脚本参数等技术标识保持英文。
+
 默认先做设计，后做建模：
 
 1. 先引导用户澄清持久化需求。
@@ -25,6 +27,7 @@ description: Use when Codex needs to design normalized database schemas, Chen-no
 
 - 先探索仓库上下文，再进入引导式对话。
 - 一次只推进一个高影响决策。
+- 阶段性摘要、待确认项、审阅提示等面向用户的输出必须使用中文。
 - 维护并显式输出：
   - 已确认约束
   - 待确认项
@@ -36,6 +39,7 @@ description: Use when Codex needs to design normalized database schemas, Chen-no
 ### 普通执行模式
 
 - 沿用已经确认过的业务约束和设计摘要。
+- 所有生成的文档正文、章节标题、图注和业务说明必须使用中文。
 - 生成或更新稳定文件：
   - `docs/design/schema/<strategy-slug>.md`
   - `docs/plantuml/code/E-R/<strategy-slug>-er.puml`
@@ -124,7 +128,7 @@ python .codex/skills/option-schema-designer/scripts/update_schema_doc.py --doc d
 
 ## 输出规则
 
-- 文档与 references 一律用中文。
+- 所有生成的设计摘要、文档正文、章节标题、图注和审阅说明都必须使用中文。
 - 模型、表、字段、类名、脚本参数使用英文标识。
 - E-R 图可以用中文业务名称配英文别名，例如：
 
@@ -157,5 +161,6 @@ entity "期权合约" as OPTION_CONTRACT {
 - `docs/design/schema/<strategy-slug>.md` 包含主 E-R 图和完整中文设计说明。
 - `docs/plantuml/code/E-R/<strategy-slug>-er.puml` 使用 Chen notation。
 - `docs/plantuml/charts/<strategy-slug>-er.svg` 成功渲染并被插入文档。
+- Plan Mode 与普通执行模式中的面向用户输出都保持中文。
 - 在 Plan Mode 下没有越界写文件。
 - 在 Peewee 阶段只推进到 Peewee Model，不触碰 DDL。
