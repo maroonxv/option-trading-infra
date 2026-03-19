@@ -9,7 +9,7 @@ description: Use when Codex needs to design normalized database schemas, Chen-no
 
 用这个 skill 为基于当前脚手架实现的期权策略设计数据库范式、Schema 文档、Chen notation 的 E-R 图，以及在文档批准后的 Peewee Model 映射。
 
-硬性要求：所有生成的设计摘要、Markdown 文档、章节标题、图注、审阅说明，以及图中面向业务阅读者的说明文字都必须使用中文；只有模型、表、字段、类名、脚本参数等技术标识保持英文。
+硬性要求：所有生成的设计摘要、Markdown 文档、章节标题、图注、审阅说明，以及图中面向业务阅读者的说明文字都必须使用中文；图表中的说明性文字必须使用中文，但专有名词必须沿用既有英文标识，不得翻译或改写，尤其是模型名、表名、字段名、类名、脚本参数，以及其他与代码或 schema 对齐的标识。
 
 默认先做设计，后做建模：
 
@@ -130,6 +130,8 @@ python .codex/skills/option-schema-designer/scripts/update_schema_doc.py --doc d
 
 - 所有生成的设计摘要、文档正文、章节标题、图注和审阅说明都必须使用中文。
 - 模型、表、字段、类名、脚本参数使用英文标识。
+- 图表中的说明性文字必须使用中文。
+- 图表中的专有名词和标识必须保持既有英文，不翻译、不改写，确保与代码和 schema 定义一致。
 - E-R 图可以用中文业务名称配英文别名，例如：
 
 ```plantuml

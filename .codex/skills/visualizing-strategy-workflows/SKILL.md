@@ -9,7 +9,7 @@ description: Turn Python application-layer workflow files into visual markdown d
 
 Use this skill to convert Python workflow orchestration code into visual-first markdown. Favor clear diagrams and short explanations over long prose.
 
-硬性要求：所有生成的 Markdown 文档、章节标题、图注、摘要和说明文字都必须使用中文；仅文件路径、源码符号、类名、函数名以及 PlantUML 中的技术标识可以保留英文。
+硬性要求：所有生成的 Markdown 文档、章节标题、图注、摘要和说明文字都必须使用中文；图表中的说明性文字也必须使用中文，但专有名词必须沿用原有代码里的英文标识，不得翻译或改写，尤其是模块名、类名、函数名、方法名、变量名以及 PlantUML 中引用源码符号的标识。
 
 ## Workflow
 
@@ -49,7 +49,9 @@ It does not infer final diagram semantics for you. Fill those in after reading t
 - Keep PlantUML sources at `docs/plantuml/code/`.
 - Keep rendered charts at `docs/plantuml/chart/`.
 - Embed images directly in the markdown using relative paths.
-- All generated documentation content, section titles, captions, summaries, and explanatory text must be written in Chinese. Keep English only for file paths, code symbols, and technical identifiers when needed.
+- 所有生成的文档内容、章节标题、图注、摘要和说明文字都必须使用中文。
+- 图表中的说明性文字必须使用中文。
+- 图表里的专有名词必须保持原有代码中的英文，不得翻译或改写，尤其是模块名、类名、函数名、方法名和变量名。
 - Keep prose short:
   - one responsibility summary
   - source file path
