@@ -1,0 +1,27 @@
+@startuml
+title 生命周期工作流 - 顺序图
+autonumber
+
+participant "StrategyEntry" as Entry
+participant "LifecycleWorkflow" as Workflow
+participant "ConfigLoader" as Config
+participant "StateRepository" as Repo
+participant "HistoryDataRepository" as History
+participant "EventBridge" as Bridge
+
+Entry -> Workflow : on_init()
+Workflow -> Config : load_target_products()
+Workflow -> Config : load_toml(strategy_config)
+Workflow -> Workflow : 创建服务 / 聚合 / 网关 / 持久化
+
+alt 回测模式
+  Workflow -> History : load_bars(warmup_days)
+else 实盘模式
+  Workflow -> Repo : load(strategy_name)
+  Repo --> Workflow : snapshot / ArchiveNotFound
+  Workflow -> Bridge : on_position / on_order / on_trade
+  Workflow -> History : replay_bars_from_database()
+end
+
+Workflow --> Entry : 完成初始化
+@enduml

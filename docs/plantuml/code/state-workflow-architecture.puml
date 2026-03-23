@@ -1,0 +1,18 @@
+@startuml
+title 状态工作流 - 架构图
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+component "StateWorkflow" as Workflow
+rectangle "InstrumentManager" as Instrument
+rectangle "PositionAggregate" as Position
+rectangle "CombinationAggregate" as Combination
+rectangle "StrategyMonitor" as Monitor
+rectangle "Snapshot dict" as Snapshot
+
+Workflow --> Instrument : to_snapshot()
+Workflow --> Position : to_snapshot()
+Workflow --> Combination : 可选 to_snapshot()
+Workflow --> Snapshot : 组装持久化结构
+Workflow --> Monitor : record_snapshot(...)
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+title 状态工作流 - 顺序图
+autonumber
+
+participant "StrategyEntry" as Entry
+participant "StateWorkflow" as Workflow
+participant "TargetAggregate" as Target
+participant "PositionAggregate" as Position
+participant "StrategyMonitor" as Monitor
+
+Entry -> Workflow : _create_snapshot()
+Workflow -> Target : to_snapshot()
+Workflow -> Position : to_snapshot()
+Workflow --> Entry : snapshot dict
+
+Entry -> Workflow : _record_snapshot()
+Workflow -> Monitor : record_snapshot(...)
+Monitor --> Workflow : 成功 / 异常
+Workflow --> Entry : 结束
+@enduml

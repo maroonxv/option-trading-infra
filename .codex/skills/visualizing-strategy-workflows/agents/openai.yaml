@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visualizing Strategy Workflows"
+  short_description: "Visualize Python workflow code with PlantUML docs"
+  default_prompt: "Use $visualizing-strategy-workflows to turn application workflow code into PlantUML-backed documentation."

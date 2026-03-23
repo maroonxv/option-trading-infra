@@ -1,0 +1,20 @@
+@startuml
+title 订阅工作流 - 架构图
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+component "SubscriptionWorkflow" as Workflow
+rectangle "SubscriptionModeEngine" as Engine
+rectangle "MarketGateway" as Market
+rectangle "AccountGateway" as Account
+rectangle "TargetAggregate" as Target
+rectangle "PositionAggregate" as Position
+rectangle "subscribed_symbols /\nstale / temp_symbols" as RuntimeState
+
+Workflow --> Engine : resolve(context)
+Workflow --> Market : contracts / ticks /\nsubscribe / unsubscribe
+Workflow --> Account : 持仓来源
+Workflow --> Target : 主力合约来源
+Workflow --> Position : 挂单 / 活跃持仓来源
+Workflow --> RuntimeState : 维护订阅运行态
+@enduml

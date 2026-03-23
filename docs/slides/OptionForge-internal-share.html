@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptionForge｜内部分享</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        html {
+            scroll-snap-type: y mandatory;
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            --bg-0: #0b1118;
+            --bg-1: #131b26;
+            --panel-bg: #141b24;
+            --panel-strong: #101720;
+            --panel-alt: #0e141c;
+            --border-soft: rgba(132, 145, 163, 0.18);
+            --text-primary: #eef3f8;
+            --text-secondary: #9caabd;
+            --text-dim: #707f92;
+            --accent-cyan: #91b6ff;
+            --accent-amber: #d9ac58;
+            --accent-green: #74b982;
+            --title-size: clamp(2rem, 5vw, 4.6rem);
+            --h2-size: clamp(1.35rem, 3.2vw, 2.6rem);
+            --body-size: clamp(0.86rem, 1.28vw, 1.08rem);
+            --small-size: clamp(0.68rem, 0.95vw, 0.88rem);
+            --slide-padding: clamp(1.15rem, 3.8vw, 3.6rem);
+            --content-gap: clamp(0.8rem, 1.8vw, 1.6rem);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --shadow-soft: 0 12px 28px rgba(2, 8, 14, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text-primary);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.016), transparent 20%),
+                linear-gradient(135deg, var(--bg-0), var(--bg-1) 58%, #172131 100%);
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            opacity: 0.24;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 28px 28px;
+            mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.88), transparent 96%);
+        }
+
+        body::after {
+            background:
+                radial-gradient(circle at top left, rgba(145, 182, 255, 0.1), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(217, 172, 88, 0.09), transparent 24%);
+            z-index: -1;
+        }
+
+        main {
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            scroll-snap-align: start;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .slide::before {
+            content: "";
+            position: absolute;
+            inset: clamp(0.9rem, 2vw, 1.8rem);
+            border: 1px solid rgba(145, 182, 255, 0.08);
+            border-radius: 34px;
+            pointer-events: none;
+        }
+
+        .slide-shell {
+            flex: 1;
+            width: min(94vw, 1360px);
+            height: min(86vh, 860px);
+            max-height: 100%;
+            overflow: hidden;
+            padding: var(--slide-padding);
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: var(--content-gap);
+            position: relative;
+            z-index: 1;
+        }
+
+        .slide-top,
+        .slide-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .slide-top {
+            align-items: flex-start;
+        }
+
+        .slide-label,
+        .slide-index,
+        .slide-footer,
+        .chip,
+        .command,
+        .nav-meta {
+            font-family: "Consolas", "SFMono-Regular", monospace;
+            font-size: var(--small-size);
+        }
+
+        .slide-label {
+            color: var(--accent-cyan);
+        }
+
+        .slide-index {
+            color: var(--text-dim);
+        }
+
+        .slide-title {
+            margin: 0;
+            font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+            font-size: var(--h2-size);
+            line-height: 1.04;
+            letter-spacing: -0.04em;
+            max-width: 12ch;
+        }
+
+        code {
+            padding: 0.15rem 0.42rem;
+            border-radius: 999px;
+            background: rgba(145, 182, 255, 0.08);
+            border: 1px solid rgba(145, 182, 255, 0.18);
+            color: #d8e4ff;
+            font-family: "Consolas", "SFMono-Regular", monospace;
+            font-size: 0.92em;
+        }
+
+        .hero-title {
+            font-size: var(--title-size);
+            max-width: 10.5ch;
+        }
+
+        .slide-summary,
+        .hero-summary {
+            margin: 0;
+            max-width: 64ch;
+            color: var(--text-secondary);
+            font-size: var(--body-size);
+            line-height: 1.65;
+        }
+
+        .hero-summary {
+            font-size: clamp(1rem, 1.45vw, 1.2rem);
+            max-width: 42ch;
+        }
+
+        .hero-grid,
+        .two-panel,
+        .cards-4,
+        .stats-row,
+        .timeline-grid,
+        .roadmap-grid,
+        .pack-layout,
+        .value-grid,
+        .monitor-grid,
+        .branch-row {
+            display: grid;
+            gap: clamp(0.75rem, 1.2vw, 1rem);
+        }
+
+        .hero-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.18fr) minmax(360px, 0.82fr);
+            gap: clamp(1rem, 2vw, 1.6rem);
+            min-height: 0;
+        }
+
+        .two-panel {
+            flex: 1;
+            grid-template-columns: minmax(0, 1fr) minmax(320px, 0.88fr);
+            min-height: 0;
+        }
+
+        .cards-4 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .stats-row {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .timeline-grid {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+
+        .roadmap-grid,
+        .pack-layout,
+        .value-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .panel,
+        .metric-card,
+        .issue-card,
+        .capability-card,
+        .terminal-card,
+        .flow-card,
+        .branch-card,
+        .surface-card,
+        .roadmap-card,
+        .timeline-card,
+        .monitor-card,
+        .value-card,
+        .closing-card {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 60%),
+                var(--panel-bg);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .panel,
+        .surface-card,
+        .terminal-card,
+        .closing-card {
+            padding: clamp(1rem, 1.9vw, 1.5rem);
+        }
+
+        .metric-card,
+        .issue-card,
+        .capability-card,
+        .branch-card,
+        .roadmap-card,
+        .timeline-card,
+        .monitor-card,
+        .value-card {
+            padding: clamp(0.9rem, 1.6vw, 1.2rem);
+        }
+
+        .panel-strong {
+            background:
+                linear-gradient(180deg, rgba(145, 182, 255, 0.08), rgba(145, 182, 255, 0)),
+                var(--panel-strong);
+            border-color: rgba(145, 182, 255, 0.2);
+        }
+
+        .card-title {
+            margin: 0 0 0.55rem;
+            font-size: clamp(1rem, 1.35vw, 1.18rem);
+            font-weight: 650;
+            letter-spacing: -0.02em;
+        }
+
+        .card-text,
+        .card-list li,
+        .timeline-result,
+        .small-note,
+        .roadmap-list li,
+        .value-list li,
+        .bullets li {
+            color: var(--text-secondary);
+            font-size: var(--body-size);
+            line-height: 1.55;
+        }
+
+        .card-list,
+        .roadmap-list,
+        .value-list,
+        .bullets {
+            margin: 0;
+            padding-left: 1.1rem;
+            display: grid;
+            gap: 0.45rem;
+        }
+
+        .hero-copy,
+        .hero-board,
+        .focus-steps,
+        .monitor-notes,
+        .monitor-stack,
+        .closing-copy {
+            min-height: 0;
+        }
+
+        .hero-copy {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: clamp(0.8rem, 1.6vw, 1.2rem);
+        }
+
+        .hero-board {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.9rem;
+        }
+
+        .hero-quote {
+            margin: 0;
+            color: #f2f6fb;
+            font-size: clamp(1.06rem, 1.6vw, 1.34rem);
+            line-height: 1.55;
+        }
+
+        .hero-note {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--small-size);
+        }
+
+        .metric-number {
+            font-size: clamp(1.4rem, 2.6vw, 2.5rem);
+            line-height: 1;
+            letter-spacing: -0.05em;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            color: var(--text-dim);
+            font-size: var(--small-size);
+        }
+
+        .hero-packs,
+        .pack-strip,
+        .mini-tags,
+        .surface-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 2rem;
+            padding: 0.3rem 0.68rem;
+            border-radius: 999px;
+            border: 1px solid rgba(145, 182, 255, 0.24);
+            color: var(--text-primary);
+            background: rgba(145, 182, 255, 0.08);
+            white-space: nowrap;
+        }
+
+        .chip.warm {
+            border-color: rgba(217, 172, 88, 0.32);
+            background: rgba(217, 172, 88, 0.11);
+        }
+
+        .chip.good {
+            border-color: rgba(116, 185, 130, 0.3);
+            background: rgba(116, 185, 130, 0.1);
+        }
+
+        .issue-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem;
+        }
+
+        .issue-badge,
+        .flow-step,
+        .roadmap-kicker,
+        .timeline-index {
+            color: var(--accent-amber);
+            font-size: var(--small-size);
+            font-family: "Consolas", "SFMono-Regular", monospace;
+        }
+
+        .capability-card,
+        .issue-card,
+        .branch-card,
+        .roadmap-card,
+        .timeline-card,
+        .value-card {
+            display: grid;
+            gap: 0.55rem;
+            align-content: start;
+        }
+
+        .capability-accent {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 14px;
+            border: 1px solid rgba(145, 182, 255, 0.2);
+            background: rgba(145, 182, 255, 0.08);
+            display: grid;
+            place-items: center;
+            font-size: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .flow-shell,
+        .pack-shell,
+        .timeline-shell {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 1rem;
+            min-height: 0;
+        }
+
+        .flow-main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+            gap: 0.5rem;
+            align-items: stretch;
+        }
+
+        .flow-card {
+            padding: 1rem 0.95rem;
+            display: grid;
+            gap: 0.45rem;
+            align-content: start;
+        }
+
+        .flow-arrow {
+            display: grid;
+            place-items: center;
+            color: var(--text-dim);
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+        }
+
+        .pack-strip {
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+            background: rgba(16, 23, 32, 0.85);
+        }
+
+        .pack-panel {
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+            background: var(--panel-bg);
+            display: grid;
+            gap: 0.8rem;
+            align-content: start;
+        }
+
+        .pack-title,
+        .focus-step-title,
+        .command-title,
+        .surface-name {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 650;
+        }
+
+        .focus-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(330px, 0.98fr);
+            gap: 1rem;
+            min-height: 0;
+        }
+
+        .focus-steps,
+        .command-grid,
+        .monitor-notes {
+            display: grid;
+            align-content: center;
+            gap: 0.9rem;
+        }
+
+        .focus-step {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.8rem;
+            padding: 0.85rem 1rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(145, 182, 255, 0.15);
+            background: rgba(145, 182, 255, 0.04);
+            min-height: 0;
+        }
+
+        .focus-step-number {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            color: var(--bg-0);
+            background: var(--accent-cyan);
+            font-family: "Consolas", "SFMono-Regular", monospace;
+            font-size: 0.78rem;
+        }
+
+        .focus-step-text,
+        .surface-text {
+            margin: 0.2rem 0 0;
+            color: var(--text-secondary);
+            font-size: var(--body-size);
+            line-height: 1.5;
+        }
+
+        .surface-card {
+            display: grid;
+            gap: 0.9rem;
+            min-height: 0;
+            background:
+                linear-gradient(180deg, rgba(217, 172, 88, 0.07), transparent 45%),
+                var(--panel-strong);
+        }
+
+        .surface-row,
+        .command-card,
+        .monitor-block,
+        .trace-item {
+            padding: 0.8rem 0.9rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(14, 20, 28, 0.76);
+        }
+
+        .terminal-layout,
+        .monitor-layout,
+        .closing-layout {
+            flex: 1;
+            display: grid;
+            min-height: 0;
+            gap: 1rem;
+        }
+
+        .terminal-layout,
+        .closing-layout {
+            grid-template-columns: minmax(0, 1.05fr) minmax(330px, 0.95fr);
+        }
+
+        .monitor-layout {
+            grid-template-columns: minmax(0, 0.92fr) minmax(380px, 1.08fr);
+        }
+
+        .monitor-stack,
+        .closing-copy {
+            display: grid;
+            align-content: center;
+            gap: 1rem;
+        }
+
+        .closing-card {
+            display: grid;
+            gap: 0.9rem;
+            align-content: center;
+            background:
+                linear-gradient(180deg, rgba(217, 172, 88, 0.07), transparent 46%),
+                var(--panel-strong);
+        }
+
+        .terminal-card {
+            display: grid;
+            gap: 0.9rem;
+            background:
+                linear-gradient(180deg, rgba(145, 182, 255, 0.06), transparent 30%),
+                #0b1016;
+        }
+
+        .terminal-bar,
+        .monitor-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .terminal-lights {
+            display: flex;
+            gap: 0.45rem;
+        }
+
+        .terminal-lights span {
+            width: 0.68rem;
+            height: 0.68rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .terminal-lights span:nth-child(1) { background: #ff8d7a; }
+        .terminal-lights span:nth-child(2) { background: #ffd37a; }
+        .terminal-lights span:nth-child(3) { background: #78dc8b; }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: "Consolas", "SFMono-Regular", monospace;
+            font-size: clamp(0.77rem, 1.1vw, 0.95rem);
+            line-height: 1.65;
+            color: #dfe7ef;
+        }
+
+        .command {
+            color: var(--accent-cyan);
+        }
+
+        .monitor-card {
+            display: grid;
+            gap: 0.75rem;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 55%),
+                #101720;
+        }
+
+        .live-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            border: 1px solid rgba(116, 185, 130, 0.35);
+            background: rgba(116, 185, 130, 0.13);
+            color: #a3ebaf;
+            font-family: "Consolas", "SFMono-Regular", monospace;
+            font-size: 0.72rem;
+        }
+
+        .live-pill::before {
+            content: "";
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 999px;
+            background: currentColor;
+        }
+
+        .monitor-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .monitor-key {
+            color: var(--text-dim);
+            font-size: 0.72rem;
+        }
+
+        .monitor-value {
+            font-size: 1.2rem;
+            letter-spacing: -0.03em;
+        }
+
+        .trace-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .trace-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.8rem;
+            color: var(--text-secondary);
+            font-size: var(--small-size);
+        }
+
+        .value-card.highlight {
+            background:
+                linear-gradient(180deg, rgba(145, 182, 255, 0.08), transparent 50%),
+                var(--panel-strong);
+            border-color: rgba(145, 182, 255, 0.22);
+        }
+
+        .accent-line {
+            width: 5rem;
+            height: 0.28rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-amber));
+        }
+
+        .nav-dots {
+            position: fixed;
+            right: 1.35rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 40;
+            display: grid;
+            gap: 0.58rem;
+        }
+
+        .nav-dot {
+            width: 0.78rem;
+            height: 0.78rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            background: rgba(255, 255, 255, 0.08);
+            cursor: pointer;
+            transition: transform 0.22s ease, background-color 0.22s ease, border-color 0.22s ease;
+        }
+
+        .nav-dot.active {
+            transform: scale(1.14);
+            background: var(--accent-cyan);
+            border-color: rgba(145, 182, 255, 0.88);
+        }
+
+        .progress-track {
+            position: fixed;
+            inset: 0 0 auto;
+            height: 4px;
+            z-index: 45;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-amber), var(--accent-cyan));
+            transition: width 0.2s ease;
+        }
+
+        .nav-meta {
+            position: fixed;
+            left: 1.35rem;
+            bottom: 1rem;
+            z-index: 40;
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+
+        [data-reveal] {
+            opacity: 0;
+            transform: translateY(18px);
+            transition: opacity 0.58s ease, transform 0.58s ease;
+        }
+
+        .slide.is-active [data-reveal] {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delay-1 { transition-delay: 0.08s; }
+        .delay-2 { transition-delay: 0.16s; }
+        .delay-3 { transition-delay: 0.24s; }
+
+        @media (max-width: 1100px) {
+            .hero-grid,
+            .two-panel,
+            .focus-grid,
+            .terminal-layout,
+            .monitor-layout,
+            .closing-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row,
+            .timeline-grid,
+            .value-grid,
+            .roadmap-grid,
+            .pack-layout {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .flow-main {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .flow-arrow {
+                transform: rotate(90deg);
+            }
+        }
+
+        @media (max-width: 760px), (max-height: 700px) {
+            :root {
+                --slide-padding: clamp(0.85rem, 2.6vw, 1.6rem);
+                --content-gap: clamp(0.55rem, 1.1vw, 0.9rem);
+                --title-size: clamp(1.5rem, 8vw, 2.6rem);
+                --h2-size: clamp(1.18rem, 4.4vw, 1.7rem);
+                --body-size: clamp(0.78rem, 1.5vw, 0.92rem);
+            }
+
+            .slide::before {
+                inset: 0.5rem;
+                border-radius: 20px;
+            }
+
+            .slide-shell {
+                width: min(96vw, 1360px);
+                height: min(90vh, 860px);
+            }
+
+            .cards-4,
+            .stats-row,
+            .issue-grid,
+            .branch-row,
+            .timeline-grid,
+            .roadmap-grid,
+            .pack-layout,
+            .value-grid,
+            .monitor-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-dots {
+                right: 0.65rem;
+            }
+
+            .nav-meta {
+                left: 0.8rem;
+                bottom: 0.7rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+
+            html {
+                scroll-behavior: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-track" aria-hidden="true">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="nav-dots" id="navDots" aria-label="幻灯片导航"></div>
+    <div class="nav-meta">
+        <span>↑ ↓ / Space 导航</span>
+        <span>滚轮或点击右侧圆点跳转</span>
+    </div>
+
+    <main>
+        <section class="slide" id="slide-1" aria-label="封面">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div class="slide-label" data-reveal>OptionForge · 内部分享</div>
+                    <div class="slide-index" data-reveal>01 / 12</div>
+                </div>
+                <div class="hero-grid">
+                    <div class="hero-copy">
+                        <h1 class="slide-title hero-title" data-reveal>把期权策略研发，做成可复用的工程底座</h1>
+                        <p class="hero-summary delay-1" data-reveal>`OptionForge` 基于 `vn.py`，把运行、回测、配置、监控，以及 AI 导航统一到一条工程化工作流里。</p>
+                        <div class="stats-row delay-2" data-reveal>
+                            <div class="metric-card">
+                                <div class="metric-number">10</div>
+                                <div class="metric-label">pack 能力链路</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-number">123</div>
+                                <div class="metric-label">测试文件快照</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-number">2</div>
+                                <div class="metric-label">运行模式：standalone / daemon</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-number">1</div>
+                                <div class="metric-label">统一入口：optionforge</div>
+                            </div>
+                        </div>
+                        <div class="hero-packs delay-3" data-reveal>
+                            <span class="chip">Python 3.12</span>
+                            <span class="chip">Flask + Socket.IO</span>
+                            <span class="chip warm">runner + monitor + PostgreSQL</span>
+                            <span class="chip good">focus workflow</span>
+                        </div>
+                    </div>
+                    <div class="hero-board">
+                        <div class="panel panel-strong delay-1" data-reveal>
+                            <p class="hero-quote">项目想解决的不是“怎么再造一个策略仓库”，而是“怎样把策略研究、运行、观测和协作变成可以重复交付的工程动作”。</p>
+                        </div>
+                        <div class="cards-4">
+                            <div class="capability-card delay-2" data-reveal>
+                                <div class="capability-accent">01</div>
+                                <h3 class="card-title">分层底座</h3>
+                                <p class="card-text">`application / domain / infrastructure` 明确边界，让策略逻辑不再挤成一团。</p>
+                            </div>
+                            <div class="capability-card delay-2" data-reveal>
+                                <div class="capability-accent">02</div>
+                                <h3 class="card-title">能力装配</h3>
+                                <p class="card-text">selection、pricing、risk、execution、hedging 等 pack 按需启用。</p>
+                            </div>
+                            <div class="capability-card delay-3" data-reveal>
+                                <div class="capability-accent">03</div>
+                                <h3 class="card-title">统一 CLI</h3>
+                                <p class="card-text">从创建、校验到运行、回测、焦点测试，都走一套命令体系。</p>
+                            </div>
+                            <div class="capability-card delay-3" data-reveal>
+                                <div class="capability-accent">04</div>
+                                <h3 class="card-title">观测入口</h3>
+                                <p class="card-text">内置 Web monitor、快照与事件读取，让策略不是“黑盒跑着”。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>主题：期权策略脚手架的产品化方向</span>
+                    <span>面向对象：策略研发 / 平台 / AI coding 协作</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-2" aria-label="问题背景">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>从零开始最贵的，往往不是代码量</div>
+                        <h2 class="slide-title delay-1" data-reveal>为什么不是再写一个“策略模板”</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>02 / 12</div>
+                </div>
+                <div class="two-panel">
+                    <div class="panel delay-1" data-reveal>
+                        <p class="slide-summary">多数策略仓库真正拖慢速度的，是工程层面的重复劳动：边界不清、入口分散、环境不稳定、观测缺位，以及协作时上下文失控。</p>
+                        <div class="issue-grid" style="margin-top: 1rem;">
+                            <div class="issue-card">
+                                <div class="issue-badge">问题 01</div>
+                                <h3 class="card-title">逻辑与基础设施糊在一起</h3>
+                                <p class="card-text">合约选择、风控判断、监控落盘、网关对接常常挤在同一层里。</p>
+                            </div>
+                            <div class="issue-card">
+                                <div class="issue-badge">问题 02</div>
+                                <h3 class="card-title">入口越多，回归越难</h3>
+                                <p class="card-text">回测、实盘、配置校验、监控各有脚本，经验无法沉淀成流程。</p>
+                            </div>
+                            <div class="issue-card">
+                                <div class="issue-badge">问题 03</div>
+                                <h3 class="card-title">新人和 agent 上手成本高</h3>
+                                <p class="card-text">仓库一大，既不知道先看哪，也不清楚哪些文件能改、哪些别碰。</p>
+                            </div>
+                            <div class="issue-card">
+                                <div class="issue-badge">问题 04</div>
+                                <h3 class="card-title">策略能跑，不代表能交付</h3>
+                                <p class="card-text">缺 monitor、缺部署、缺配置治理，最终只在作者机器上好用。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel panel-strong delay-2" data-reveal>
+                        <h3 class="card-title">这个脚手架的回答</h3>
+                        <ul class="card-list">
+                            <li>用分层架构隔离流程编排、交易规则和外部依赖。</li>
+                            <li>把 `create / init / run / backtest / validate / doctor / focus` 收敛成统一 CLI。</li>
+                            <li>让 `.focus` 导航文件与 manifest 一起约束 agent 的可编辑边界。</li>
+                            <li>从第一天就把 Web monitor、事件快照和 Docker 部署放进项目骨架。</li>
+                        </ul>
+                        <div class="mini-tags" style="margin-top: 0.9rem;">
+                            <span class="chip">不是现成策略</span>
+                            <span class="chip warm">是策略研发底座</span>
+                            <span class="chip good">强调复用与演进</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>核心目标：把高频重复工程从每个策略项目里抽离出来</span>
+                    <span>结果：策略迭代聚焦在 alpha、风控与执行细节上</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-3" aria-label="项目定位">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>项目定位</div>
+                        <h2 class="slide-title delay-1" data-reveal>它提供的不是收益曲线，而是可持续迭代的地基</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>03 / 12</div>
+                </div>
+                <div class="panel delay-1" data-reveal>
+                    <p class="slide-summary">仓库已经内置了策略项目最常见的四类成本中心：结构拆分、能力编排、AI 导航与运维观察。团队不必每次开新策略都重新把这些轮子装一遍。</p>
+                </div>
+                <div class="cards-4">
+                    <div class="capability-card delay-1" data-reveal>
+                        <div class="capability-accent">A</div>
+                        <h3 class="card-title">分层结构</h3>
+                        <p class="card-text">`StrategyEntry` 把 application、domain、infrastructure 串起来，保持调用路径清晰。</p>
+                    </div>
+                    <div class="capability-card delay-2" data-reveal>
+                        <div class="capability-accent">B</div>
+                        <h3 class="card-title">领域能力</h3>
+                        <p class="card-text">selection、signal、pricing、combination、risk、execution、hedging 都有落点。</p>
+                    </div>
+                    <div class="capability-card delay-2" data-reveal>
+                        <div class="capability-accent">C</div>
+                        <h3 class="card-title">AI-first 导航</h3>
+                        <p class="card-text">`focus manifest + .focus docs + editable surface` 把协作边界直接写进仓库。</p>
+                    </div>
+                    <div class="capability-card delay-3" data-reveal>
+                        <div class="capability-accent">D</div>
+                        <h3 class="card-title">观测与部署</h3>
+                        <p class="card-text">Web monitor、日志目录、PostgreSQL 与 Docker Compose 一起就位。</p>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>一句话总结：先把工程骨架搭稳，再把精力留给策略本身</span>
+                    <span>仓库角色：期权策略研发的“产品化起点”</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-4" aria-label="架构链路">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>架构概览</div>
+                        <h2 class="slide-title delay-1" data-reveal>运行时是一条清晰的链路，而不是散落的脚本集合</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>04 / 12</div>
+                </div>
+                <div class="flow-shell">
+                    <div class="flow-main delay-1" data-reveal>
+                        <div class="flow-card">
+                            <div class="flow-step">01</div>
+                            <h3 class="card-title">vn.py 事件 / 行情回调</h3>
+                            <p class="card-text">接收市场数据与策略生命周期事件，作为最外层输入。</p>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-card">
+                            <div class="flow-step">02</div>
+                            <h3 class="card-title">StrategyEntry</h3>
+                            <p class="card-text">把运行入口与各层依赖绑定起来，避免流程四处散开。</p>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-card">
+                            <div class="flow-step">03</div>
+                            <h3 class="card-title">Application workflows</h3>
+                            <p class="card-text">负责订阅、市场、状态与生命周期编排，不承载具体交易规则。</p>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-card">
+                            <div class="flow-step">04</div>
+                            <h3 class="card-title">Domain services</h3>
+                            <p class="card-text">承接选合约、定价、风控、执行、对冲等真正的策略语义。</p>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-card">
+                            <div class="flow-step">05</div>
+                            <h3 class="card-title">Infrastructure</h3>
+                            <p class="card-text">处理网关、监控、持久化、报告、订阅与日志等外部依赖。</p>
+                        </div>
+                    </div>
+                    <div class="branch-row delay-2" data-reveal>
+                        <div class="branch-card">
+                            <h3 class="card-title">旁路一：Backtesting Runner</h3>
+                            <p class="card-text">回测入口尽量复用主策略配置与能力装配，不另起一套世界。</p>
+                        </div>
+                        <div class="branch-card">
+                            <h3 class="card-title">旁路二：Web Monitor</h3>
+                            <p class="card-text">从快照与事件读取状态，再通过 Flask + Socket.IO 对外展示。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>关键点：上层流程直接调用具体领域服务与基础设施，不再堆抽象 facade</span>
+                    <span>收益：改策略时更容易定位、替换和回归</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-5" aria-label="能力地图">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>能力地图</div>
+                        <h2 class="slide-title delay-1" data-reveal>能力不是揉成一个大包，而是按 pack 链路装配</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>05 / 12</div>
+                </div>
+                <div class="pack-shell">
+                    <div class="pack-strip delay-1" data-reveal>
+                        <div class="pack-title">当前主链路</div>
+                        <div class="pack-strip" style="padding: 0; border: 0; background: transparent; box-shadow: none;">
+                            <span class="chip">kernel</span>
+                            <span class="chip">selection</span>
+                            <span class="chip">pricing</span>
+                            <span class="chip">risk</span>
+                            <span class="chip">execution</span>
+                            <span class="chip">hedging</span>
+                            <span class="chip">monitoring</span>
+                            <span class="chip">web</span>
+                            <span class="chip warm">deploy</span>
+                            <span class="chip good">backtest</span>
+                        </div>
+                    </div>
+                    <div class="pack-layout delay-2" data-reveal>
+                        <div class="pack-panel">
+                            <h3 class="pack-title">7 类领域服务</h3>
+                            <div class="mini-tags">
+                                <span class="chip">selection</span>
+                                <span class="chip">signal</span>
+                                <span class="chip">pricing</span>
+                                <span class="chip">combination</span>
+                                <span class="chip">risk</span>
+                                <span class="chip">execution</span>
+                                <span class="chip">hedging</span>
+                            </div>
+                            <p class="small-note">策略差异主要发生在这里：规则、参数与服务启停都能独立演进。</p>
+                        </div>
+                        <div class="pack-panel">
+                            <h3 class="pack-title">9 类基础设施模块</h3>
+                            <div class="mini-tags">
+                                <span class="chip">gateway</span>
+                                <span class="chip">monitoring</span>
+                                <span class="chip">persistence</span>
+                                <span class="chip">reporting</span>
+                                <span class="chip">subscription</span>
+                                <span class="chip">bar pipeline</span>
+                                <span class="chip">logging</span>
+                                <span class="chip">parsing</span>
+                                <span class="chip">utils</span>
+                            </div>
+                            <p class="small-note">配套问题集中收束，不用每个策略项目重新造观察、存储和接入轮子。</p>
+                        </div>
+                        <div class="pack-panel">
+                            <h3 class="pack-title">工程快照</h3>
+                            <div class="stats-row" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+                                <div class="metric-card">
+                                    <div class="metric-number">123</div>
+                                    <div class="metric-label">测试文件</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-number">11</div>
+                                    <div class="metric-label">CLI 命令入口</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-number">1</div>
+                                    <div class="metric-label">统一配置主文件</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-number">3</div>
+                                    <div class="metric-label">默认部署角色</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>能力组合可由 manifest 与配置共同描述，适合逐步扩展</span>
+                    <span>结果：做增量策略，不必把整个仓库一次性啃完</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-6" aria-label="AI 工作流">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>AI-first 工作流</div>
+                        <h2 class="slide-title delay-1" data-reveal>这个项目的差异化，不只在代码结构，还在协作导航</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>06 / 12</div>
+                </div>
+                <div class="focus-grid">
+                    <div class="focus-steps">
+                        <div class="focus-step delay-1" data-reveal>
+                            <div class="focus-step-number">1</div>
+                            <div>
+                                <h3 class="focus-step-title">先看焦点</h3>
+                                <p class="focus-step-text">`optionforge focus show` 先给出当前策略、pack 链路和阅读顺序。</p>
+                            </div>
+                        </div>
+                        <div class="focus-step delay-1" data-reveal>
+                            <div class="focus-step-number">2</div>
+                            <div>
+                                <h3 class="focus-step-title">切换或刷新</h3>
+                                <p class="focus-step-text">`focus init` / `focus refresh` 把仓库上下文收缩到当前策略最相关的表面。</p>
+                            </div>
+                        </div>
+                        <div class="focus-step delay-2" data-reveal>
+                            <div class="focus-step-number">3</div>
+                            <div>
+                                <h3 class="focus-step-title">阅读 `.focus` 文档</h3>
+                                <p class="focus-step-text">`SYSTEM_MAP`、`ACTIVE_SURFACE`、`TASK_BRIEF` 先把地图给人和 agent。</p>
+                            </div>
+                        </div>
+                        <div class="focus-step delay-2" data-reveal>
+                            <div class="focus-step-number">4</div>
+                            <div>
+                                <h3 class="focus-step-title">只改允许改的区域</h3>
+                                <p class="focus-step-text">Editable / Reference / Frozen 三种路径，把协作边界变成仓库资产。</p>
+                            </div>
+                        </div>
+                        <div class="focus-step delay-3" data-reveal>
+                            <div class="focus-step-number">5</div>
+                            <div>
+                                <h3 class="focus-step-title">先跑焦点测试</h3>
+                                <p class="focus-step-text">`optionforge focus test` 避免整仓盲跑，让局部验证更高效。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="surface-card delay-2" data-reveal>
+                        <h3 class="card-title">焦点上下文长什么样</h3>
+                        <div class="surface-row">
+                            <div class="surface-name">Editable Surface</div>
+                            <p class="surface-text">`src/strategy/strategy_entry.py`、`src/strategy/application`、`src/strategy/domain`、`config/domain_service`。</p>
+                        </div>
+                        <div class="surface-row">
+                            <div class="surface-name">Reference Surface</div>
+                            <p class="surface-text">`src/main`、`src/backtesting`、`src/web`、`src/cli`、`README.md`、`docs/`。</p>
+                        </div>
+                        <div class="surface-row">
+                            <div class="surface-name">Frozen Surface</div>
+                            <p class="surface-text">`.codex`、`.git`、`.venv`、`temp`、`LICENSE` 这类不该随意触碰的区域。</p>
+                        </div>
+                        <div class="surface-tags">
+                            <span class="chip warm">machine readable manifest</span>
+                            <span class="chip">human readable docs</span>
+                            <span class="chip good">agent-friendly validation</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>这套导航最适合“大仓里做局部策略迭代”的场景</span>
+                    <span>价值：降低误改成本，也降低上下文装载成本</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-7" aria-label="统一 CLI">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>日常入口</div>
+                        <h2 class="slide-title delay-1" data-reveal>把常见动作收敛到一条命令面：`optionforge`</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>07 / 12</div>
+                </div>
+                <div class="terminal-layout">
+                    <div class="terminal-card delay-1" data-reveal>
+                        <div class="terminal-bar">
+                            <div class="terminal-lights"><span></span><span></span><span></span></div>
+                            <div class="slide-index">project shell</div>
+                        </div>
+                        <pre>optionforge
+optionforge validate --config config/strategy_config.toml
+optionforge run --config config/strategy_config.toml --paper
+optionforge backtest --config config/strategy_config.toml --start 2025-01-01 --end 2025-03-01 --no-chart
+optionforge focus show
+optionforge focus test
+python -m src.cli.app --help</pre>
+                    </div>
+                    <div class="command-grid">
+                        <div class="command-card delay-1" data-reveal>
+                            <h3 class="command-title">创建与初始化</h3>
+                            <div class="command">create / init</div>
+                            <p class="card-text">用交互式或参数式命令生成新策略工作区与骨架。</p>
+                        </div>
+                        <div class="command-card delay-2" data-reveal>
+                            <h3 class="command-title">校验与运行</h3>
+                            <div class="command">validate / run</div>
+                            <p class="card-text">先校验配置，再用 standalone 或 daemon 模式进入执行链路。</p>
+                        </div>
+                        <div class="command-card delay-2" data-reveal>
+                            <h3 class="command-title">焦点与回测</h3>
+                            <div class="command">focus / backtest</div>
+                            <p class="card-text">把 AI 协作、局部测试和历史验证都挂到统一门面上。</p>
+                        </div>
+                        <div class="command-card delay-3" data-reveal>
+                            <h3 class="command-title">诊断与示例</h3>
+                            <div class="command">doctor / examples</div>
+                            <p class="card-text">环境自检与样例浏览，降低首次上手的摩擦。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>开发态可走 `python -m src.cli.app`，安装态直接走 `optionforge`</span>
+                    <span>CLI 设计目标：入口统一，但业务逻辑仍落回具体模块</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-8" aria-label="观测与运行">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>运行与观测</div>
+                        <h2 class="slide-title delay-1" data-reveal>不是“能跑起来”就结束，还要从 day 1 看得见</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>08 / 12</div>
+                </div>
+                <div class="monitor-layout">
+                    <div class="monitor-notes">
+                        <div class="panel delay-1" data-reveal>
+                            <ul class="bullets">
+                                <li>主程序支持 `standalone` 与 `daemon` 两种运行模式，分别服务调试与守护场景。</li>
+                                <li>Web monitor 基于 `Flask + Socket.IO`，默认端口 `5007`，读取策略快照与事件数据。</li>
+                                <li>部署默认围绕 `runner + monitor + PostgreSQL` 组织，便于把运行与观测一起交付。</li>
+                                <li>API 已经覆盖策略列表、snapshot、events、decisions、bars 等常见读取需求。</li>
+                            </ul>
+                        </div>
+                        <div class="mini-tags delay-2" data-reveal>
+                            <span class="chip">paper trading</span>
+                            <span class="chip">decision trace</span>
+                            <span class="chip warm">快照 + 事件</span>
+                            <span class="chip good">web dashboard</span>
+                        </div>
+                    </div>
+                    <div class="monitor-stack">
+                        <div class="monitor-card delay-2" data-reveal>
+                            <div class="monitor-head">
+                                <h3 class="card-title" style="margin: 0;">monitor terminal</h3>
+                                <div class="live-pill">feed live</div>
+                            </div>
+                            <div class="monitor-grid">
+                                <div class="monitor-block">
+                                    <div class="monitor-key">current strategy</div>
+                                    <div class="monitor-value">main / option-universe</div>
+                                </div>
+                                <div class="monitor-block">
+                                    <div class="monitor-key">runtime mode</div>
+                                    <div class="monitor-value">standalone → daemon</div>
+                                </div>
+                                <div class="monitor-block">
+                                    <div class="monitor-key">snapshot source</div>
+                                    <div class="monitor-value">postgres / fallback</div>
+                                </div>
+                                <div class="monitor-block">
+                                    <div class="monitor-key">web surface</div>
+                                    <div class="monitor-value">dashboard / api</div>
+                                </div>
+                            </div>
+                            <div class="trace-list">
+                                <div class="trace-item"><span>09:30</span><span>selection finished · ATM chain refreshed</span></div>
+                                <div class="trace-item"><span>09:32</span><span>risk budget accepted · delta within range</span></div>
+                                <div class="trace-item"><span>09:35</span><span>execution queued · paper order sent</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>监控层只负责读状态与展示，不把策略判断逻辑挪进前端</span>
+                    <span>这让调试、演示和生产观察能共用一套语言</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-9" aria-label="演示路径">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>推荐 demo 路径</div>
+                        <h2 class="slide-title delay-1" data-reveal>如果做一次对内演示，我会这样带大家走完一圈</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>09 / 12</div>
+                </div>
+                <div class="timeline-shell">
+                    <div class="timeline-grid">
+                        <div class="timeline-card delay-1" data-reveal>
+                            <div class="timeline-index">01</div>
+                            <h3 class="card-title">生成工作区</h3>
+                            <div class="command">optionforge create alpha_lab</div>
+                            <p class="timeline-result">先展示这个项目不是只能服务当前仓库，而是能产出新的策略工作区。</p>
+                        </div>
+                        <div class="timeline-card delay-1" data-reveal>
+                            <div class="timeline-index">02</div>
+                            <h3 class="card-title">确认焦点</h3>
+                            <div class="command">optionforge focus show</div>
+                            <p class="timeline-result">把当前策略、pack 链路和可编辑表面讲清楚，再进入代码。</p>
+                        </div>
+                        <div class="timeline-card delay-2" data-reveal>
+                            <div class="timeline-index">03</div>
+                            <h3 class="card-title">先做配置校验</h3>
+                            <div class="command">optionforge validate --config ...</div>
+                            <p class="timeline-result">强调工程化不是直接 run，而是先把配置和绑定关系跑通。</p>
+                        </div>
+                        <div class="timeline-card delay-2" data-reveal>
+                            <div class="timeline-index">04</div>
+                            <h3 class="card-title">启动 paper run</h3>
+                            <div class="command">optionforge run --config ... --paper</div>
+                            <p class="timeline-result">用模拟交易展示主链路，避免在分享里引入外部交易风险。</p>
+                        </div>
+                        <div class="timeline-card delay-3" data-reveal>
+                            <div class="timeline-index">05</div>
+                            <h3 class="card-title">打开 monitor / backtest</h3>
+                            <div class="command">python src/web/app.py</div>
+                            <p class="timeline-result">最后切到 Web monitor 或回测命令，把“运行 + 可见”两件事合起来。</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>这条路径兼顾产品感、工程感和策略感</span>
+                    <span>适合内部路演、项目 onboarding、也适合作为仓库 tour</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-10" aria-label="团队价值">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>团队价值</div>
+                        <h2 class="slide-title delay-1" data-reveal>它对团队真正有价值的地方，不只是“省几天搭环境”</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>10 / 12</div>
+                </div>
+                <div class="value-grid">
+                    <div class="value-card highlight delay-1" data-reveal>
+                        <h3 class="card-title">降低启动成本</h3>
+                        <p class="card-text">新策略不再从零搭目录、脚手架、命令入口和监控页面。</p>
+                    </div>
+                    <div class="value-card highlight delay-1" data-reveal>
+                        <h3 class="card-title">把协作边界写进仓库</h3>
+                        <p class="card-text">Focus Manifest 和 `.focus` 文档，让人和 agent 用同一套地图协作。</p>
+                    </div>
+                    <div class="value-card highlight delay-2" data-reveal>
+                        <h3 class="card-title">统一运行语言</h3>
+                        <p class="card-text">创建、校验、运行、回测、观测都可通过统一 CLI 讲给团队听。</p>
+                    </div>
+                    <div class="value-card delay-2" data-reveal>
+                        <h3 class="card-title">适合内部 pilot</h3>
+                        <ul class="value-list">
+                            <li>新策略孵化</li>
+                            <li>期权研究模板化</li>
+                            <li>新人 onboarding</li>
+                            <li>AI assisted refactor</li>
+                        </ul>
+                    </div>
+                    <div class="value-card delay-3" data-reveal>
+                        <h3 class="card-title">质量更易沉淀</h3>
+                        <p class="card-text">当前仓库已经有 120+ 测试文件快照，后续重构更容易积累验证资产。</p>
+                    </div>
+                    <div class="value-card delay-3" data-reveal>
+                        <h3 class="card-title">工程资产更像产品</h3>
+                        <p class="card-text">CLI、文档、监控、部署与计划文档形成统一叙事，适合持续对内外展示。</p>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>本质上，它把“策略代码”抬升成了“策略研发产品”</span>
+                    <span>这也是后续做模板化和插件化的前提</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-11" aria-label="下一步">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div>
+                        <div class="slide-label" data-reveal>下一步</div>
+                        <h2 class="slide-title delay-1" data-reveal>往后继续长，重点会落在 CLI 产品化与可分发能力</h2>
+                    </div>
+                    <div class="slide-index" data-reveal>11 / 12</div>
+                </div>
+                <div class="roadmap-grid">
+                    <div class="roadmap-card delay-1" data-reveal>
+                        <div class="roadmap-kicker">已经具备</div>
+                        <h3 class="card-title">底座已成形</h3>
+                        <ul class="roadmap-list">
+                            <li>分层策略结构与 pack 能力链路</li>
+                            <li>统一 CLI 与 `pyproject.toml` 入口</li>
+                            <li>Web monitor、Docker、PostgreSQL 观察链路</li>
+                            <li>Focus workflow 与 `.focus` 导航资产</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-card delay-2" data-reveal>
+                        <div class="roadmap-kicker">最近推进</div>
+                        <h3 class="card-title">CLI 产品体验</h3>
+                        <ul class="roadmap-list">
+                            <li>交互式根命令主菜单</li>
+                            <li>`create` 向导默认路径与最终确认页</li>
+                            <li>更稳定的 next steps 输出</li>
+                            <li>依赖拆分、安装体验与文档收敛</li>
+                        </ul>
+                    </div>
+                    <div class="roadmap-card delay-3" data-reveal>
+                        <div class="roadmap-kicker">继续演进</div>
+                        <h3 class="card-title">更像真正产品</h3>
+                        <ul class="roadmap-list">
+                            <li>预置策略 preset 持续丰富</li>
+                            <li>插件化扩展与能力包生态</li>
+                            <li>更细粒度的 pack / option 组合</li>
+                            <li>围绕开源增长的发布与分发路径</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>这些方向都已经在 `docs/plan/*` 里有规划，不是口头 roadmap</span>
+                    <span>分享时可以把“现在做到哪”与“接下来去哪”自然串起来</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide" id="slide-12" aria-label="结尾">
+            <div class="slide-shell">
+                <div class="slide-top">
+                    <div class="slide-label" data-reveal>结语</div>
+                    <div class="slide-index" data-reveal>12 / 12</div>
+                </div>
+                <div class="closing-layout">
+                    <div class="closing-copy">
+                        <div class="accent-line delay-1" data-reveal></div>
+                        <h2 class="slide-title hero-title delay-1" data-reveal>把底座做好，alpha 才值得被反复试验</h2>
+                        <p class="hero-summary delay-2" data-reveal>这个项目最值得对内分享的地方，在于它把策略研发从“个人习惯堆积”推进成了“团队可复用工程”。</p>
+                        <div class="mini-tags delay-3" data-reveal>
+                            <span class="chip">结构清晰</span>
+                            <span class="chip">入口统一</span>
+                            <span class="chip warm">协作可控</span>
+                            <span class="chip good">观察在线</span>
+                        </div>
+                    </div>
+                    <div class="closing-card delay-2" data-reveal>
+                        <h3 class="card-title">分享后的建议动作</h3>
+                        <ul class="card-list">
+                            <li>选一个内部策略方向做 pilot，把现有 pack 链路真正跑一次。</li>
+                            <li>把团队日常策略修改纳入 `focus show → edit → focus test` 的流程。</li>
+                            <li>把 monitor 页面和回测结果一起纳入对内演示，形成统一项目叙事。</li>
+                        </ul>
+                        <p class="hero-note">如果要继续扩展，这个仓库已经具备做模板化、preset 化、插件化的起点。</p>
+                    </div>
+                </div>
+                <div class="slide-footer">
+                    <span>谢谢</span>
+                    <span>OptionForge · internal deck</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const main = document.querySelector("main");
+        main.innerHTML = main.innerHTML.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+        const slides = Array.from(document.querySelectorAll(".slide"));
+        const navDots = document.getElementById("navDots");
+        const progressBar = document.getElementById("progressBar");
+        let activeIndex = 0;
+
+        slides.forEach((slide, index) => {
+            const dot = document.createElement("button");
+            dot.className = "nav-dot";
+            dot.type = "button";
+            dot.setAttribute("aria-label", `跳转到第 ${index + 1} 页`);
+            dot.addEventListener("click", () => slide.scrollIntoView({ behavior: "smooth", block: "start" }));
+            navDots.appendChild(dot);
+        });
+
+        const dots = Array.from(document.querySelectorAll(".nav-dot"));
+
+        const setActive = (index) => {
+            activeIndex = index;
+            slides.forEach((slide, slideIndex) => slide.classList.toggle("is-active", slideIndex === index));
+            dots.forEach((dot, dotIndex) => dot.classList.toggle("active", dotIndex === index));
+            progressBar.style.width = `${((index + 1) / slides.length) * 100}%`;
+        };
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.55) {
+                        const index = slides.indexOf(entry.target);
+                        if (index >= 0) {
+                            setActive(index);
+                        }
+                    }
+                });
+            },
+            { threshold: [0.55, 0.7] }
+        );
+
+        const syncActiveFromScroll = () => {
+            let nearestIndex = 0;
+            let nearestDistance = Number.POSITIVE_INFINITY;
+
+            slides.forEach((slide, index) => {
+                const distance = Math.abs(slide.getBoundingClientRect().top);
+                if (distance < nearestDistance) {
+                    nearestDistance = distance;
+                    nearestIndex = index;
+                }
+            });
+
+            setActive(nearestIndex);
+        };
+
+        slides.forEach((slide) => observer.observe(slide));
+        setActive(0);
+        window.addEventListener("scroll", syncActiveFromScroll, { passive: true });
+        window.addEventListener("hashchange", syncActiveFromScroll);
+        window.addEventListener("load", () => {
+            if (location.hash) {
+                const target = document.querySelector(location.hash);
+                if (target) {
+                    target.scrollIntoView({ behavior: "auto", block: "start" });
+                }
+            }
+            syncActiveFromScroll();
+            setTimeout(syncActiveFromScroll, 120);
+        });
+
+        window.addEventListener("keydown", (event) => {
+            if (["ArrowDown", "PageDown", " ", "Enter"].includes(event.key)) {
+                event.preventDefault();
+                const nextIndex = Math.min(activeIndex + 1, slides.length - 1);
+                slides[nextIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            if (["ArrowUp", "PageUp", "Backspace"].includes(event.key)) {
+                event.preventDefault();
+                const prevIndex = Math.max(activeIndex - 1, 0);
+                slides[prevIndex].scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            if (event.key === "Home") {
+                event.preventDefault();
+                slides[0].scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            if (event.key === "End") {
+                event.preventDefault();
+                slides[slides.length - 1].scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
+    </script>
+</body>
+</html>
