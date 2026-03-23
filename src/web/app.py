@@ -2,13 +2,21 @@ from __future__ import annotations
 
 import os
 import select
+import sys
 from datetime import datetime
+from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from flask import Flask, current_app, jsonify, render_template, request
 from flask_socketio import SocketIO, join_room, leave_room
+
+if __package__ in (None, ""):
+    repo_root = Path(__file__).resolve().parents[2]
+    repo_root_str = str(repo_root)
+    if repo_root_str not in sys.path:
+        sys.path.insert(0, repo_root_str)
 
 from src.main.utils.logging_setup import setup_logging
 from src.strategy.infrastructure.monitoring.notification_protocol import (
