@@ -1,7 +1,7 @@
 packs = ["kernel", "selection", "pricing", "risk", "execution", "hedging", "monitoring", "web", "deploy", "backtest"]
 editable_paths = ["src/strategy/strategy_entry.py", "src/strategy/application", "src/strategy/domain", "config/strategy_config.toml", "config/general/trading_target.toml", "config/domain_service", "tests/strategy", "tests/web"]
 reference_paths = ["src/main", "src/main/validation", "src/backtesting", "src/web", "src/main/scaffold", "tests/strategy/application", "tests/main/scaffold", "tests/main/validation", "deploy", "docs", "README.md"]
-frozen_paths = [".codex", ".git", ".pytest_cache", "LICENSE"]
+frozen_paths = [".codex", ".git", "LICENSE"]
 
 [strategy]
 name = "main"

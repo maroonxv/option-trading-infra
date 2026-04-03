@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+import tomllib
+
+from src.main.focus.service import refresh_agent_assets
 
 
 def _repo_root() -> Path:
@@ -39,3 +42,18 @@ def test_ddd_guardrail_prompt_eval_suite_uses_real_repository_smells() -> None:
     assert (rubrics_dir / "boundary-judgment.md").exists()
     assert (rubrics_dir / "intervention-quality.md").exists()
     assert (rubrics_dir / "migration-quality.md").exists()
+
+
+def test_focus_assets_do_not_freeze_pytest_cache() -> None:
+    repo_root = _repo_root()
+
+    context = refresh_agent_assets(repo_root)
+    manifest_payload = tomllib.loads(
+        (repo_root / "focus" / "strategies" / "main" / "strategy.manifest.toml").read_text(encoding="utf-8")
+    )
+
+    assert ".pytest_cache" not in context.manifest.frozen_paths
+    assert ".pytest_cache" not in manifest_payload["frozen_paths"]
+    assert '".pytest_cache"' not in context.context_json_path.read_text(encoding="utf-8")
+    assert ".pytest_cache" not in context.active_surface_path.read_text(encoding="utf-8")
+    assert ".pytest_cache" not in context.task_brief_path.read_text(encoding="utf-8")

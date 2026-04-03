@@ -29,5 +29,4 @@
 
 - `.codex`
 - `.git`
-- `.pytest_cache`
 - `LICENSE`

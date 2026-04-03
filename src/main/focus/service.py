@@ -40,7 +40,7 @@ DEFAULT_REFERENCE_PATHS: tuple[str, ...] = (
     "docs",
     "README.md",
 )
-DEFAULT_FROZEN_PATHS: tuple[str, ...] = (".codex", ".git", ".venv", ".pytest_cache", ".hypothesis", "temp", "LICENSE")
+DEFAULT_FROZEN_PATHS: tuple[str, ...] = (".codex", ".git", ".venv", ".hypothesis", "temp", "LICENSE")
 PACK_REQUIRED_MODULES: dict[str, tuple[str, ...]] = {"backtest": ("chinese_calendar",)}
 SMOKE_TEST_EXCLUDE_KEYWORDS: tuple[str, ...] = ("property", "pbt")
 WIDE_FOCUS_PACK_THRESHOLD = 6

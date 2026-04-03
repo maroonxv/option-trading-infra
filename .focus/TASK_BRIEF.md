@@ -20,7 +20,6 @@
 
 - `.codex`
 - `.git`
-- `.pytest_cache`
 - `LICENSE`
 
 ## Acceptance
