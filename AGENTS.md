@@ -1,4 +1,4 @@
-﻿## DDD Guardrail
+## DDD Guardrail
 
 For any work touching `src/strategy/**`, use `.codex/skills/ddd-coding-guard` before implementation.
 For hotspot cleanup or boundary repair in existing code, use `.codex/skills/ddd-refactor-coach`.
@@ -13,57 +13,60 @@ Read the full doctrine in:
 - `docs/architecture/ddd-constitution.md`
 - `docs/architecture/context-map.md`
 - `docs/architecture/refactor-catalog.md`
-# Agent 琛屼负瑙勮寖
 
-## 鑷姩 Git 鎻愪氦瑙勫垯
+# Agent 行为规范
 
-褰撲綘瀹屾垚浠ヤ笅浠讳綍涓€绫绘搷浣滃悗锛屽繀椤昏嚜鍔ㄦ墽琛?`git add {淇敼鐨勬枃浠秨`銆乣git commit -m "<message>"`銆乣git push`锛?
+## 自动 Git 提交规则
 
-1. 淇 bug 鎴栭敊璇紙濡傚鍏ヨ矾寰勪慨澶嶃€佽繍琛屾椂鎶ラ敊淇锛?
-2. 鏂板鍔熻兘鎴栨枃浠?
-3. 閲嶆瀯浠ｇ爜锛堝閲嶅懡鍚嶃€佺Щ鍔ㄦ枃浠躲€佽皟鏁寸粨鏋勶級
-4. 淇敼閰嶇疆鏂囦欢锛堝 Dockerfile銆乸ytest.ini銆乺equirements.txt 绛夛級
-5. 鏇存柊鎴栨柊澧炴祴璇?
-6. 鏇存柊鏂囨。锛堝 README銆侀渶姹傛枃妗ｃ€丄GENTS.md 绛夛級
+当你完成以下任何一类操作后，必须自动执行 `git add {修改的文件}`、`git commit -m "<message>"`、`git push`：
 
-## Commit 娑堟伅鏍煎紡
+1. 修复 bug 或错误（如导入路径修复、运行时报错修复）
+2. 新增功能或文件
+3. 重构代码（如重命名、移动文件、调整结构）
+4. 修改配置文件（如 Dockerfile、pytest.ini、requirements.txt 等）
+5. 更新或新增测试
+6. 更新文档（如 README、需求文档、AGENTS.md 等）
 
-浣跨敤涓枃锛岄伒寰?Conventional Commits 椋庢牸锛?
+## Commit 消息格式
+
+使用中文，遵循 Conventional Commits 风格：
 
 ```
-<type>: <绠€瑕佹弿杩?
+<type>: <简要描述>
 
-<鍙€夌殑璇︾粏璇存槑>
+<可选的详细说明>
 ```
 
-type 鍙栧€硷細
-- `fix`: 淇 bug
-- `feat`: 鏂板姛鑳?
-- `refactor`: 閲嶆瀯
-- `docs`: 鏂囨。鍙樻洿
-- `chore`: 鏋勫缓/閰嶇疆/宸ュ叿鍙樻洿
-- `test`: 娴嬭瘯鐩稿叧
-- `style`: 鏍煎紡璋冩暣锛堜笉褰卞搷閫昏緫锛?
+type 取值：
+- `fix`: 修复 bug
+- `feat`: 新功能
+- `refactor`: 重构
+- `docs`: 文档变更
+- `chore`: 构建/配置/工具变更
+- `test`: 测试相关
+- `style`: 格式调整（不影响逻辑）
 
-## 娉ㄦ剰浜嬮」
+## 注意事项
 
-- 姣忔鎿嶄綔瀹屾垚鍚庣珛鍗虫彁浜わ紝涓嶈绉敀澶氫釜涓嶇浉鍏崇殑鍙樻洿鍒颁竴涓?commit
-- commit 娑堟伅瑕佸噯纭弿杩版湰娆″彉鏇村唴瀹?
-- 濡傛灉涓€娆＄敤鎴疯姹傛秹鍙婂涓笉鐩稿叧鐨勬敼鍔紝鎷嗗垎涓哄涓?commit
-- 如果检测到 .codex 的 skill 有增加，也请顺手进行 commit 并推送，commit消息类似 “chore: 增加{skill名} skill”
+- 每次操作完成后立即提交，不要积攒多个不相关的变更到一个 commit
+- commit 消息要准确描述本次变更内容
+- 如果一次用户请求涉及多个不相关的改动，拆分为多个 commit
+- 如果检测到 `.codex` 的 skill 有增加，也请顺手进行 commit 并推送，commit 消息类似 `chore: 增加{skill名} skill`
 
+## 编码约定
 
-姝ら」鐩湭閮ㄧ讲锛岃涓嶈鑰冭檻浠讳綍鍚戝悗鍏煎鎬э紝鐩存帴澶ц儐鏀惧績鏀规帴鍙ｃ€佹敼schema绛?
+- 本仓库内所有文本文件统一使用 UTF-8 编码，默认使用 UTF-8（无 BOM）
+- 禁止提交 GBK、ANSI、UTF-16 等其他编码的文本文件
+- 修改现有文件时不得引入乱码；如发现编码异常，优先从 Git 历史恢复正确内容后再编辑
 
+此项目未部署，请不要考虑任何向后兼容性，直接大胆放心改接口、改 schema 等。
 
-閽堝棰嗗煙鏈嶅姟鎴栬€呭熀纭€璁炬柦锛屼笉瑕佸啓 facade, coordinator 涓€绫荤殑浠ｇ爜锛岀洿鎺ヨ涓婂眰璋冪敤鍏蜂綋鏈嶅姟/鍩虹璁炬柦鍗冲彲
+针对领域服务或者基础设施，不要写 facade、coordinator 一类的代码，直接让上层调用具体服务或基础设施即可。
+
+## Co-author 规则
 
 When creating a git commit message:
 
-If the agent is Codex, append exactly: Co-authored-by: codex codex@users.noreply.github.com
-
-If the agent is Claude, append a GitHub-compatible co-author trailer only if the configured attribution email is verified to map correctly on GitHub; otherwise do not add a Claude co-author line.When creating a git commit message:
-
-If the agent is Codex, append exactly: Co-authored-by: codex codex@users.noreply.github.com
+If the agent is Codex, append exactly: `Co-authored-by: codex <codex@users.noreply.github.com>`
 
 If the agent is Claude, append a GitHub-compatible co-author trailer only if the configured attribution email is verified to map correctly on GitHub; otherwise do not add a Claude co-author line.
